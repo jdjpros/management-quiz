@@ -166,7 +166,7 @@ const UNIT_DA = [
   {
     id: 'DA10',   // X_TYPE
     ans: 3,
-    stem: '10 2023년 국가직. 자원기반관점의 VRIO 모형에서 (가) ~ (라)에 들어갈 내용으로 옳지 않은 것은?',
+    stem: '10 2023년 국가직. 자원기반관점의 VRIO 모형에서 (가) ~ (라)에 들어갈 내용으로 옳지 않은 것은?\n<table class="q-table"><tr><th>가치가<br>있는가?</th><th>희소성이<br>있는가?</th><th>모방하기<br>어려운가?</th><th>조직에 의해<br>실현되는가?</th><th>경쟁력<br>상태</th></tr><tr><td>아니오</td><td>-</td><td>-</td><td>아니오</td><td>(가)</td></tr><tr><td>예</td><td>아니오</td><td>-</td><td>-</td><td>(나)</td></tr><tr><td>예</td><td>예</td><td>아니오</td><td>-</td><td>(다)</td></tr><tr><td>예</td><td>예</td><td>예</td><td>예</td><td>(라)</td></tr></table>',
     opts: [
       '① (가) - 경쟁열위',
       '② (나) - 경쟁등위',
@@ -454,7 +454,7 @@ const UNIT_DA = [
   {
     id: 'DA26',   // O_TYPE
     ans: 1,
-    stem: '26 2022년 군무원 7급. 다음 내용은 어떤 기업전략의 사례를 설명하는 것이다. 아래의 사례에 가장 옳은 것은? (N사의 디자인/판매 직접 수행 및 생산 외주 사례)',
+    stem: '26 2022년 군무원 7급. 다음 내용은 어떤 기업전략의 사례를 설명하는 것이다. 아래의 사례에 가장 옳은 것은?\n<div class="q-passage">N사는 운동화를 만드는 과정에서 제품 디자인과 판매와 같이 가치사슬의 처음과 끝부분만 자신이 담당하고 나머지 생산부문은 전세계의 하청기업들에 맡기고 있다. 하청기업들 간에 서로 비용절감 및 품질향상 경쟁을 유도하며 그 중에서 가장 낮은 가격과 높은 품질의 제품을 구매한다.</div>',
     opts: [
       '① 전략적 아웃소싱',
       '② 전략적 제휴',
@@ -868,20 +868,20 @@ const UNIT_DA = [
   {
     id: 'DA49',   // O_TYPE
     ans: 3,
-    stem: '49 2023년 군무원 7급. 노나카(Ikujiro Nonaka)가 제시한 암묵지(tacit knowledge)와 형식지(explicit knowledge)간의 상호작용을 통한 4개의 지식변환과정 순서로 가장 적절한 것은?',
+    stem: '49 2023년 군무원 7급. 노나카(Ikujiro Nonaka)가 제시한 암묵지(tacit knowledge)와 형식지(explicit knowledge)간의 상호작용을 통한 4개의 지식변환과정(knowledge conversion process)인 ①-②-③-④을 가장 적절하게 표시하고 있는 것은?\n<img src="data/images/DA49.png" style="max-width:100%;border-radius:6px;margin:6px 0;">',
     opts: [
-      'ㄱ. 사회화(socialization)',
-      'ㄴ. 외재화(externalization)',
-      'ㄷ. 종합화(combination)',
-      'ㄹ. 내재화(internalization)'
+      '① 종합화(combination) - ② 사회화(socialization) - ③ 외재화(externalization) - ④ 내재화(internalization)',
+      '① 종합화(combination) - ② 외재화(externalization) - ③ 사회화(socialization) - ④ 내재화(internalization)',
+      '① 사회화(socialization) - ② 외재화(externalization) - ③ 종합화(combination) - ④ 내재화(internalization)',
+      '① 사회화(socialization) - ② 외재화(externalization) - ③ 내재화(internalization) - ④ 종합화(combination)'
     ],
     exps: [
-      {ox: 'O', t: 'ㄱ. 암묵지 → 암묵지로의 전환 단계이다. (출처: 기출집 p.219)'},
-      {ox: 'O', t: 'ㄴ. 암묵지 → 형식지로의 전환 단계이다. (출처: 기출집 p.219)'},
-      {ox: 'O', t: 'ㄷ. 형식지 → 형식지로의 전환 단계이다. (출처: 기출집 p.219)'},
-      {ox: 'O', t: 'ㄹ. 형식지 → 암묵지로의 전환 단계이다. (출처: 기출집 p.219)'}
+      {ox: 'X', t: '①은 암묵지→암묵지이므로 사회화가 맞다. 종합화가 아니다. (출처: 기출집 p.219)'},
+      {ox: 'X', t: '③과 ④가 뒤바뀌었다. ③은 형식지→형식지(종합화)가 맞다. (출처: 기출집 p.219)'},
+      {ox: 'O', t: 'SECI: ①사회화(암묵지→암묵지), ②외재화(암묵지→형식지), ③종합화(형식지→형식지), ④내재화(형식지→암묵지). (출처: 기출집 p.219)'},
+      {ox: 'X', t: '③과 ④의 위치가 바뀌었다. 내재화(형식지→암묵지)는 ④ 위치가 맞다. (출처: 기출집 p.219)'}
     ],
-    tip: '💡 SECI 모델 순서: Socialization(사) → Externalization(표) → Combination(연) → Internalization(내).'
+    tip: '💡 SECI: ①사회화(암→암) ②외재화(암→형) ③종합화(형→형) ④내재화(형→암)'
   },
   {
     id: 'DA50',   // X_TYPE

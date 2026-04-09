@@ -125,7 +125,7 @@ var Q_OPTS_BOX  = new Set([
   'BA06',
   'BB02','BB24','BB32','BB37','BB56',
   'CA14','CA19',
-  'DA08','DA37','DA49',
+  'DA08','DA37',
   'DB20','DB36','DB50','DB51'
 ]);
 var NUMS        = ['①','②','③','④','⑤'];

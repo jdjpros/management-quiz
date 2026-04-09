@@ -95,6 +95,7 @@ body{background:var(--bg);color:var(--text);font-family:'Pretendard',sans-serif;
 .q-table th{background:#e8effe;color:#1e40af;font-weight:700;}
 .q-table tr td:first-child{background:#f5f6ff;font-weight:600;text-align:left;}
 .q-diagram{font-family:'JetBrains Mono',monospace;background:#f5f6ff;border:1px solid var(--border);border-radius:6px;padding:12px 20px;margin:8px 0;font-size:13px;text-align:center;line-height:2.2;letter-spacing:.05em;}
+.q-passage{background:#f8f9fa;border-left:3px solid var(--c0);border-radius:0 6px 6px 0;padding:10px 14px;margin:8px 0;font-size:12.5px;color:var(--dim);line-height:1.7;}
 .inline-passage{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dim);background:var(--surface2);border-radius:7px;padding:9px 12px;margin:9px 0;white-space:pre-wrap;border-left:3px solid var(--c2);line-height:1.8;}
 
 /* OX OPTIONS */
@@ -1781,21 +1782,23 @@ function parseStemHeader(stem, id){
   var firstLine=lines[0].trim();
   var secondLine=lines.length>1?lines[1].trim():'';
   // 형식A: "01 2025년 군무원 7급. 질문..." (한 줄, 마침표 구분)
+  // → 질문이 line0에 있으므로 추가 콘텐츠(표 등)는 line1부터 (bodyStart:1)
   var mA=firstLine.match(/^(\d+)\s+(\d{4}년[^.]*)\.\s*(.+)$/);
   if(mA&&mA[2]&&mA[3]){
-    return { title:mA[1]+'. '+mA[3].trim(), badge:mA[2].trim() };
+    return { title:mA[1]+'. '+mA[3].trim(), badge:mA[2].trim(), bodyStart:1 };
   }
-  // 형식B: "01 2022년 군무원 7급\n질문..." (줄바꿈 구분, 첫줄=출처, 둘째줄=질문)
-  var mB=firstLine.match(/^(\d+)\s+(\d{4}년[^\n]*?)$/);
+  // 형식B: "01 2022년 군무원 7급\n질문..." 또는 "02. 2020년 경영지도사\n질문..."
+  // → 질문이 line1이므로 추가 콘텐츠는 line2부터 (bodyStart:2)
+  var mB=firstLine.match(/^(\d+)[\.\s]\s*(\d{4}년[^\n]*?)$/);
   if(mB&&mB[2]&&secondLine){
-    return { title:mB[1]+'. '+secondLine.trim(), badge:mB[2].trim() };
+    return { title:mB[1]+'. '+secondLine.trim(), badge:mB[2].trim(), bodyStart:2 };
   }
   // 형식C: stem에 번호 없음 → id에서 번호 추출 (e.g. 'FA01' → '01')
   if(id && !firstLine.match(/^\d+[\.\s]/)){
     var mId=(id||'').match(/(\d+)$/);
-    if(mId){ return { title:mId[1]+'. '+firstLine, badge:'' }; }
+    if(mId){ return { title:mId[1]+'. '+firstLine, badge:'', bodyStart:1 }; }
   }
-  return { title:firstLine, badge:'' };
+  return { title:firstLine, badge:'', bodyStart:1 };
 }
 
 // ═══════════════════════════════════════════
@@ -2297,7 +2300,9 @@ function mkCard(q){
     bp.innerHTML=parsed.items.map(function(it){return '<div class="box-item"><span class="box-label">'+it.label+'.</span><span class="box-text">'+it.text+'</span></div>';}).join('');
     body.appendChild(bp);
   } else if(stemLines.length>1){
-    body.innerHTML+='<div class="qstem">'+stemLines.slice(1).join('<br>')+'</div>';
+    // bodyStart: 형식A=1(질문이 line0), 형식B=2(질문이 line1), 기타=1
+    var bodyLines=stemLines.slice(head.bodyStart||1);
+    if(bodyLines.length>0) body.innerHTML+='<div class="qstem">'+bodyLines.join('<br>')+'</div>';
   }
 
   // 정답 배너

@@ -96,6 +96,12 @@ body{background:var(--bg);color:var(--text);font-family:'Pretendard',sans-serif;
 .q-table tr td:first-child{background:#f5f6ff;font-weight:600;text-align:left;}
 .q-diagram{font-family:'JetBrains Mono',monospace;background:#f5f6ff;border:1px solid var(--border);border-radius:6px;padding:12px 20px;margin:8px 0;font-size:13px;text-align:center;line-height:2.2;letter-spacing:.05em;}
 .q-passage{background:#f8f9fa;border-left:3px solid var(--c0);border-radius:0 6px 6px 0;padding:10px 14px;margin:8px 0;font-size:12.5px;color:var(--dim);line-height:1.7;}
+
+/* SCROLL TO TOP */
+.scroll-top-wrap{text-align:center;padding:28px 16px 40px;display:none;}
+.scroll-top-btn{display:inline-flex;align-items:center;gap:7px;background:#1a1f36;color:#fff;border:none;border-radius:24px;padding:11px 28px;font-size:13px;font-weight:700;font-family:'Pretendard',sans-serif;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.18);transition:background .15s,transform .15s;letter-spacing:.02em;}
+.scroll-top-btn:hover{background:#2563eb;transform:translateY(-2px);}
+.scroll-top-btn .sti{font-size:16px;}
 .inline-passage{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dim);background:var(--surface2);border-radius:7px;padding:9px 12px;margin:9px 0;white-space:pre-wrap;border-left:3px solid var(--c2);line-height:1.8;}
 
 /* OX OPTIONS */
@@ -825,6 +831,11 @@ body{background:var(--bg);color:var(--text);font-family:'Pretendard',sans-serif;
   <div class="empty-state" id="emptyState" style="display:none;">
     <p id="emptyMsg">🎉 복습할 문제가 없어요!</p>
     <small id="emptyHint">△(한 번 더) 또는 X(모름) 표시한 지문이 여기 모입니다.</small>
+  </div>
+  <div class="scroll-top-wrap" id="scrollTopWrap">
+    <button class="scroll-top-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+      <span class="sti">&#8679;</span> 맨 위로
+    </button>
   </div>
 </div>
 
@@ -2455,6 +2466,10 @@ function renderAll(){
   if(searchQuery) applySearch();
   else if(masteryFilter) applyMasteryFilter();
   updateProg();
+
+  // 문제가 있을 때만 맨 위로 버튼 표시
+  var stw=document.getElementById('scrollTopWrap');
+  if(stw) stw.style.display = vis>0 ? 'block' : 'none';
 }
 
 // ═══════════════════════════════════════════

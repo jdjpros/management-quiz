@@ -82,6 +82,7 @@ body{background:var(--bg);color:var(--text);font-family:'Pretendard',sans-serif;
 .qcard.confused .qnum{background:var(--warn)!important;}
 .qcard.failed .qnum{background:var(--wrong)!important;}
 .qtitle{font-size:12.5px;color:var(--text);flex:1;font-weight:500;line-height:1.6;}
+.qsrc{font-size:10.5px;color:var(--muted);font-weight:600;margin-left:6px;}
 .qmeta{font-size:12px;flex-shrink:0;}
 .chev{color:var(--muted);font-size:10px;transition:transform .2s;flex-shrink:0;margin-top:3px;}
 .qcard.open .chev{transform:rotate(180deg);}
@@ -1625,7 +1626,11 @@ function applySearch(){
     if(matchesSearch(q,query)){
       card.style.display=''; cnt++;
       var titleEl=card.querySelector('.qtitle');
-      if(titleEl){ var orig=q.stem.split('\n')[0]; titleEl.innerHTML=orig.replace(new RegExp('('+query.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'),'<span class="highlight">$1</span>'); }
+      if(titleEl){
+        var head=parseStemHeader(q.stem);
+        var orig=head.title+(head.badge?(' ['+head.badge+']'):'');
+        titleEl.innerHTML=orig.replace(new RegExp('('+query.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'),'<span class="highlight">$1</span>');
+      }
     } else { card.style.display='none'; }
   });
   var countEl=document.getElementById('searchCount');
@@ -1735,6 +1740,16 @@ function parseBoxStem(stem){
   }
   if(cur) boxItems.push(cur);
   return {title:titleLines.join('\n').trim(), items:boxItems};
+}
+
+function parseStemHeader(stem){
+  var firstLine=(stem||'').split('\n')[0].trim();
+  // 예: "01 2025년 군무원 7급. 질문..." -> badge: "2025년 군무원 7급", title: "질문..."
+  var m=firstLine.match(/^\d+\s+(\d{4}년[^.]*)\.\s*(.+)$/);
+  if(m&&m[1]&&m[2]){
+    return { title:m[2].trim(), badge:m[1].trim() };
+  }
+  return { title:firstLine, badge:'' };
 }
 
 // ═══════════════════════════════════════════
@@ -2219,7 +2234,9 @@ function mkCard(q){
   var srsS=getSrsState(q.id); var srsBadge='';
   if(isSrsDue(q.id)&&srsS.lvl>0) srsBadge='<span class="srs-badge due">SRS</span>';
   else if(srsS.lvl>0&&srsS.due) srsBadge='<span class="srs-badge soon">Lv'+srsS.lvl+'</span>';
-  hdr.innerHTML='<div class="qnum">Q'+qIdx+'</div><div class="qtitle">'+q.stem.split('\n')[0]+srsBadge+'</div><div class="qmeta">'+rvIcon+'</div><div class="chev">▼</div>';
+  var head=parseStemHeader(q.stem);
+  var badgeHtml=head.badge?(' <span class="qsrc">['+head.badge+']</span>'):'';
+  hdr.innerHTML='<div class="qnum">Q'+qIdx+'</div><div class="qtitle">'+head.title+badgeHtml+srsBadge+'</div><div class="qmeta">'+rvIcon+'</div><div class="chev">▼</div>';
   card.appendChild(hdr);
 
   var body=document.createElement('div'); body.className='qbody';

@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>경영학 퀴즈 프롬프트 생성기</title>
+<style>
+:root {
+  --bg: #f0f2f8; --surface: #fff; --border: #e2e6f0;
+  --text: #1a1f36; --dim: #4a5080; --muted: #8890b0;
+  --c0: #2563eb; --c1: #0891b2; --c2: #7c3aed;
+  --correct: #16a34a; --wrong: #dc2626;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'Pretendard', -apple-system, sans-serif; font-size: 14px; line-height: 1.7; min-height: 100vh; }
+
+.top { background: #1a1f36; padding: 13px 20px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 12px rgba(0,0,0,.3); }
+.top-inner { max-width: 860px; margin: 0 auto; display: flex; align-items: center; gap: 10px; }
+.top-title { color: #fff; font-size: 15px; font-weight: 700; }
+.top-title span { color: #93c5fd; font-size: 11px; font-weight: 400; margin-left: 8px; }
+
+.tab-bar { background: #fff; border-bottom: 2px solid var(--border); position: sticky; top: 48px; z-index: 90; }
+.tab-inner { max-width: 860px; margin: 0 auto; display: flex; }
+.tab { padding: 11px 18px; cursor: pointer; font-size: 12.5px; font-weight: 600; color: var(--muted); border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all .2s; white-space: nowrap; }
+.tab:hover { color: var(--text); }
+.tab.act { color: var(--c0); border-color: var(--c0); }
+
+.container { max-width: 860px; margin: 0 auto; padding: 24px 20px 60px; }
+.panel { display: none; }
+.panel.act { display: block; }
+
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 16px; }
+.card-title { font-size: 12px; font-weight: 700; color: var(--dim); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 14px; }
+
+.row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field label { font-size: 11.5px; font-weight: 600; color: var(--dim); }
+select, input[type=text], input[type=number], textarea {
+  border: 1.5px solid var(--border); border-radius: 7px; padding: 7px 11px;
+  font-family: inherit; font-size: 13px; color: var(--text); background: #f8f9fc;
+  outline: none; transition: border-color .15s;
+}
+select:focus, input:focus, textarea:focus { border-color: var(--c0); background: #fff; }
+textarea { resize: vertical; min-height: 70px; }
+
+.btn { border: none; border-radius: 7px; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 700; padding: 9px 20px; transition: filter .15s; }
+.btn-primary { background: var(--c0); color: #fff; }
+.btn-primary:hover { filter: brightness(1.1); }
+.btn-copy { background: var(--correct); color: #fff; font-size: 12px; padding: 6px 14px; }
+.btn-copy:hover { filter: brightness(1.1); }
+.btn-copy.copied { background: #6b7280; }
+
+.output-wrap { position: relative; margin-top: 14px; }
+.output-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.output-label { font-size: 11px; font-weight: 700; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+.output-box {
+  background: #1a1f36; color: #e2e8f0; border-radius: 8px;
+  padding: 16px; font-family: 'JetBrains Mono', 'Consolas', monospace;
+  font-size: 12px; line-height: 1.8; white-space: pre-wrap; word-break: break-all;
+  max-height: 520px; overflow-y: auto; border: 1px solid #2d3561;
+}
+.output-box.cmd { font-size: 12.5px; }
+
+.badge { display: inline-block; border-radius: 5px; font-size: 10px; font-weight: 700; padding: 2px 7px; margin-left: 6px; }
+.badge-blue { background: #dbeafe; color: var(--c0); }
+.badge-green { background: #dcfce7; color: var(--correct); }
+
+.rule-list { display: flex; flex-direction: column; gap: 5px; }
+.rule-item { display: flex; gap: 8px; align-items: flex-start; font-size: 12.5px; color: var(--dim); }
+.rule-num { background: var(--c0); color: #fff; border-radius: 4px; font-size: 10px; font-weight: 700; padding: 1px 6px; flex-shrink: 0; margin-top: 2px; }
+.rule-warn { background: var(--wrong); }
+
+.unit-preview { font-size: 15px; color: var(--c0); font-weight: 800; margin-top: 2px; }
+
+@media(max-width:600px) {
+  .row { flex-direction: column; }
+  .field { width: 100% !important; }
+}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="top-inner">
+    <div class="top-title">경영학 퀴즈 <span>프롬프트 생성기</span></div>
+  </div>
+</div>
+
+<div class="tab-bar">
+  <div class="tab-inner">
+    <div class="tab act" onclick="switchTab(0)">① 추출 프롬프트</div>
+    <div class="tab" onclick="switchTab(1)">② 단원 검증 명령어</div>
+    <div class="tab" onclick="switchTab(2)">③ 일괄 검증</div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- ════════════════════════════════
+       TAB 1: 추출 프롬프트
+  ════════════════════════════════ -->
+  <div class="panel act" id="panel0">
+
+    <div class="card">
+      <div class="card-title">단원 선택</div>
+      <div class="row">
+        <div class="field" style="flex:2;min-width:220px;">
+          <label>대단원</label>
+          <select id="parent" onchange="onParentChange()">
+            <option value="A">A — 경영학 기초개념</option>
+            <option value="B">B — 경영자와 기업</option>
+            <option value="C">C — 경영관리</option>
+            <option value="D">D — 경영전략</option>
+            <option value="E">E — 조직행동론 기초개념</option>
+            <option value="F">F — 개인수준 활동</option>
+            <option value="G">G — 집단수준 활동</option>
+            <option value="H">H — 조직수준 활동</option>
+            <option value="I">I — 인적자원관리 기초개념</option>
+            <option value="J">J — 인적자원 조달</option>
+            <option value="K">K — 인적자원 개발</option>
+            <option value="L">L — 인적자원 평가와 보상</option>
+            <option value="M">M — 인적자원 유지 및 방출</option>
+            <option value="N">N — 생산운영관리 기초개념</option>
+            <option value="O">O — 생산전략</option>
+            <option value="P">P — 생산시스템 설계</option>
+            <option value="Q">Q — 생산시스템 운영 및 통제</option>
+            <option value="R">R — 마케팅 기초개념</option>
+            <option value="S">S — 마케팅 기회분석</option>
+            <option value="T">T — 마케팅 전략</option>
+            <option value="U">U — 마케팅믹스</option>
+            <option value="V">V — 마케팅 영역 확장</option>
+            <option value="W">W — 재무관리</option>
+            <option value="X">X — 회계학</option>
+            <option value="Y">Y — 경영정보시스템</option>
+          </select>
+        </div>
+        <div class="field" style="flex:1;min-width:180px;">
+          <label>소단원</label>
+          <select id="sub" onchange="onParentChange()">
+            <option value="A">A — 군무원/공무원 기출</option>
+            <option value="B">B — 기타 기출</option>
+          </select>
+        </div>
+        <div class="field" style="min-width:100px;">
+          <label>생성 prefix</label>
+          <div class="unit-preview" id="prefixPreview">AA</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;">unit_AA.js</div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="field" style="width:120px;">
+          <label>시작 문번</label>
+          <input type="number" id="numStart" value="1" min="1">
+        </div>
+        <div class="field" style="width:120px;">
+          <label>끝 문번</label>
+          <input type="number" id="numEnd" value="30" min="1">
+        </div>
+        <div class="field" style="flex:1;min-width:200px;">
+          <label>특이사항 (선택)</label>
+          <input type="text" id="notes" placeholder="예: 표·그림 있는 문제 포함, 5지선다 혼재">
+        </div>
+      </div>
+
+      <button class="btn btn-primary" onclick="genExtractPrompt()">프롬프트 생성</button>
+    </div>
+
+    <div class="card" style="background:#fafbff;">
+      <div class="card-title">추출 규칙 요약</div>
+      <div class="rule-list">
+        <div class="rule-item"><span class="rule-num rule-warn">금지</span>cite 태그 &lt;cite&gt;&lt;/cite&gt; 절대 사용 금지</div>
+        <div class="rule-item"><span class="rule-num rule-warn">금지</span>백틱(`) 절대 사용 금지 — 코드블록 포함</div>
+        <div class="rule-item"><span class="rule-num rule-warn">금지</span>exps의 t 필드에 ①②③④⑤ 기호 사용 금지 (ㄱㄴㄷㄹ는 허용)</div>
+        <div class="rule-item"><span class="rule-num rule-warn">금지</span>출처·페이지 표기 금지 (예: 출처: 기출집 p.45)</div>
+        <div class="rule-item"><span class="rule-num rule-warn">금지</span>stem에 문제 번호 포함 금지 (예: "01." 제거)</div>
+        <div class="rule-item"><span class="rule-num">필수</span>문자열 내 작은따옴표(')는 반드시 \' 로 이스케이프</div>
+        <div class="rule-item"><span class="rule-num">필수</span>ㄱㄴㄷ 박스형 exps: t 필드를 "ㄱ. 해설내용" 형태로 작성</div>
+        <div class="rule-item"><span class="rule-num">필수</span>ans는 정답 선지 번호 (숫자만, 1~4 또는 1~5)</div>
+      </div>
+    </div>
+
+    <div id="extractOutput" style="display:none;">
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div style="padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+          <span style="font-size:12px;font-weight:700;color:var(--dim);">
+            Gemini 추출 프롬프트
+            <span class="badge badge-blue" id="extractBadge"></span>
+          </span>
+          <button class="btn btn-copy" id="btnCopyExtract" onclick="copyText('extractText','btnCopyExtract')">복사</button>
+        </div>
+        <div class="output-box" id="extractText"></div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ════════════════════════════════
+       TAB 2: 단원 검증 명령어
+  ════════════════════════════════ -->
+  <div class="panel" id="panel1">
+
+    <div class="card">
+      <div class="card-title">검증 대상 입력</div>
+      <div class="row">
+        <div class="field" style="width:140px;">
+          <label>단원 코드</label>
+          <input type="text" id="vCode" placeholder="예: AA" maxlength="2"
+            style="text-transform:uppercase;font-size:16px;font-weight:700;letter-spacing:2px;"
+            oninput="this.value=this.value.toUpperCase()">
+        </div>
+        <div class="field" style="width:140px;">
+          <label>예상 문항 수</label>
+          <input type="number" id="vCount" placeholder="예: 29" min="1">
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="genVerifyCmd()">명령어 생성</button>
+    </div>
+
+    <div class="card" style="background:#fafbff;">
+      <div class="card-title">검증 항목</div>
+      <div class="rule-list">
+        <div class="rule-item"><span class="rule-num">1</span>cite 태그 포함 여부</div>
+        <div class="rule-item"><span class="rule-num">2</span>백틱(`) 포함 여부</div>
+        <div class="rule-item"><span class="rule-num">3</span>실제 문항 수 vs 예상 문항 수 비교</div>
+        <div class="rule-item"><span class="rule-num">4</span>ox 값 이상 (O/X 외 값) 검사</div>
+        <div class="rule-item"><span class="rule-num">5</span>exps 내 ①②③④⑤ 기호 잔존 여부</div>
+        <div class="rule-item"><span class="rule-num">6</span>stem 내 문제번호("01.") 잔존 여부</div>
+        <div class="rule-item"><span class="rule-num">7</span>출처 텍스트 잔존 여부</div>
+      </div>
+    </div>
+
+    <div id="verifyOutput" style="display:none;">
+      <!-- Python 방법 (권장) -->
+      <div class="card" style="padding:0;overflow:hidden;margin-bottom:12px;">
+        <div style="padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+          <span style="font-size:12px;font-weight:700;color:var(--dim);">
+            방법 1 — Python 실행 <span class="badge badge-green">권장</span>
+            <span class="badge badge-blue" id="verifyBadge"></span>
+          </span>
+          <button class="btn btn-copy" id="btnCopyVerify" onclick="copyText('verifyText','btnCopyVerify')">복사</button>
+        </div>
+        <div class="output-box cmd" id="verifyText"></div>
+      </div>
+      <!-- bash 스크립트 저장 방법 -->
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div style="padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+          <span style="font-size:12px;font-weight:700;color:var(--dim);">
+            방법 2 — bash 스크립트 저장 후 실행 <span class="badge" style="background:#fef3c7;color:#92400e;">Git Bash 전용</span>
+          </span>
+          <button class="btn btn-copy" id="btnCopyVerifyBash" onclick="copyText('verifyBashText','btnCopyVerifyBash')">복사</button>
+        </div>
+        <div class="output-box cmd" id="verifyBashText"></div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ════════════════════════════════
+       TAB 3: 일괄 검증
+  ════════════════════════════════ -->
+  <div class="panel" id="panel2">
+
+    <div class="card">
+      <div class="card-title">일괄 검증</div>
+      <p style="font-size:12.5px;color:var(--dim);margin-bottom:14px;">
+        <code style="background:#f0f2f8;padding:2px 7px;border-radius:4px;font-size:12px;">경영학 데이터파일/</code> 폴더 내 모든 unit_*.js 파일을 한 번에 검증합니다.<br>
+        Git Bash에서 <strong>경영학 작업</strong> 폴더 위치에서 실행하세요.
+      </p>
+      <button class="btn btn-primary" onclick="genBulkCmd()">명령어 생성</button>
+    </div>
+
+    <div id="bulkOutput" style="display:none;">
+      <!-- Python 방법 -->
+      <div class="card" style="padding:0;overflow:hidden;margin-bottom:12px;">
+        <div style="padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+          <span style="font-size:12px;font-weight:700;color:var(--dim);">
+            방법 1 — Python 실행 <span class="badge badge-green">권장</span>
+          </span>
+          <button class="btn btn-copy" id="btnCopyBulkPy" onclick="copyText('bulkPyText','btnCopyBulkPy')">복사</button>
+        </div>
+        <div class="output-box cmd" id="bulkPyText"></div>
+      </div>
+      <!-- bash 방법 -->
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div style="padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+          <span style="font-size:12px;font-weight:700;color:var(--dim);">방법 2 — bash 스크립트 저장 후 실행 <span class="badge" style="background:#fef3c7;color:#92400e;">Git Bash 전용</span></span>
+          <button class="btn btn-copy" id="btnCopyBulk" onclick="copyText('bulkText','btnCopyBulk')">복사</button>
+        </div>
+        <div class="output-box cmd" id="bulkText"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const MENU = {
+  A:'경영학 기초개념', B:'경영자와 기업', C:'경영관리', D:'경영전략',
+  E:'조직행동론 기초개념', F:'개인수준 활동', G:'집단수준 활동', H:'조직수준 활동',
+  I:'인적자원관리 기초개념', J:'인적자원 조달', K:'인적자원 개발',
+  L:'인적자원 평가와 보상', M:'인적자원 유지 및 방출',
+  N:'생산운영관리 기초개념', O:'생산전략', P:'생산시스템 설계',
+  Q:'생산시스템 운영 및 통제', R:'마케팅 기초개념', S:'마케팅 기회분석',
+  T:'마케팅 전략', U:'마케팅믹스', V:'마케팅 영역 확장',
+  W:'재무관리', X:'회계학', Y:'경영정보시스템'
+};
+const SUB = { A:'군무원/공무원 기출', B:'기타 기출' };
+
+function switchTab(n) {
+  document.querySelectorAll('.tab').forEach(function(t,i){ t.classList.toggle('act', i===n); });
+  document.querySelectorAll('.panel').forEach(function(p,i){ p.classList.toggle('act', i===n); });
+}
+
+function onParentChange() {
+  var p = document.getElementById('parent').value;
+  var s = document.getElementById('sub').value;
+  var prefix = p + s;
+  document.getElementById('prefixPreview').textContent = prefix;
+  document.querySelector('[for="prefixPreview"]');
+  document.getElementById('prefixPreview').nextElementSibling.textContent = 'unit_' + prefix + '.js';
+}
+
+function pad2(n){ return String(n).padStart(2,'0'); }
+
+function genExtractPrompt() {
+  var p        = document.getElementById('parent').value;
+  var s        = document.getElementById('sub').value;
+  var prefix   = p + s;
+  var pLabel   = MENU[p];
+  var sLabel   = SUB[s];
+  var ns       = parseInt(document.getElementById('numStart').value) || 1;
+  var ne       = parseInt(document.getElementById('numEnd').value)   || 30;
+  var notes    = document.getElementById('notes').value.trim();
+  var noteBlock = notes ? '\n\n## 특이사항\n' + notes : '';
+
+  var prompt =
+'아래 첨부 PDF(이미지)에서 경영학 기출문제를 추출하여 JavaScript 배열 형식으로 변환해 주세요.\n'
++'\n'
++'## 대상 정보\n'
++'- 대단원: ' + pLabel + '\n'
++'- 소단원: ' + sLabel + '\n'
++'- prefix: ' + prefix + '\n'
++'- 파일명: unit_' + prefix + '.js\n'
++'- 문제 범위: ' + ns + '번 ~ ' + ne + '번 (ID: ' + prefix + pad2(ns) + ' ~ ' + prefix + pad2(ne) + ')'
++ noteBlock + '\n'
++'\n'
++'## 출력 형식\n'
++'\n'
++'const UNIT_' + prefix + ' = [\n'
++'  {\n'
++'    id: \'' + prefix + '01\',\n'
++'    ans: 2,\n'
++'    stem: \'문제 지문 (줄바꿈은 \\n 사용)\',\n'
++'    opts: [\n'
++'      \'① 선택지1\',\n'
++'      \'② 선택지2\',\n'
++'      \'③ 선택지3\',\n'
++'      \'④ 선택지4\'\n'
++'    ],\n'
++'    exps: [\n'
++'      {ox: \'X\', t: \'해설 내용\'},\n'
++'      {ox: \'O\', t: \'해설 내용\'},\n'
++'      {ox: \'X\', t: \'해설 내용\'},\n'
++'      {ox: \'X\', t: \'해설 내용\'}\n'
++'    ],\n'
++'    tip: \'💡 핵심 암기 포인트\'  // 있을 때만\n'
++'  }\n'
++'];\n'
++'\n'
++'## 규칙 (반드시 준수)\n'
++'\n'
++'[금지]\n'
++'1. <cite>, </cite> 태그 절대 사용 금지\n'
++'2. 백틱(`) 절대 사용 금지 — 코드블록(```) 포함\n'
++'3. exps의 t 필드에 ①②③④⑤ 기호 사용 금지 (ㄱ ㄴ ㄷ ㄹ 는 허용)\n'
++'4. 출처·페이지 표기 금지 (예: "(출처: p.45)", "기출집 p.23" 모두 제거)\n'
++'5. stem에 문제 번호 포함 금지 (예: "01.", "1." 앞 번호 제거)\n'
++'\n'
++'[필수]\n'
++'6. 문자열 내 작은따옴표(\')는 반드시 \\\' 로 이스케이프\n'
++'7. ans는 정답 선지 번호 (숫자만, 1~4 또는 1~5)\n'
++'8. exps 배열 길이 = opts 배열 길이 (반드시 일치)\n'
++'9. ox 값은 반드시 \'O\' 또는 \'X\' 중 하나\n'
++'10. tip 필드는 핵심 암기 포인트가 있을 때만 추가, 없으면 완전 생략\n'
++'\n'
++'[ㄱㄴㄷ 박스형 문제]\n'
++'- opts 자체가 ㄱ/ㄴ/ㄷ/ㄹ 지문인 경우: opts에 그대로 유지\n'
++'  예) opts: [\'ㄱ. 내용A\', \'ㄴ. 내용B\', \'ㄷ. 내용C\', \'ㄹ. 내용D\']\n'
++'- exps의 t 필드: \'ㄱ. 해설내용\' 형태로 각 항목 해설 작성\n'
++'  예) {ox:\'O\', t:\'ㄱ. 옳은 이유\'}, {ox:\'X\', t:\'ㄴ. 틀린 이유\'}\n'
++'- 보기 박스(지문)가 별도로 있는 경우: stem 마지막에 \\n\\n[보기]\\n- ㄱ. ... 형태로 포함\n'
++'\n'
++'[표·그림 처리]\n'
++'- 표는 stem 또는 opts 안에 텍스트로 재현\n'
++'  예) \'- 항목1: 값A / 값B\\n- 항목2: 값C / 값D\'\n'
++'- 그림·도형은 내용을 간결하게 텍스트로 설명\n'
++'\n'
++'위 형식을 정확히 지켜 ' + ns + '번부터 ' + ne + '번까지 전체 문제를 변환해 주세요.\n'
++'배열 전체를 코드블록 없이 plain text로 출력해 주세요.';
+
+  document.getElementById('extractText').textContent = prompt;
+  document.getElementById('extractBadge').textContent = prefix + ' · ' + ns + '~' + ne + '번';
+  document.getElementById('extractOutput').style.display = 'block';
+  resetBtn('btnCopyExtract');
+}
+
+function genVerifyCmd() {
+  var code  = document.getElementById('vCode').value.trim().toUpperCase();
+  var count = document.getElementById('vCount').value.trim();
+  if (!code) { alert('단원 코드를 입력하세요 (예: AA)'); return; }
+
+  var expected = count || '?';
+
+  // 방법 1: Python
+  var py = 'python verify.py ' + code + (count ? ' ' + count : '');
+
+  // 방법 2: bash 스크립트 저장 후 실행
+  var file = '"경영학 데이터파일/unit_' + code + '.js"';
+  var bashScript =
+'FILE=' + file + '\n'
++'\n'
++'echo "=== [1] cite 태그 검사 ==="\n'
++'grep -n "<cite>" $FILE && echo "!! cite 태그 발견 !!" || echo "OK - cite 없음"\n'
++'\n'
++'echo "=== [2] 백틱 검사 ==="\n'
++'grep -n "\\`" $FILE && echo "!! 백틱 발견 !!" || echo "OK - 백틱 없음"\n'
++'\n'
++'echo "=== [3] 문항 수 ==="\n'
++'COUNT=$(grep -c "id: \'' + code + '" $FILE)\n'
++'echo "실제: $COUNT 문항 / 예상: ' + expected + ' 문항"\n'
++(count ? '[ "$COUNT" -eq ' + count + ' ] && echo "OK - 일치" || echo "!! 불일치 !!"\n' : '')
++'\n'
++'echo "=== [4] ox 이상값 검사 ==="\n'
++"grep -n \"ox:\" $FILE | grep -v \"ox: 'O'\" | grep -v \"ox: 'X'\" && echo \"!! ox 이상값 !!\" || echo \"OK\"\n"
++'\n'
++'echo "=== [5] exps 내 원문자 기호 ==="\n'
++'grep -n "ox:" $FILE | grep -E "[①②③④⑤]" && echo "!! 원문자 발견 !!" || echo "OK"\n'
++'\n'
++'echo "=== [6] stem 내 문제번호 잔존 ==="\n'
++"grep -n \"stem:\" $FILE | grep -E \"'[0-9]+\\.\" && echo \"!! 문제번호 잔존 !!\" || echo \"OK\"\n"
++'\n'
++'echo "=== [7] 출처 텍스트 잔존 ==="\n'
++'grep -n "출처\\|기출집" $FILE && echo "!! 출처 잔존 !!" || echo "OK"';
+
+  var bash =
+'# 1. 스크립트 저장\n'
++'cat > verify_' + code + '.sh << \'EOF\'\n'
++ bashScript + '\n'
++'EOF\n'
++'\n'
++'# 2. 실행\n'
++'bash verify_' + code + '.sh';
+
+  document.getElementById('verifyText').textContent = py;
+  document.getElementById('verifyBashText').textContent = bash;
+  document.getElementById('verifyBadge').textContent = 'unit_' + code + '.js';
+  document.getElementById('verifyOutput').style.display = 'block';
+  resetBtn('btnCopyVerify');
+  resetBtn('btnCopyVerifyBash');
+}
+
+function genBulkCmd() {
+  // 방법 1: Python
+  var py = 'python verify.py all';
+
+  // 방법 2: bash 스크립트
+  var bash =
+'# 1. 스크립트 저장\n'
++'cat > verify_all.sh << \'EOF\'\n'
++'DIR="경영학 데이터파일"\n'
++'PASS=0; FAIL=0\n'
++'\n'
++'for FILE in "$DIR"/unit_*.js; do\n'
++'  CODE=$(basename "$FILE" .js | sed \'s/unit_//\')\n'
++'  ERRORS=""\n'
++'\n'
++'  grep -q "<cite>" "$FILE"                    && ERRORS="$ERRORS [cite]"\n'
++'  grep -q "\\`" "$FILE"                        && ERRORS="$ERRORS [백틱]"\n'
++"  grep \"ox:\" \"$FILE\" | grep -v \"ox: 'O'\" | grep -v \"ox: 'X'\" | grep -q \".\" && ERRORS=\"$ERRORS [ox]\"\n"
++'  grep "ox:" "$FILE" | grep -qE "[①②③④⑤]" && ERRORS="$ERRORS [원문자]"\n'
++'  grep -q "출처\\|기출집" "$FILE"               && ERRORS="$ERRORS [출처]"\n'
++'\n'
++'  COUNT=$(grep -c "id: \'$CODE" "$FILE" 2>/dev/null || echo 0)\n'
++'  if [ -z "$ERRORS" ]; then\n'
++'    echo "[ OK] unit_$CODE.js ($COUNT 문항)"\n'
++'    PASS=$((PASS+1))\n'
++'  else\n'
++'    echo "[ERR] unit_$CODE.js ($COUNT 문항) -->$ERRORS"\n'
++'    FAIL=$((FAIL+1))\n'
++'  fi\n'
++'done\n'
++'\n'
++'echo ""\n'
++'echo "결과: OK ${PASS}개 / ERR ${FAIL}개"\n'
++'EOF\n'
++'\n'
++'# 2. 실행\n'
++'bash verify_all.sh';
+
+  document.getElementById('bulkPyText').textContent = py;
+  document.getElementById('bulkText').textContent = bash;
+  document.getElementById('bulkOutput').style.display = 'block';
+  resetBtn('btnCopyBulkPy');
+  resetBtn('btnCopyBulk');
+}
+
+function copyText(id, btnId) {
+  var text = document.getElementById(id).textContent;
+  navigator.clipboard.writeText(text).then(function() {
+    var btn = document.getElementById(btnId);
+    btn.textContent = '복사됨!';
+    btn.classList.add('copied');
+    setTimeout(function(){ btn.textContent='복사'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+function resetBtn(btnId) {
+  var btn = document.getElementById(btnId);
+  btn.textContent = '복사';
+  btn.classList.remove('copied');
+}
+
+onParentChange();
+</script>
+</body>
+</html>

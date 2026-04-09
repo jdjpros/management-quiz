@@ -1,0 +1,9 @@
+# 개발 도구 (배포 불필요)
+경영학 데이터파일/
+경영학 단원별 기출문제집/
+merge_units.py
+verify.py
+verify.bat
+verify.ps1
+*.pdf
+*.xlsx

@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "경영학 퀴즈 (정적 서버)",
+      "runtimeExecutable": "C:\\Users\\강철사원\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "runtimeArgs": ["-m", "http.server", "8081"],
+      "port": 8081
+    }
+  ]
+}

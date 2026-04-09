@@ -1627,7 +1627,7 @@ function applySearch(){
       card.style.display=''; cnt++;
       var titleEl=card.querySelector('.qtitle');
       if(titleEl){
-        var head=parseStemHeader(q.stem);
+        var head=parseStemHeader(q.stem,q.id);
         var orig=head.title+(head.badge?(' ['+head.badge+']'):'');
         titleEl.innerHTML=orig.replace(new RegExp('('+query.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'),'<span class="highlight">$1</span>');
       }
@@ -1742,12 +1742,24 @@ function parseBoxStem(stem){
   return {title:titleLines.join('\n').trim(), items:boxItems};
 }
 
-function parseStemHeader(stem){
-  var firstLine=(stem||'').split('\n')[0].trim();
-  // 예: "01 2025년 군무원 7급. 질문..." -> badge: "2025년 군무원 7급", title: "질문..."
-  var m=firstLine.match(/^\d+\s+(\d{4}년[^.]*)\.\s*(.+)$/);
-  if(m&&m[1]&&m[2]){
-    return { title:m[2].trim(), badge:m[1].trim() };
+function parseStemHeader(stem, id){
+  var lines=(stem||'').split('\n');
+  var firstLine=lines[0].trim();
+  var secondLine=lines.length>1?lines[1].trim():'';
+  // 형식A: "01 2025년 군무원 7급. 질문..." (한 줄, 마침표 구분)
+  var mA=firstLine.match(/^(\d+)\s+(\d{4}년[^.]*)\.\s*(.+)$/);
+  if(mA&&mA[2]&&mA[3]){
+    return { title:mA[1]+'. '+mA[3].trim(), badge:mA[2].trim() };
+  }
+  // 형식B: "01 2022년 군무원 7급\n질문..." (줄바꿈 구분, 첫줄=출처, 둘째줄=질문)
+  var mB=firstLine.match(/^(\d+)\s+(\d{4}년[^\n]*?)$/);
+  if(mB&&mB[2]&&secondLine){
+    return { title:mB[1]+'. '+secondLine.trim(), badge:mB[2].trim() };
+  }
+  // 형식C: stem에 번호 없음 → id에서 번호 추출 (e.g. 'FA01' → '01')
+  if(id && !firstLine.match(/^\d+[\.\s]/)){
+    var mId=(id||'').match(/(\d+)$/);
+    if(mId){ return { title:mId[1]+'. '+firstLine, badge:'' }; }
   }
   return { title:firstLine, badge:'' };
 }
@@ -2234,7 +2246,7 @@ function mkCard(q){
   var srsS=getSrsState(q.id); var srsBadge='';
   if(isSrsDue(q.id)&&srsS.lvl>0) srsBadge='<span class="srs-badge due">SRS</span>';
   else if(srsS.lvl>0&&srsS.due) srsBadge='<span class="srs-badge soon">Lv'+srsS.lvl+'</span>';
-  var head=parseStemHeader(q.stem);
+  var head=parseStemHeader(q.stem,q.id);
   var badgeHtml=head.badge?(' <span class="qsrc">['+head.badge+']</span>'):'';
   hdr.innerHTML='<div class="qnum">Q'+qIdx+'</div><div class="qtitle">'+head.title+badgeHtml+srsBadge+'</div><div class="qmeta">'+rvIcon+'</div><div class="chev">▼</div>';
   card.appendChild(hdr);

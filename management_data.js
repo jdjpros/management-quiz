@@ -119,5 +119,13 @@ var MENU = [
 // ═══════════════════════════════════════════
 var O_TYPE      = new Set([]);
 var Q_EXPS_BOX  = new Set([]);
-var Q_OPTS_BOX  = new Set([]);
+var Q_OPTS_BOX  = new Set([
+  'AA02','AA20','AA24','AA29',
+  'AB15','AB19','AB34','AB37','AB38','AB56','AB73','AB77','AB81',
+  'BA06',
+  'BB02','BB24','BB32','BB37','BB56',
+  'CA14','CA19',
+  'DA08','DA37','DA49',
+  'DB20','DB36','DB50','DB51'
+]);
 var NUMS        = ['①','②','③','④','⑤'];

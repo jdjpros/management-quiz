@@ -263,9 +263,11 @@ body{background:var(--bg);color:var(--text);font-family:'Pretendard',sans-serif;
 .search-count{font-size:11px;color:var(--muted);white-space:nowrap;font-family:'JetBrains Mono',monospace;flex-shrink:0;}
 .search-count.has-result{color:var(--c0);font-weight:700;}
 .highlight{background:#fef08a;border-radius:2px;padding:0 1px;}
-.parent-bar{background:#1e2540;border-bottom:1px solid rgba(255,255,255,.08);position:sticky;top:52px;z-index:300;overflow:hidden;}
-.parent-inner{max-width:920px;margin:0 auto;display:flex;padding:0 8px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.parent-bar{background:#1e2540;border-bottom:1px solid rgba(255,255,255,.08);position:sticky;top:52px;z-index:300;overflow:hidden;display:flex;align-items:center;}
+.parent-inner{flex:1;max-width:920px;margin:0 auto;display:flex;padding:0 4px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
 .parent-inner::-webkit-scrollbar{display:none;}
+.parent-arrow{flex-shrink:0;background:none;border:none;color:rgba(255,255,255,.55);font-size:16px;padding:6px 8px;cursor:pointer;line-height:1;transition:color .15s;user-select:none;}
+.parent-arrow:hover{color:#fff;}
 .ptab{padding:7px 16px;cursor:pointer;font-size:12px;font-weight:700;color:rgba(255,255,255,.5);border-bottom:3px solid transparent;margin-bottom:-1px;transition:all .2s;white-space:nowrap;flex-shrink:0;}
 .ptab:hover{color:rgba(255,255,255,.8);}
 .ptab.act{color:#93c5fd;border-color:#2563eb;}
@@ -683,7 +685,11 @@ body{background:var(--bg);color:var(--text);font-family:'Pretendard',sans-serif;
   </div>
 </div>
 
-<div class="parent-bar"><div class="parent-inner" id="parentTabs"></div></div>
+<div class="parent-bar">
+  <button class="parent-arrow" id="parentPrev" onclick="scrollParentTabs(-1)">&#8249;</button>
+  <div class="parent-inner" id="parentTabs"></div>
+  <button class="parent-arrow" id="parentNext" onclick="scrollParentTabs(1)">&#8250;</button>
+</div>
 <div class="mid-bar"><div class="mid-inner" id="midTabs"></div></div>
 <div class="sub-bar hidden" id="subBar"><div class="sub-inner" id="subTabs"></div></div>
 
@@ -1430,6 +1436,23 @@ function getCurrentLabel(){
 }
 
 // ═══════════════════════════════════════════
+// 대단원 탭 가로 스크롤 화살표
+// ═══════════════════════════════════════════
+function scrollParentTabs(dir){
+  var el=document.getElementById('parentTabs');
+  if(el) el.scrollBy({left: dir*120, behavior:'smooth'});
+}
+(function(){
+  var el=document.getElementById('parentTabs');
+  if(!el) return;
+  el.addEventListener('wheel',function(e){
+    if(Math.abs(e.deltaX)>Math.abs(e.deltaY)) return;
+    e.preventDefault();
+    el.scrollBy({left: e.deltaY*1.2, behavior:'auto'});
+  },{passive:false});
+})();
+
+// ═══════════════════════════════════════════
 // 탭 렌더링
 // ═══════════════════════════════════════════
 function renderTabs(){
@@ -1441,6 +1464,11 @@ function renderTabs(){
     el.onclick=function(){ curParent=p.id; selectMid(p.mids[0]); };
     pt.appendChild(el);
   });
+  // 활성 탭이 보이도록 스크롤
+  setTimeout(function(){
+    var actTab=pt.querySelector('.ptab.act');
+    if(actTab) actTab.scrollIntoView({block:'nearest',inline:'center',behavior:'smooth'});
+  },50);
   var mt=document.getElementById('midTabs'); mt.innerHTML='';
   var par=MENU.find(function(p){return p.id===curParent;}); if(!par) return;
   par.mids.forEach(function(m,mi){

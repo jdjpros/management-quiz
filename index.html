@@ -626,7 +626,6 @@ body{background:var(--bg);color:var(--text);font-family:'Pretendard',sans-serif;
         <span id="googleLoginBtnText">Google로 로그인</span>
       </button>
       <p class="firebase-loading-hint" id="firebaseLoadingHint">서버 연결 중입니다. 잠시 기다려주세요.</p>
-      <div id="_loginDbg" style="margin-top:8px;font-size:10px;color:#666;font-family:monospace;text-align:left;background:#f5f5f5;border-radius:6px;padding:6px;max-height:120px;overflow-y:auto;display:none;"></div>
       <p class="login-skip" onclick="skipLogin()">로그인 없이 시작 (이 기기만 저장)</p>
     </div>
     <!-- 인앱 브라우저 안내 UI (카카오/네이버 등) -->
@@ -906,25 +905,7 @@ body{background:var(--bg);color:var(--text);font-family:'Pretendard',sans-serif;
 <!-- ── 메뉴 및 설정 ── -->
 <script src="management_data.js"></script>
 <script>
-// ── 전역 에러 캐치 + 화면 디버그 패널 ──
-window.onerror = function(msg, src, line, col, err){
-  var el = document.getElementById('_fbDebug');
-  if(!el){ el=document.createElement('div'); el.id='_fbDebug';
-    el.style.cssText='position:fixed;bottom:0;left:0;right:0;background:rgba(180,0,0,.9);color:#fff;font-size:11px;font-family:monospace;padding:8px;z-index:9999999;max-height:200px;overflow-y:auto;';
-    document.body && document.body.appendChild(el); }
-  if(el) el.innerHTML += '<div>JS오류 ' + line + ':' + col + ' ' + msg + ' [' + (src||'').split('/').pop() + ']</div>';
-};
-function _dbg(msg){
-  // 로그인 박스 안 디버그 패널
-  var inner = document.getElementById('_loginDbg');
-  if(inner){ inner.style.display='block'; inner.innerHTML += '<div>'+ new Date().toISOString().slice(11,19) +' '+ msg +'</div>'; inner.scrollTop=inner.scrollHeight; }
-  // 고정 패널 (백업)
-  var el = document.getElementById('_fbDebug');
-  if(!el){ el=document.createElement('div'); el.id='_fbDebug';
-    el.style.cssText='position:fixed;bottom:0;left:0;right:0;background:rgba(0,0,0,.85);color:#0f0;font-size:11px;font-family:monospace;padding:8px;z-index:9999999;max-height:200px;overflow-y:auto;';
-    document.body && document.body.appendChild(el); }
-  if(el){ el.innerHTML += '<div>'+ new Date().toISOString().slice(11,19) +' '+ msg +'</div>'; el.scrollTop=el.scrollHeight; }
-}
+function _dbg(msg){ /* 디버그 로그 비활성화 */ }
 _dbg('스크립트 시작 UA=' + navigator.userAgent.slice(0,80));
 
 // ═══════════════════════════════════════════

@@ -905,8 +905,6 @@ body{background:var(--bg);color:var(--text);font-family:'Pretendard',sans-serif;
 <!-- ── 메뉴 및 설정 ── -->
 <script src="management_data.js"></script>
 <script>
-function _dbg(msg){ /* 디버그 로그 비활성화 */ }
-_dbg('스크립트 시작 UA=' + navigator.userAgent.slice(0,80));
 
 // ═══════════════════════════════════════════
 // 상태 변수
@@ -934,49 +932,27 @@ var firebaseReady = false;
 var autoSyncTimer = null;
 var _cloudWriting = false; // pushToCloud 중복 실행 방지 플래그
 
-function _dbg(msg){
-  var el = document.getElementById('_fbDebug');
-  if(!el){ el = document.createElement('div'); el.id='_fbDebug';
-    el.style.cssText='position:fixed;bottom:0;left:0;right:0;background:rgba(0,0,0,.85);color:#0f0;font-size:11px;font-family:monospace;padding:8px;z-index:999999;max-height:160px;overflow-y:auto;';
-    document.body.appendChild(el); }
-  el.innerHTML += '<div>' + new Date().toISOString().slice(11,19) + ' ' + msg + '</div>';
-  el.scrollTop = el.scrollHeight;
-}
 function initFirebase() {
-  _dbg('initFirebase 시작');
-  if(firebaseConfig.apiKey === 'YOUR_API_KEY') {
-    _dbg('config 미설정');
-    showGuestUI(); return;
-  }
-  _dbg('_fbErr=' + (!!window._fbErr) + ' firebase=' + (typeof firebase));
-  if(window._fbErr || typeof firebase === 'undefined') {
-    _dbg('SDK 로드 실패 → 게스트모드');
-    showGuestUI(); return;
-  }
+  if(firebaseConfig.apiKey === 'YOUR_API_KEY') { showGuestUI(); return; }
+  if(window._fbErr || typeof firebase === 'undefined') { showGuestUI(); return; }
   try {
     initFirebaseCore();
   } catch(e) {
-    _dbg('initFirebaseCore 오류: ' + e.message);
+    console.warn('[동기화] Firebase 초기화 오류:', e.message);
     showGuestUI();
   }
 }
 
 function initFirebaseCore() {
   try {
-    _dbg('initFirebaseCore 시작');
     if(firebase.apps && firebase.apps.length > 0) {
       fbApp = firebase.apps[0];
-      _dbg('기존 앱 재사용');
     } else {
       fbApp = firebase.initializeApp(firebaseConfig);
-      _dbg('앱 초기화 완료');
     }
     fbDb = firebase.database();
-    _dbg('DB 연결 완료');
     fbAuth = firebase.auth();
-    _dbg('Auth 연결 완료');
     firebaseReady = true;
-    _dbg('firebaseReady=true → 버튼 활성화');
     _enableGoogleLoginBtn();
     // 삼성 브라우저/태블릿 리다이렉트 결과 처리
     handleRedirectResult();

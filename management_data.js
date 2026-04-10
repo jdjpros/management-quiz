@@ -119,6 +119,7 @@ var MENU = [
 // ═══════════════════════════════════════════
 var O_TYPE      = new Set([]);
 var Q_EXPS_BOX  = new Set([]);
+var Q3_TYPE     = new Set([]);
 var Q_OPTS_BOX  = new Set([
   'AA02','AA20','AA24','AA29',
   'AB15','AB19','AB34','AB37','AB38','AB56','AB73','AB77','AB81',

@@ -905,6 +905,22 @@ body{background:var(--bg);color:var(--text);font-family:'Pretendard',sans-serif;
 <!-- ── 메뉴 및 설정 ── -->
 <script src="management_data.js"></script>
 <script>
+// ── 전역 에러 캐치 + 화면 디버그 패널 ──
+window.onerror = function(msg, src, line, col, err){
+  var el = document.getElementById('_fbDebug');
+  if(!el){ el=document.createElement('div'); el.id='_fbDebug';
+    el.style.cssText='position:fixed;bottom:0;left:0;right:0;background:rgba(180,0,0,.9);color:#fff;font-size:11px;font-family:monospace;padding:8px;z-index:9999999;max-height:200px;overflow-y:auto;';
+    document.body && document.body.appendChild(el); }
+  if(el) el.innerHTML += '<div>JS오류 ' + line + ':' + col + ' ' + msg + ' [' + (src||'').split('/').pop() + ']</div>';
+};
+function _dbg(msg){
+  var el = document.getElementById('_fbDebug');
+  if(!el){ el=document.createElement('div'); el.id='_fbDebug';
+    el.style.cssText='position:fixed;bottom:0;left:0;right:0;background:rgba(0,0,0,.85);color:#0f0;font-size:11px;font-family:monospace;padding:8px;z-index:9999999;max-height:200px;overflow-y:auto;';
+    document.body && document.body.appendChild(el); }
+  if(el){ el.innerHTML += '<div>'+ new Date().toISOString().slice(11,19) +' '+ msg +'</div>'; el.scrollTop=el.scrollHeight; }
+}
+_dbg('스크립트 시작 UA=' + navigator.userAgent.slice(0,80));
 
 // ═══════════════════════════════════════════
 // 상태 변수

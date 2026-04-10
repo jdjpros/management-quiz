@@ -1084,6 +1084,12 @@ var _googleBtnHTML = '<svg width="20" height="20" viewBox="0 0 48 48"><path fill
 function _resetGoogleBtn(btn){
   if(btn){ btn.disabled = false; btn.innerHTML = _googleBtnHTML; }
 }
+function _isMobileOrTablet(){
+  var ua = navigator.userAgent || '';
+  // 터치 기반 기기 (Android, iOS, Samsung 태블릿 등)
+  return /Android|iPhone|iPad|iPod|Samsung|SamsungBrowser|SM-[TPX]/i.test(ua) || (navigator.maxTouchPoints > 1 && /Macintosh/i.test(ua));
+}
+
 function signInWithGoogle(){
   if(!firebaseReady){
     // Firebase SDK 아직 로드 중 → 준비되면 자동 재시도 (최대 15초)
@@ -1096,15 +1102,28 @@ function signInWithGoogle(){
         clearInterval(retryTimer);
         _resetGoogleBtn(btn);
         signInWithGoogle();
-      } else if(waited >= 15000){
+      } else if(waited >= 30000){
         clearInterval(retryTimer);
         _resetGoogleBtn(btn);
-        alert('Firebase 연결 시간 초과. 페이지를 새로고침하거나 인터넷 연결을 확인해주세요.');
+        var retry = confirm('Firebase 연결 시간 초과.\n인터넷 연결을 확인 후 다시 시도해주세요.\n\n[확인] 페이지 새로고침\n[취소] 로그인 없이 계속');
+        if(retry){ location.reload(); } else { skipLogin(); }
       }
     }, 300);
     return;
   }
   var provider = new firebase.auth.GoogleAuthProvider();
+  // 모바일/태블릿: 팝업이 조용히 무시되는 경우가 많으므로 리다이렉트 우선
+  if(_isMobileOrTablet()){
+    fbAuth.signInWithRedirect(provider).catch(function(e){
+      if(e.code==='auth/unauthorized-domain'){
+        alert('이 도메인은 Firebase 로그인이 허용되지 않습니다.\nFirebase Console > Authentication > Settings > 승인된 도메인에\n"' + location.hostname + '" 을 추가해주세요.');
+      } else {
+        alert('로그인 실패 (' + (e.code||'') + '): ' + e.message);
+      }
+    });
+    return;
+  }
+  // 데스크탑: 팝업 우선, 실패 시 리다이렉트 폴백
   fbAuth.signInWithPopup(provider).catch(function(e){
     if(e.code==='auth/popup-blocked'||e.code==='auth/popup-closed-by-user'||e.code==='auth/operation-not-supported-in-this-environment'){
       fbAuth.signInWithRedirect(provider).catch(function(e2){
@@ -1117,13 +1136,22 @@ function signInWithGoogle(){
     }
   });
 }
-// 리다이렉트 후 결과 처리 (삼성 브라우저용)
+// 리다이렉트 후 결과 처리 (삼성 브라우저/태블릿용)
 function handleRedirectResult(){
   if(!firebaseReady||!fbAuth) return;
   fbAuth.getRedirectResult().then(function(result){
-    if(result&&result.user){ /* onAuthStateChanged가 처리 */ }
+    if(result&&result.user){
+      // onAuthStateChanged가 처리하지만, 혹시 누락될 경우 대비
+      currentUser = result.user;
+      hideLoginOverlay();
+      showUserUI(result.user);
+    }
   }).catch(function(e){
-    if(e.code&&e.code!=='auth/no-such-provider') console.warn('redirect result:',e.message);
+    if(e.code==='auth/unauthorized-domain'){
+      alert('이 도메인은 Firebase 로그인이 허용되지 않습니다.\nFirebase Console > Authentication > Settings > 승인된 도메인에\n"' + location.hostname + '" 을 추가해주세요.');
+    } else if(e.code&&e.code!=='auth/no-such-provider'){
+      console.warn('redirect result 오류:', e.code, e.message);
+    }
   });
 }
 
@@ -4355,7 +4383,7 @@ renderTodayBanner();
   }catch(e){}
 })();
 
-// Firebase SDK 동적 로드 (삼성 브라우저 대응)
+// Firebase SDK 동적 로드 (삼성 브라우저/태블릿 대응)
 // 세 스크립트를 순서대로 로드하고, 모두 완료되면 initFirebase() 호출
 (function loadFirebaseSDK(){
   var scripts = [
@@ -4363,14 +4391,22 @@ renderTodayBanner();
     'https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js',
     'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js'
   ];
-  var loaded = 0;
   var failed = false;
+  var SCRIPT_TIMEOUT_MS = 20000; // 스크립트 하나당 최대 20초 대기
   function loadNext(idx){
     if(idx >= scripts.length){ initFirebase(); return; }
     var s = document.createElement('script');
     s.src = scripts[idx];
-    s.onload = function(){ loaded++; loadNext(idx+1); };
+    var timer = setTimeout(function(){
+      if(!failed){
+        failed = true;
+        console.warn('[동기화] Firebase SDK 로드 타임아웃 (' + scripts[idx] + ') - 게스트 모드 전환');
+        showGuestUI();
+      }
+    }, SCRIPT_TIMEOUT_MS);
+    s.onload = function(){ clearTimeout(timer); loadNext(idx+1); };
     s.onerror = function(){
+      clearTimeout(timer);
       if(!failed){
         failed = true;
         console.warn('[동기화] Firebase SDK 로드 실패 (' + scripts[idx] + ') - 게스트 모드 전환');

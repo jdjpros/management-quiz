@@ -6,9 +6,9 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>경영학 기출문제집 OX풀이 v1</title>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js" onerror="window._fbErr=true"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js" onerror="window._fbErr=true"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js" onerror="window._fbErr=true"></script>
 <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
 
@@ -938,12 +938,17 @@ function initFirebase() {
     showGuestUI();
     return;
   }
-  if(typeof firebase === 'undefined') {
-    console.warn('[동기화] Firebase SDK 미로드 상태 - 게스트 모드 전환');
+  if(window._fbErr || typeof firebase === 'undefined') {
+    console.warn('[동기화] Firebase SDK 로드 실패 - 게스트 모드 전환');
     showGuestUI();
     return;
   }
-  initFirebaseCore();
+  try {
+    initFirebaseCore();
+  } catch(e) {
+    console.warn('[동기화] Firebase 초기화 오류:', e.message);
+    showGuestUI();
+  }
 }
 
 function initFirebaseCore() {
@@ -1105,9 +1110,13 @@ function showUserUI(user){
   if(name) name.textContent = user.displayName || user.email;
 }
 function showGuestUI(){
-  document.getElementById('syncUser').style.display = 'none';
-  document.getElementById('syncGuest').style.display = 'flex';
-  hideLoginOverlay();
+  try {
+    var su = document.getElementById('syncUser');
+    var sg = document.getElementById('syncGuest');
+    if(su) su.style.display = 'none';
+    if(sg) sg.style.display = 'flex';
+    hideLoginOverlay();
+  } catch(e) { console.warn('[UI] showGuestUI 오류:', e.message); }
 }
 
 // ── 구글 로그인 ────────────────────────────────────────
@@ -4418,6 +4427,13 @@ renderTodayBanner();
 
 // Firebase SDK는 <head>의 <script> 태그로 동기 로드됨
 initFirebase();
+// 10초 후에도 버튼이 비활성 상태면 게스트 모드로 강제 전환
+setTimeout(function(){
+  if(!firebaseReady){
+    console.warn('[동기화] 10초 내 Firebase 초기화 실패 - 게스트 모드 전환');
+    showGuestUI();
+  }
+}, 10000);
 // ⑦ 뒤로가기 버튼 → 이전 모드로 복원 (창 종료 방지)
 (function(){
   var _popHandling = false;

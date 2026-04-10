@@ -486,6 +486,14 @@ body{background:var(--bg);color:var(--text);font-family:'Pretendard',sans-serif;
   box-shadow:0 1px 3px rgba(0,0,0,.08); transition:.2s;
 }
 .google-login-btn:hover{ box-shadow:0 2px 8px rgba(0,0,0,.15); background:#f8f8f8; }
+.google-login-btn:disabled{
+  background:#f1f3f4; color:#9aa0a6; border-color:#e0e0e0;
+  cursor:not-allowed; box-shadow:none;
+}
+.firebase-loading-hint{
+  margin-top:10px; font-size:11.5px; color:var(--muted);
+  display:none;
+}
 .login-skip{
   margin-top:16px; font-size:12px; color:var(--muted);
   cursor:pointer; text-decoration:underline; text-underline-offset:3px;
@@ -610,10 +618,11 @@ body{background:var(--bg);color:var(--text);font-family:'Pretendard',sans-serif;
       <div class="login-logo">📊</div>
       <h2 class="login-title">경영학 기출문제집 OX풀이</h2>
       <p class="login-desc">구글 계정으로 로그인하면<br>모든 기기에서 진도가 자동 동기화됩니다.</p>
-      <button class="google-login-btn" onclick="signInWithGoogle()">
+      <button class="google-login-btn" id="googleLoginBtn" onclick="signInWithGoogle()" disabled>
         <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.08 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-3.59-13.46-8.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>
-        Google로 로그인
+        <span id="googleLoginBtnText">⏳ 연결 중...</span>
       </button>
+      <p class="firebase-loading-hint" id="firebaseLoadingHint">서버 연결 중입니다. 잠시 기다려주세요.</p>
       <p class="login-skip" onclick="skipLogin()">로그인 없이 시작 (이 기기만 저장)</p>
     </div>
     <!-- 인앱 브라우저 안내 UI (카카오/네이버 등) -->
@@ -944,7 +953,8 @@ function initFirebaseCore() {
     fbDb = firebase.database();
     fbAuth = firebase.auth();
     firebaseReady = true;
-    // 삼성 브라우저 리다이렉트 결과 처리
+    _enableGoogleLoginBtn();
+    // 삼성 브라우저/태블릿 리다이렉트 결과 처리
     handleRedirectResult();
 
     // 로그인 상태 감지 - 자동으로 처리
@@ -1049,6 +1059,24 @@ function _showCopyFallback(url){
 
 function _fallbackCopy(url){ _showCopyFallback(url); }
 
+function _enableGoogleLoginBtn(){
+  var btn = document.getElementById('googleLoginBtn');
+  var txt = document.getElementById('googleLoginBtnText');
+  var hint = document.getElementById('firebaseLoadingHint');
+  if(btn){ btn.disabled = false; }
+  if(txt){ txt.textContent = 'Google로 로그인'; }
+  if(hint){ hint.style.display = 'none'; }
+}
+
+function _disableGoogleLoginBtnWithHint(){
+  var btn = document.getElementById('googleLoginBtn');
+  var txt = document.getElementById('googleLoginBtnText');
+  var hint = document.getElementById('firebaseLoadingHint');
+  if(btn){ btn.disabled = true; }
+  if(txt){ txt.textContent = '⚠️ 연결 실패 — 새로고침 후 시도'; }
+  if(hint){ hint.style.display = 'block'; hint.textContent = '네트워크 상태를 확인하거나 페이지를 새로고침해주세요.'; }
+}
+
 function showLoginOverlay(){
   var el = document.getElementById('loginOverlay');
   if(!el) return;
@@ -1082,7 +1110,7 @@ function showGuestUI(){
 // ── 구글 로그인 ────────────────────────────────────────
 var _googleBtnHTML = '<svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.08 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-3.59-13.46-8.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg> Google로 로그인';
 function _resetGoogleBtn(btn){
-  if(btn){ btn.disabled = false; btn.innerHTML = _googleBtnHTML; }
+  _enableGoogleLoginBtn();
 }
 function _isMobileOrTablet(){
   var ua = navigator.userAgent || '';
@@ -1093,8 +1121,10 @@ function _isMobileOrTablet(){
 function signInWithGoogle(){
   if(!firebaseReady){
     // Firebase SDK 아직 로드 중 → 준비되면 자동 재시도 (최대 15초)
-    var btn = document.querySelector('.google-login-btn');
-    if(btn){ btn.textContent = '⏳ 연결 중...'; btn.disabled = true; }
+    var btn = document.getElementById('googleLoginBtn');
+    var hint = document.getElementById('firebaseLoadingHint');
+    if(btn){ btn.disabled = true; }
+    if(hint){ hint.style.display = 'block'; hint.textContent = 'Firebase 연결 중입니다. 잠시 기다려주세요...'; }
     var waited = 0;
     var retryTimer = setInterval(function(){
       waited += 300;
@@ -4401,6 +4431,7 @@ renderTodayBanner();
       if(!failed){
         failed = true;
         console.warn('[동기화] Firebase SDK 로드 타임아웃 (' + scripts[idx] + ') - 게스트 모드 전환');
+        _disableGoogleLoginBtnWithHint();
         showGuestUI();
       }
     }, SCRIPT_TIMEOUT_MS);
@@ -4410,6 +4441,7 @@ renderTodayBanner();
       if(!failed){
         failed = true;
         console.warn('[동기화] Firebase SDK 로드 실패 (' + scripts[idx] + ') - 게스트 모드 전환');
+        _disableGoogleLoginBtnWithHint();
         showGuestUI();
       }
     };

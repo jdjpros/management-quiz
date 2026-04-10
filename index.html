@@ -6,6 +6,9 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>경영학 기출문제집 OX풀이 v1</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
 
@@ -4413,75 +4416,8 @@ renderTodayBanner();
   }catch(e){}
 })();
 
-// Firebase SDK 동적 로드 (CDN 이중화: gstatic 실패 시 jsdelivr 자동 전환)
-(function loadFirebaseSDK(){
-  var VER = '10.12.0';
-  var CDNS = [
-    // 1순위: Google gstatic
-    [
-      'https://www.gstatic.com/firebasejs/' + VER + '/firebase-app-compat.js',
-      'https://www.gstatic.com/firebasejs/' + VER + '/firebase-database-compat.js',
-      'https://www.gstatic.com/firebasejs/' + VER + '/firebase-auth-compat.js'
-    ],
-    // 2순위: jsDelivr (fallback)
-    [
-      'https://cdn.jsdelivr.net/npm/firebase@' + VER + '/firebase-app-compat.min.js',
-      'https://cdn.jsdelivr.net/npm/firebase@' + VER + '/firebase-database-compat.min.js',
-      'https://cdn.jsdelivr.net/npm/firebase@' + VER + '/firebase-auth-compat.min.js'
-    ]
-  ];
-  var cdnIdx = 0;
-  var globalFailed = false;
-  var FIRST_TIMEOUT_MS = 8000;  // 1순위 CDN 대기 시간
-  var SECOND_TIMEOUT_MS = 20000; // 2순위 CDN 대기 시간
-
-  function onAllFailed(){
-    if(globalFailed) return;
-    globalFailed = true;
-    console.warn('[동기화] 모든 CDN 로드 실패 - 게스트 모드 전환');
-    _disableGoogleLoginBtnWithHint();
-    showGuestUI();
-  }
-
-  function tryLoadCDN(idx){
-    var scripts = CDNS[idx];
-    var timeoutMs = idx === 0 ? FIRST_TIMEOUT_MS : SECOND_TIMEOUT_MS;
-    var failed = false;
-
-    function onFail(src){
-      if(failed || globalFailed) return;
-      failed = true;
-      console.warn('[동기화] CDN' + (idx+1) + ' 실패/타임아웃 (' + src + ')');
-      if(idx + 1 < CDNS.length){
-        console.log('[동기화] CDN' + (idx+2) + ' (jsdelivr) 로 재시도...');
-        tryLoadCDN(idx + 1);
-      } else {
-        onAllFailed();
-      }
-    }
-
-    function loadScript(src, onload){
-      var s = document.createElement('script');
-      s.src = src;
-      var timer = setTimeout(function(){ onFail(src); }, timeoutMs);
-      s.onload = function(){ clearTimeout(timer); if(!failed && !globalFailed) onload(); };
-      s.onerror = function(){ clearTimeout(timer); onFail(src); };
-      document.head.appendChild(s);
-    }
-
-    // firebase-app 먼저, 이후 database+auth 병렬
-    loadScript(scripts[0], function(){
-      var done = 0;
-      [scripts[1], scripts[2]].forEach(function(src){
-        loadScript(src, function(){
-          if(++done === 2) initFirebase();
-        });
-      });
-    });
-  }
-
-  tryLoadCDN(0);
-})();
+// Firebase SDK는 <head>의 <script> 태그로 동기 로드됨
+initFirebase();
 // ⑦ 뒤로가기 버튼 → 이전 모드로 복원 (창 종료 방지)
 (function(){
   var _popHandling = false;

@@ -740,6 +740,7 @@ body{background:var(--bg);color:var(--text);font-family:'Pretendard',sans-serif;
       <span class="plan-label">📚 학습 범위</span>
       <div class="scope-tab-row" style="margin-top:6px;">
         <button class="scope-tab act" id="scopeTabAll" onclick="selectScope('all')">🌐 전범위</button>
+        <button class="scope-tab" id="scopeTabGwa" onclick="selectScope('gwa')">🎖️ 군무원/공무원</button>
         <button class="scope-tab" id="scopeTabUnit" onclick="selectScope('unit')">📂 단원 선택</button>
       </div>
       <div id="scopeUnitPanel" style="display:none;">
@@ -3016,6 +3017,14 @@ function renderDashboard(){
   var calBody = document.getElementById('dashCalBody');
   if(calBody && plan){
     calBody.innerHTML = '';
+    // 군무원/공무원 모드일 때 범위 배너 표시
+    if(planScopeMode === 'gwa'){
+      var scopeBanner = document.createElement('div');
+      scopeBanner.style.cssText = 'background:#fef9c3;border:1px solid #fde047;border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:11.5px;color:#854d0e;display:flex;align-items:center;gap:6px;';
+      scopeBanner.innerHTML = '<b>🎖️ 군무원/공무원 기출:</b> '+allQ.length+'문항'
+        +'<span style="margin-left:auto;cursor:pointer;color:#92400e;text-decoration:underline;" onclick="openPlanOverlay()">범위 수정</span>';
+      calBody.appendChild(scopeBanner);
+    }
     // 단원 선택 모드일 때 범위 배너 표시
     if(planScopeMode === 'unit' && planScopeIds.length > 0){
       var scopeBanner = document.createElement('div');
@@ -3419,12 +3428,28 @@ function getAllQuestions(){
 }
 
 // 플랜 범위 상태 (전역)
-var planScopeMode = 'all';       // 'all' | 'unit'
+var planScopeMode = 'all';       // 'all' | 'gwa' | 'unit'
 var planScopeIds  = [];          // 선택된 중단원 id 배열 (unit 모드일 때)
 
 // 플랜 범위 내 문제만 수집
 function getPlanQuestions(){
-  if(planScopeMode === 'all' || planScopeIds.length === 0) return getAllQuestions();
+  if(planScopeMode === 'all') return getAllQuestions();
+  if(planScopeMode === 'gwa'){
+    var result = [];
+    MENU.forEach(function(p){
+      p.mids.forEach(function(m){
+        if(m.hasSub){
+          m.subs.forEach(function(s){
+            if(s.id.slice(-1) === 'A') result = result.concat(s.data);
+          });
+        } else if(m.data && m.id.slice(-1) === 'A'){
+          result = result.concat(m.data);
+        }
+      });
+    });
+    return result;
+  }
+  if(planScopeIds.length === 0) return getAllQuestions();
   var result = [];
   MENU.forEach(function(p){
     p.mids.forEach(function(m){
@@ -3433,7 +3458,6 @@ function getPlanQuestions(){
           if(planScopeIds.indexOf(s.id) >= 0) result = result.concat(s.data);
         });
       } else if(m.data){
-        // 일반 중단원: mid id로 매칭
         var midId = m.id;
         if(planScopeIds.indexOf(midId) >= 0) result = result.concat(m.data);
       }
@@ -4005,11 +4029,11 @@ function _warnScopeChange(){
 function selectScope(mode){
   if(mode !== planScopeMode && !_warnScopeChange()) return; // 취소
   planScopeMode = mode;
-  document.getElementById('scopeTabAll').className = 'scope-tab'+(mode==='all'?' act':'');
+  document.getElementById('scopeTabAll').className  = 'scope-tab'+(mode==='all'?' act':'');
+  document.getElementById('scopeTabGwa').className  = 'scope-tab'+(mode==='gwa'?' act':'');
   document.getElementById('scopeTabUnit').className = 'scope-tab'+(mode==='unit'?' act':'');
   document.getElementById('scopeUnitPanel').style.display = mode==='unit'?'block':'none';
   if(mode==='unit' && planScopeIds.length===0){
-    // 처음 단원선택 시 전체 선택 상태로
     planScopeIds = getPlanScopeAllMidIds();
     renderScopeUnitList();
   }
@@ -4145,6 +4169,7 @@ function openPlanOverlay(){
   }
   // 범위 탭 UI 복원
   document.getElementById('scopeTabAll').className  = 'scope-tab'+(planScopeMode==='all'?' act':'');
+  document.getElementById('scopeTabGwa').className  = 'scope-tab'+(planScopeMode==='gwa'?' act':'');
   document.getElementById('scopeTabUnit').className = 'scope-tab'+(planScopeMode==='unit'?' act':'');
   document.getElementById('scopeUnitPanel').style.display = planScopeMode==='unit'?'block':'none';
   if(planScopeMode==='unit'){ renderScopeUnitList(); }

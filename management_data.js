@@ -117,7 +117,31 @@ var MENU = [
 // ═══════════════════════════════════════════
 // 문제 유형 Set
 // ═══════════════════════════════════════════
-var O_TYPE      = new Set([]);
+var O_TYPE      = new Set([
+  // AA (Q_OPTS_BOX 제외: AA02,AA20,AA24,AA29)
+  'AA01','AA03','AA04','AA07','AA08','AA17','AA21','AA23','AA26','AA27',
+  // AB (Q_OPTS_BOX 제외: AB15,AB19,AB34,AB37,AB38,AB56,AB73,AB77,AB81)
+  'AB02','AB03','AB06','AB14','AB21','AB23','AB24','AB26','AB30','AB35',
+  'AB46','AB47','AB54','AB59','AB60','AB62','AB64','AB65','AB67','AB74','AB75','AB76','AB78',
+  // BA (Q_OPTS_BOX 제외: BA06)
+  'BA02','BA04','BA05','BA10','BA12','BA13','BA17','BA25','BA28','BA30',
+  'BA33','BA35','BA36','BA39','BA43','BA45','BA52','BA55',
+  // BB (Q_OPTS_BOX 제외: BB02,BB24,BB32,BB37,BB56)
+  'BB13','BB14','BB15','BB21','BB22','BB23','BB29','BB30','BB31','BB33',
+  'BB34','BB41','BB43','BB44','BB45','BB46','BB47','BB49','BB51','BB52','BB53','BB55','BB57','BB58',
+  // CA (Q_OPTS_BOX 제외: CA14,CA19)
+  'CA01','CA09','CA16','CA17','CA18','CA21',
+  // CB
+  'CB03','CB12','CB14','CB20','CB21','CB22','CB25','CB28','CB31','CB33',
+  'CB36','CB37','CB38','CB40','CB42','CB43',
+  // DA (Q_OPTS_BOX 제외: DA08,DA37)
+  'DA01','DA03','DA04','DA13','DA19','DA26','DA38','DA39','DA46','DA48','DA49','DA51','DA52','DA54',
+  // DB (Q_OPTS_BOX 제외: DB20,DB36,DB50,DB51)
+  'DB04','DB06','DB07','DB10','DB12','DB19','DB22','DB25','DB28','DB31',
+  'DB32','DB33','DB34','DB35','DB37','DB43','DB45','DB46','DB48','DB49',
+  'DB57','DB58','DB59','DB60','DB61','DB62','DB64','DB69','DB70','DB72',
+  'DB74','DB80','DB81','DB82','DB83','DB86'
+]);
 var Q_EXPS_BOX  = new Set([]);
 var Q3_TYPE     = new Set([]);
 var Q_OPTS_BOX  = new Set([

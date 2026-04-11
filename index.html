@@ -3151,7 +3151,9 @@ function renderDashboard(){
           var doneU=u.data.filter(function(q){return isQDone(q);}).length;
           var pct=Math.round(doneU/u.data.length*100);
           var lvl=pct>=100?'lvl-3':pct>=60?'lvl-2':pct>=20?'lvl-1':'lvl-0';
-          var inScope = planScopeMode==='all' || planScopeIds.indexOf(u.id)>=0;
+          var inScope = planScopeMode==='all'
+            || (planScopeMode==='gwa' && u.id.slice(-1)==='A')
+            || planScopeIds.indexOf(u.id)>=0;
           var unitDiv=document.createElement('div'); unitDiv.className='dash-unit';
           if(!inScope) unitDiv.style.opacity='0.35';
           unitDiv.innerHTML='<div class="dash-unit-name" title="'+u.label+'">'+u.label+'</div>'

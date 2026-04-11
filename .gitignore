@@ -5,5 +5,7 @@ merge_units.py
 verify.py
 verify.bat
 verify.ps1
+prompt_generator.html
+prompt_generator_mgmt.html
 *.pdf
 *.xlsx

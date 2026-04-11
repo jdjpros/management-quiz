@@ -4147,7 +4147,8 @@ function openPlanOverlay(){
   document.getElementById('scopeTabAll').className  = 'scope-tab'+(planScopeMode==='all'?' act':'');
   document.getElementById('scopeTabUnit').className = 'scope-tab'+(planScopeMode==='unit'?' act':'');
   document.getElementById('scopeUnitPanel').style.display = planScopeMode==='unit'?'block':'none';
-  if(planScopeMode==='unit'){ renderScopeUnitList(); updateScopeCount(); }
+  if(planScopeMode==='unit'){ renderScopeUnitList(); }
+  updateScopeCount();
   selectGoal(goal);
   selectWeekend(planIncludeWeekend);
   updatePlanPreview();

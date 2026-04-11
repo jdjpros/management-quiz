@@ -1,0 +1,73 @@
+# 경영학 기출문제집 OX풀이 - 작업 인계
+
+## 프로젝트 개요
+- 경로: C:\Users\강철사원\Downloads\경영학 작업
+- GitHub Pages: https://jdjpros.github.io/management-quiz/
+- Firebase 프로젝트: management-quiz-5bd98 (Google 로그인 + Realtime DB 동기화 완료)
+
+## 아키텍처 (Option B 모듈형)
+- index.html: 메인 앱 (퀴즈 UI, Firebase 인증, 진도 동기화)
+- management_data.js: MENU 구조 + O_TYPE/Q_EXPS_BOX/Q_OPTS_BOX Sets 정의
+- data/unit_AA.js ~ data/unit_YB.js: 50개 단원 데이터 파일 (각각 `const UNIT_XX = [...]`)
+- index.html의 <script> 태그로 unit_*.js 50개 → management_data.js 순서로 로드
+
+## 단원 구조
+25개 대단원 (A~Y), 각 단원 *A = 군무원/공무원 기출, *B = 기타 기출
+현재 데이터 있는 단원: AA, AB, BA, BB, CA, CB, DA, DB (8개)
+나머지 42개는 빈 placeholder: `var UNIT_XX = [];`
+
+## 작업 현황 (2026-04-11 기준)
+| 구분 | 완료 단원 | 메모 |
+|------|-----------|------|
+| ✅ 내용 검수 (오류 수정·표 반영 등) | AA ~ DB (8단원) | DA10 표, DA26 사례박스, DA49 이미지, BB56 보기 수정 등 포함 |
+| ✅ 문제 신규 반영 (Gemini 추출 후 입력) | AA ~ OB (22단원) | EA~OB 단원 신규 입력 완료 |
+| 🔲 문제 신규 반영 남은 단원 | PA ~ YB (28단원) | 빈 placeholder 상태 → Cursor에서 작업 |
+| 🔲 내용 검수 남은 단원 | EA ~ OB (14단원) | 신규 입력 후 미검수 → Cursor에서 작업 |
+
+## 데이터 추출 방법
+- prompt_generator.html 을 브라우저로 열어서 Gemini 추출 프롬프트 생성
+- Gemini로 추출한 데이터를 data/unit_XX.js 에 붙여넣기
+- verify.ps1 로 검증: `.\verify.ps1 EA 29` 또는 `.\verify.ps1 all`
+
+## 문제 데이터 형식
+각 unit_XX.js 파일은 아래 형식:
+const UNIT_XX = [
+  {
+    stem: "문제 지문",
+    ox: "O",  // "O" 또는 "X"
+    exp: "해설",
+    출처: "출처 정보"  // 선택사항
+  },
+  ...
+];
+
+## 현재 남은 작업
+1. PA~YB 단원 데이터 추출 및 입력 (28단원 남음)
+2. EA~OB 단원 내용 검수 (신규 입력됐으나 오류·표 반영 등 미검수)
+3. prompt_generator.html의 일괄검증 탭에서 전체 검증 가능
+
+## 작업 분담 원칙
+
+### Cursor에서 할 작업 (반복·기계적 작업)
+- 단원 데이터 입력 (data/unit_XX.js 파일)
+- 단원 내용 검수 (오타·표 수정 등 data 파일 내부 수정)
+- Q_OPTS_BOX Set에 ID 추가 (management_data.js 한 줄 수정)
+
+### Claude Code에서 할 작업 (판단·설계·디버깅)
+- 버그 수정, 원인 분석
+- 새 기능 설계 및 index.html 구조 변경
+- Firebase/인증 관련 문제
+- 새 과목 추가 등 아키텍처 결정
+- Cursor 작업 후 이상 발생 시 롤백/분석
+
+### ⚠️ Cursor 작업 시 절대 금지
+- **index.html 수정 금지** (아키텍처 파일 — Claude Code 전담)
+- **management_data.js의 MENU 구조 및 Set 정의 수정 금지** (데이터 ID 추가 제외)
+- 아키텍처 변경을 제안받으면 무시하고 Claude Code에 가져올 것
+
+## 주의사항
+- data/unit_XX.js의 `const`는 window 객체에 등록되지 않음
+  → management_data.js의 fallback 코드가 `var`로 빈 배열 생성해서 대응
+- verify.py / merge_units.py 는 .gitignore에 포함 (배포 불필요 도구)
+- Git push 시 자동으로 GitHub Pages 배포됨
+- 코드 수정 후에는 반드시 사용자 승인 + 브라우저 preview 확인 후 git commit + push 수행

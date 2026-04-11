@@ -1915,6 +1915,17 @@ function setRvGnJudge(qId,idx,level){
     if(cur===level) localStorage.removeItem(k); else localStorage.setItem(k,level);
   }catch(e){}
 }
+// 복습모드에서 문제 전체 판정 완료 여부 (임시 rv_ 기준)
+function isQRvDone(q){
+  if(Q_OPTS_BOX.has(q.id)||Q_EXPS_BOX.has(q.id)){
+    return q.exps.every(function(e,i){ return getRvGnJudge(q.id,i)!==null; });
+  }
+  var parsed=parseBoxStem(q.stem);
+  if(parsed.items.length>0&&!Q3_TYPE.has(q.id)){
+    return parsed.items.every(function(it){ return getRvBoxJudge(q.id,it.label)!==null; });
+  }
+  return q.opts.every(function(o,i){ return getRvJudge(q.id,i+1)!==null; });
+}
 // 복습모드에서 해당 지문이 임시 O 처리됐는지
 function isRvDone(qId,idx,type){
   if(type==='opt') return getRvJudge(qId,idx)==='mastered';
@@ -2597,8 +2608,9 @@ function updateProg(){
     }
   });
 
-  // 완료 문항 수 (모든 지문 판정 완료 기준 - 원본 state 기준)
-  var done = Qs.filter(function(q){ return isQDone(q); }).length;
+  // 완료 문항 수: review 모드(2/3차)는 임시 rv_ 판정 기준, 나머지는 원본 state 기준
+  var isReviewPass = (mode==='review' && hasPlanToday && tp && tp.passNum > 1);
+  var done = Qs.filter(function(q){ return isReviewPass ? isQRvDone(q) : isQDone(q); }).length;
 
   // 판정별 집계 (원본 state 기준)
   var m=0, cf=0, f=0;

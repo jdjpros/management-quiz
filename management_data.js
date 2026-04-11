@@ -171,7 +171,27 @@ var O_TYPE      = new Set([
   // OA
   'OA01','OA03',
   // OB
-  'OB02','OB03'
+  'OB02','OB03',
+  // PA
+  'PA01','PA02','PA03','PA08','PA10','PA11','PA12','PA14','PA15',
+  // PB
+  'PB01','PB02','PB04','PB05','PB08','PB09','PB10','PB11','PB12','PB15','PB16','PB20','PB21',
+  // RA
+  'RA01','RA02','RA03','RA04','RA05',
+  // RB
+  'RB02','RB03','RB04','RB05',
+  // SB
+  'SB02','SB03','SB04','SB05','SB06','SB07','SB10','SB11','SB12','SB14','SB17','SB18','SB19','SB21',
+  // TB
+  'TB07','TB10','TB13','TB14','TB15','TB16','TB17','TB18','TB19','TB20','TB21','TB22','TB25','TB26','TB27','TB28','TB29','TB35',
+  // VA
+  'VA05',
+  // VB
+  'VB02','VB06','VB09','VB11','VB14','VB15','VB16','VB17','VB18','VB19','VB21','VB23','VB25','VB26','VB27',
+  // YA
+  'YA01','YA03','YA09','YA10',
+  // YB
+  'YB01','YB02','YB03','YB04','YB05','YB06','YB07','YB09','YB10','YB11','YB13','YB14','YB15','YB16','YB17','YB18','YB19','YB20','YB21','YB22','YB26','YB27','YB28','YB29','YB31','YB34','YB36','YB37','YB40','YB42','YB43','YB45','YB46'
 ]);
 var Q_EXPS_BOX  = new Set([]);
 var Q3_TYPE     = new Set([]);

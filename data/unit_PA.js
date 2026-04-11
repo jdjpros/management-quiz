@@ -1,4 +1,4 @@
-const UNIT\_PA = [
+const UNIT_PA = [
     {
     id: 'PA01',
     ans: 1,
@@ -315,7 +315,7 @@ const UNIT\_PA = [
     opts: [
     '① 중심지법(centroid, center of gravity)은 새로운 시설과 기존 시설들과의 거리 및 수송할 물량을 평가요소로 활용한다.',
     '② 요인평점법(factor-rating)은 각 입지 요인의 상대적 중요도를 반영한 가중치를 활용하여 양적 및 질적 요인을 함께 고려할 수 있다.',
-    '③ 수송계획법(transportation method)은 선형계획법의 한 유형으로 최소비용법(minimum cell cost method), 보겔의 추정법(Vogel's approximation method) 등으로 초기해를 도출한 후 수정배분법(modified distribution method) 등으로 최적해를 도출하는 방법이다.',
+    '③ 수송계획법(transportation method)은 선형계획법의 한 유형으로 최소비용법(minimum cell cost method), 보겔의 추정법(Vogel\'s approximation method) 등으로 초기해를 도출한 후 수정배분법(modified distribution method) 등으로 최적해를 도출하는 방법이다.',
     '④ 손익분기점분석법(break-even analysis)은 총생산비용과 총수익의 상관관계를 이용하여 수요가 최대가 되는 최적 입지를 찾는 분석법이다.'
     ],
     exps: [
@@ -326,15 +326,3 @@ const UNIT\_PA = [
     ]
     }
     ];
-    
-    -----
-    
-    [작업 완료 보고]
-    
-      - 총 추출 문제 수: 19문제
-      - O\_TYPE 문제 ID 목록: PA03, PA08, PA11, PA14, PA15
-      - 박스형으로 처리한 문제 ID 목록: PA02, PA03, PA10, PA12, PA18
-      - 추출 중 애매했던 부분:
-          - 2번(PA02)의 원본 이미지에서 1번 선택지가 깨져 누락되어 문맥을 고려해 '① ㄱ, ㄷ'으로 복원했습니다.
-          - 3번(PA03)의 선택지가 표 형태의 빈칸 채우기로 되어 있어, 텍스트(예: '① ㄱ: 가치분석, ㄴ: 모듈러 설계...')로 풀어서 작성했습니다.
-      - 축약 관련 특이사항: 복잡한 표나 수식은 규칙에 따라 HTML(`class="q-table"`) 및 텍스트로 치환하였고, 지문이나 선택지가 축약되거나 누락된 곳은 없습니다.

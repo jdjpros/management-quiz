@@ -2320,7 +2320,10 @@ function mkCard(q){
   var stemLines=q.stem.split('\n');
 
   // stem 표시
-  if(boxMode){
+  if(Q_EXPS_BOX.has(q.id)){
+    // 유형2: 항목은 exps에서 렌더링하므로 질문 제목만 표시
+    body.innerHTML+='<div class="qstem">'+parsed.title+'</div>';
+  } else if(boxMode){
     body.innerHTML+='<div class="qstem">'+parsed.title+'</div>';
     var bp=document.createElement('div'); bp.className='box-passage';
     bp.innerHTML=parsed.items.map(function(it){return '<div class="box-item"><span class="box-label">'+it.label+'.</span><span class="box-text">'+it.text+'</span></div>';}).join('');

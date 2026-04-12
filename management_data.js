@@ -193,8 +193,11 @@ var O_TYPE      = new Set([
   // YB
   'YB01','YB02','YB03','YB04','YB05','YB06','YB07','YB09','YB10','YB11','YB13','YB14','YB15','YB16','YB17','YB18','YB19','YB20','YB21','YB22','YB26','YB27','YB28','YB29','YB31','YB34','YB36','YB37','YB40','YB42','YB43','YB45','YB46'
 ]);
-var Q_EXPS_BOX  = new Set([]);
-var Q3_TYPE     = new Set(['FA15','FB11']); // 순서 나열형: stem에 ㄱ.ㄴ.ㄷ. 있지만 opts(①②③④)가 정오 판단 대상
+var Q_EXPS_BOX  = new Set([
+  // FB: 모두 고른 것 유형 - ㄱ.ㄴ.ㄷ. 항목별 개별 OX 판단
+  'FB14','FB22','FB52','FB59','FB63'
+]);
+var Q3_TYPE     = new Set(['FA15','FB11','FB32']); // 순서/연결 나열형: stem에 ㄱ.ㄴ.ㄷ. 있지만 opts(①②③④)가 정오 판단 대상
 var Q_OPTS_BOX = new Set([
   // AA
   'AA02','AA20','AA24','AA29',

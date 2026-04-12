@@ -1967,7 +1967,7 @@ function buildOptRow(q2,i){
   div.className='opt-row '+jCls+expCls; div.id='optrow-'+q2.id+'-'+idx;
   var top=document.createElement('div'); top.className='opt-top';
   var lbl=document.createElement('div'); lbl.className='opt-label'; lbl.textContent=NUMS[i]; top.appendChild(lbl);
-  var txt=document.createElement('div'); txt.className='opt-text'; txt.innerHTML=q2.opts[i]; top.appendChild(txt);
+  var txt=document.createElement('div'); txt.className='opt-text'; txt.innerHTML=q2.opts[i].replace(/^[①②③④⑤]\s*/,''); top.appendChild(txt);
   var btns=document.createElement('div'); btns.className='opt-judge-btns';
 
   if(isFinal){
@@ -2365,14 +2365,14 @@ function mkCard(q){
       if(el) optsWrap.appendChild(el);
     });
     var ai2=document.createElement('div'); ai2.className='box-ans-info';
-    ai2.innerHTML='<span class="box-ans-label">정답 →</span> '+q.opts[q.ans-1];
+    ai2.innerHTML='<span class="box-ans-label">정답 →</span> '+q.opts[q.ans-1].replace(/^[①②③④⑤]\s*/,'');
     optsWrap.appendChild(ai2);
 
   } else if(boxMode){
     // 유형1: stem에 ㄱ.ㄴ.ㄷ. 직접
     parsed.items.forEach(function(item){ var el=buildBoxItemRow(q,item); if(el) optsWrap.appendChild(el); });
     var ai3=document.createElement('div'); ai3.className='box-ans-info';
-    ai3.innerHTML='<span class="box-ans-label">정답 선택지 →</span> '+q.opts.map(function(opt,i){return '<span class="box-ans-opt">'+NUMS[i]+' '+opt+'</span>';}).join('');
+    ai3.innerHTML='<span class="box-ans-label">정답 선택지 →</span> '+q.opts.map(function(opt,i){return '<span class="box-ans-opt">'+NUMS[i]+' '+opt.replace(/^[①②③④⑤]\s*/,'')+'</span>';}).join('');
     optsWrap.appendChild(ai3);
 
   } else {

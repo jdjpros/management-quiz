@@ -2400,7 +2400,21 @@ function mkCard(q){
 // ═══════════════════════════════════════════
 // ACTIONS
 // ═══════════════════════════════════════════
-function toggleCard(id){ sq(id,{open:!gq(id).open}); refresh(id); }
+function toggleCard(id){ sq(id,{open:!gq(id).open}); refresh(id); updateExpandAllBtn(); }
+
+function toggleExpandAll(){
+  var Qs = getCurrentData();
+  var anyOpen = Qs.some(function(q){ return gq(q.id).open; });
+  var targetOpen = !anyOpen;
+  Qs.forEach(function(q){ sq(q.id,{open:targetOpen}); });
+  renderAll();
+}
+function updateExpandAllBtn(){
+  var btn = document.getElementById('btnExpandAll'); if(!btn) return;
+  var Qs = getCurrentData();
+  var anyOpen = Qs.some(function(q){ return gq(q.id).open; });
+  btn.textContent = anyOpen ? '📕 전체 접기' : '📖 전체 펼침';
+}
 function resetQ(id){
   delete state[id]; delete state[id+'_j']; delete state[id+'_e']; delete state[id+'_r'];
   delete state[id+'_bj']; delete state[id+'_be']; delete state[id+'_br'];
@@ -2434,10 +2448,13 @@ function renderAll(){
   bF.onclick=function(){setMasteryFilter('failed');}; bbtns.appendChild(bF);
   var bAll=document.createElement('button'); bAll.className='bulk-btn clr'; bAll.id='filterBtnAll'; bAll.textContent='전체 보기';
   bAll.onclick=function(){setMasteryFilter(null);}; bbtns.appendChild(bAll);
+  var bExpand=document.createElement('button'); bExpand.className='bulk-btn clr'; bExpand.id='btnExpandAll'; bExpand.textContent='📖 전체 펼침';
+  bExpand.onclick=function(){ toggleExpandAll(); }; bbtns.appendChild(bExpand);
   bar.appendChild(bbtns);
   var bInfo=document.createElement('span'); bInfo.className='bulk-info'; bInfo.id='filterInfo'; bar.appendChild(bInfo);
   c.parentNode.insertBefore(bar,c);
   renderBulkBar();
+  updateExpandAllBtn();
 
   // 파이널체크: 모든 단원 △·X 문제 수집 (해설 펼침, 외움 버튼만)
   // 복습모드: 현재 단원 △·X 지문만 (임시 판정)

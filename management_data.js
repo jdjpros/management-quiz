@@ -195,7 +195,9 @@ var O_TYPE      = new Set([
 ]);
 var Q_EXPS_BOX  = new Set([
   // FB: 모두 고른 것 / 연결 유형 - ㄱ.ㄴ.ㄷ. 항목별 개별 판단
-  'FB14','FB22','FB32','FB52','FB59','FB63'
+  'FB14','FB22','FB32','FB52','FB59','FB63',
+  // GB
+  'GB17'
 ]);
 var Q3_TYPE     = new Set(['FA15','FB11']); // 순서/선택 나열형: stem에 ㄱ.ㄴ.ㄷ. 있지만 opts(①②③④)가 정오 판단 대상
 var Q_OPTS_BOX = new Set([

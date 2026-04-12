@@ -214,10 +214,10 @@ const UNIT_TB = [
         '④ ㄴ, ㄷ, ㄹ'
       ],
       exps: [
-        {ox: 'X', t: '3C는 고객(Customer), 경쟁기업(Competitor), 자사(Company)이다.'},
-        {ox: 'X', t: '3C는 고객(Customer), 경쟁기업(Competitor), 자사(Company)이다.'},
-        {ox: 'X', t: '3C는 고객(Customer), 경쟁기업(Competitor), 자사(Company)이다.'},
-        {ox: 'O', t: '3C는 고객(Customer), 경쟁기업(Competitor), 자사(Company)이다.'}
+        {ox: 'X', t: 'ㄱ. 유통경로(Channel) → 3C 분석의 구성요소가 아니다. 3C는 고객(Customer), 경쟁기업(Competitor), 자사(Company)를 의미한다.'},
+        {ox: 'O', t: 'ㄴ. 고객(Customer) → 3C 분석의 구성요소이다. 목표 세분시장의 고객 규모, 니즈, 구매행동 등을 분석한다.'},
+        {ox: 'O', t: 'ㄷ. 경쟁기업(Competitor) → 3C 분석의 구성요소이다. 경쟁기업의 강약점, 시장점유율, 전략 등을 분석한다.'},
+        {ox: 'O', t: 'ㄹ. 자사(Company) → 3C 분석의 구성요소이다. 자사의 역량, 자원, 경쟁우위 등을 분석한다.'}
       ]
     },
     {

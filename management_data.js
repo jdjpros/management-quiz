@@ -196,8 +196,48 @@ var O_TYPE      = new Set([
 var Q_EXPS_BOX  = new Set([
   // FB: 모두 고른 것 / 연결 유형 - ㄱ.ㄴ.ㄷ. 항목별 개별 판단
   'FB14','FB22','FB32','FB52','FB59','FB63',
+  // GA
+  'GA23',
   // GB
-  'GB17'
+  'GB17','GB43','GB46','GB62','GB74','GB76',
+  // HA
+  'HA06','HA11','HA14',
+  // HB
+  'HB07',
+  // JA
+  'JA09','JA22',
+  // JB
+  'JB04','JB26','JB29','JB34',
+  // LB
+  'LB38',
+  // PA
+  'PA02',
+  // QA
+  'QA32','QA79','QA80',
+  // QB
+  'QB02','QB06','QB07','QB29','QB89',
+  // SA
+  'SA15','SA22',
+  // SB
+  'SB10',
+  // TA
+  'TA03','TA22',
+  // TB
+  'TB13',
+  // UA
+  'UA05',
+  // UB
+  'UB09','UB13','UB23','UB70','UB78',
+  // VB
+  'VB06','VB09','VB15','VB16','VB25',
+  // WA
+  'WA12','WA16','WA17','WA74',
+  // WB
+  'WB10','WB14','WB66','WB69','WB71',
+  // XA
+  'XA06','XA07','XA44',
+  // YB
+  'YB06'
 ]);
 var Q3_TYPE     = new Set(['FA15','FB11']); // 순서/선택 나열형: stem에 ㄱ.ㄴ.ㄷ. 있지만 opts(①②③④)가 정오 판단 대상
 var Q_OPTS_BOX = new Set([

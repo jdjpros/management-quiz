@@ -861,7 +861,7 @@ body{background:var(--bg);color:var(--text);font-family:'Pretendard',sans-serif;
 <script src="data/unit_EA.js?v=20260411"></script>
 <script src="data/unit_EB.js?v=20260411"></script>
 <script src="data/unit_FA.js?v=20260411"></script>
-<script src="data/unit_FB.js?v=20260411"></script>
+<script src="data/unit_FB.js?v=20260412"></script>
 <script src="data/unit_GA.js?v=20260411"></script>
 <script src="data/unit_GB.js?v=20260411"></script>
 <script src="data/unit_HA.js?v=20260411"></script>
@@ -1915,6 +1915,13 @@ function setGnJudge(qId,idx,level){
   state[qId+'_be_'+idx]=true;
   if(wasNew){ recordActivity(); setSrsState(qId, level==='mastered'); renderTodayBanner(); }
   saveState(); refreshGnRow(qId,idx); updateProg();
+  _maybeShowBoxAns(qId);
+}
+function _maybeShowBoxAns(qId){
+  if(!Q_EXPS_BOX.has(qId)) return;
+  var q=_findQ(qId); if(!q) return;
+  var allDone=q.exps.every(function(e,i){ return getGnJudge(qId,i)!==null; });
+  if(allDone){ var el=document.getElementById('boxans-'+qId); if(el) el.style.display=''; }
 }
 function getGnExp(qId,idx){ return !!state[qId+'_be_'+idx]; }
 function setGnReview(qId,idx){
@@ -2321,8 +2328,9 @@ function mkCard(q){
 
   // stem 표시
   if(Q_EXPS_BOX.has(q.id)){
-    // 유형2: 항목은 exps에서 렌더링하므로 질문 제목만 표시
-    body.innerHTML+='<div class="qstem">'+parsed.title+'</div>';
+    // 유형2: 항목은 exps에서 렌더링하므로 질문 제목만 표시 ([보기] 태그 제거)
+    var expsTitle=parsed.title.replace(/\n*\[보기\]\s*$/,'').trim();
+    body.innerHTML+='<div class="qstem">'+expsTitle+'</div>';
   } else if(boxMode){
     body.innerHTML+='<div class="qstem">'+parsed.title+'</div>';
     var bp=document.createElement('div'); bp.className='box-passage';
@@ -2360,14 +2368,25 @@ function mkCard(q){
       var gn=exp.t.match(/^([ㄱ-ㅎ])\.\ *([\s\S]*)/);
       if(!gn) return;
       var full=gn[2];
-      var sep=full.indexOf(' → ');
-      var stmtText = sep>=0 ? full.slice(0,sep).trim() : full.trim();
-      var descText = sep>=0 ? full.slice(sep+3).trim() : full.trim();
+      // '//'가 있으면: stmtText에 '→ 분류명'까지 포함, '//' 뒤가 설명 (연결형 문제용)
+      // '//'가 없으면: 기존 ' → ' 구분 (모두 고른 것 유형)
+      var sepSlash=full.indexOf(' // ');
+      var stmtText, descText;
+      if(sepSlash>=0){
+        stmtText=full.slice(0,sepSlash).trim();
+        descText=full.slice(sepSlash+4).trim();
+      } else {
+        var sep=full.indexOf(' → ');
+        stmtText=sep>=0?full.slice(0,sep).trim():full.trim();
+        descText=sep>=0?full.slice(sep+3).trim():full.trim();
+      }
       var expPatched = {ox:exp.ox, t:descText};
       var el=buildGnRow(q,{label:gn[1],text:stmtText},i,expPatched);
       if(el) optsWrap.appendChild(el);
     });
-    var ai2=document.createElement('div'); ai2.className='box-ans-info';
+    var ai2=document.createElement('div'); ai2.className='box-ans-info'; ai2.id='boxans-'+q.id;
+    var _gnAllDone=q.exps.every(function(e,i){ return getGnJudge(q.id,i)!==null; });
+    if(!_gnAllDone) ai2.style.display='none';
     ai2.innerHTML='<span class="box-ans-label">정답 →</span> '+q.opts[q.ans-1].replace(/^[①②③④⑤]\s*/,'');
     optsWrap.appendChild(ai2);
 

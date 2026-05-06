@@ -245,7 +245,7 @@ var Q_EXPS_BOX  = new Set([
   // YB
   'YB06'
 ]);
-var Q3_TYPE     = new Set(['FA15','FB11','QA78','UA13','UA43']); // 순서/선택 나열형: stem에 ㄱ.ㄴ.ㄷ. 있지만 opts(①②③④)가 정오 판단 대상
+var Q3_TYPE     = new Set(['FA15','FB11','QA78','UA13','UA43','YA01']); // 순서/선택 나열형: stem에 ㄱ.ㄴ.ㄷ. 있지만 opts(①②③④)가 정오 판단 대상
 var Q_OPTS_BOX = new Set([
   // AA
   'AA02','AA20','AA24','AA29',

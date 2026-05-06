@@ -1778,7 +1778,7 @@ function needsReview(qId){
 // parseBoxStem - A~E, ㄱ~ㅈ 모두 처리
 // ═══════════════════════════════════════════
 function parseBoxStem(stem){
-  var lines=stem.split('\n'); var boxItems=[]; var titleLines=[]; var inBox=false; var cur=null;
+  var lines=stem.replace(/\\n/g,'\n').split('\n'); var boxItems=[]; var titleLines=[]; var inBox=false; var cur=null;
   for(var li=0;li<lines.length;li++){
     var line=lines[li];
     var bm=line.match(/^([A-E])[.\s、．]\s*(.*)/);
@@ -1793,7 +1793,7 @@ function parseBoxStem(stem){
 }
 
 function parseStemHeader(stem, id){
-  var lines=(stem||'').split('\n');
+  var lines=(stem||'').replace(/\\n/g,'\n').split('\n');
   var firstLine=lines[0].trim();
   var secondLine=lines.length>1?lines[1].trim():'';
   // 형식A: "01 2025년 군무원 7급. 질문..." (한 줄, 마침표 구분)
@@ -2324,12 +2324,12 @@ function mkCard(q){
   var body=document.createElement('div'); body.className='qbody';
   var parsed=parseBoxStem(q.stem);
   var boxMode=parsed.items.length>0&&!Q3_TYPE.has(q.id);
-  var stemLines=q.stem.split('\n');
+  var stemLines=q.stem.replace(/\\n/g,'\n').split('\n');
 
   // stem 표시
   if(Q_EXPS_BOX.has(q.id)){
     // 유형2: 질문은 헤더에 표시. 질문(line0)과 [보기] 사이의 추가 내용(표 등)만 body에 표시
-    var stemLs2=q.stem.split('\n');
+    var stemLs2=q.stem.replace(/\\n/g,'\n').split('\n');
     var bStart2=head.bodyStart||1;
     var bokiIdx2=-1;
     for(var li2=0;li2<stemLs2.length;li2++){if(stemLs2[li2].trim()==='[보기]'||stemLs2[li2].trim()==='<보기>'){bokiIdx2=li2;break;}}

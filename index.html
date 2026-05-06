@@ -2332,10 +2332,7 @@ function mkCard(q){
     var expsTitle=parsed.title.replace(/\n*\[보기\]\s*$/,'').trim();
     body.innerHTML+='<div class="qstem">'+expsTitle+'</div>';
   } else if(boxMode){
-    body.innerHTML+='<div class="qstem">'+parsed.title+'</div>';
-    var bp=document.createElement('div'); bp.className='box-passage';
-    bp.innerHTML=parsed.items.map(function(it){return '<div class="box-item"><span class="box-label">'+it.label+'.</span><span class="box-text">'+it.text+'</span></div>';}).join('');
-    body.appendChild(bp);
+    // 유형1: 질문은 헤더에 표시, 항목은 optsWrap에서 렌더링하므로 qstem/box-passage 생략
   } else if(stemLines.length>1){
     // bodyStart: 형식A=1(질문이 line0), 형식B=2(질문이 line1), 기타=1
     var bodyLines=stemLines.slice(head.bodyStart||1);

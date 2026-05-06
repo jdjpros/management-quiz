@@ -2328,9 +2328,15 @@ function mkCard(q){
 
   // stem 표시
   if(Q_EXPS_BOX.has(q.id)){
-    // 유형2: 항목은 exps에서 렌더링하므로 질문 제목만 표시 ([보기] 태그 제거)
-    var expsTitle=parsed.title.replace(/\n*\[보기\]\s*$/,'').trim();
-    body.innerHTML+='<div class="qstem">'+expsTitle+'</div>';
+    // 유형2: 질문은 헤더에 표시. 질문(line0)과 [보기] 사이의 추가 내용(표 등)만 body에 표시
+    var stemLs2=q.stem.split('\n');
+    var bStart2=head.bodyStart||1;
+    var bokiIdx2=-1;
+    for(var li2=0;li2<stemLs2.length;li2++){if(stemLs2[li2].trim()==='[보기]'||stemLs2[li2].trim()==='<보기>'){bokiIdx2=li2;break;}}
+    var midLines2=stemLs2.slice(bStart2,bokiIdx2>=0?bokiIdx2:stemLs2.length);
+    while(midLines2.length&&!midLines2[0].trim())midLines2.shift();
+    while(midLines2.length&&!midLines2[midLines2.length-1].trim())midLines2.pop();
+    if(midLines2.length>0)body.innerHTML+='<div class="qstem">'+midLines2.join('<br>')+'</div>';
   } else if(boxMode){
     // 유형1: 질문은 헤더에 표시, 항목은 optsWrap에서 렌더링하므로 qstem/box-passage 생략
   } else if(stemLines.length>1){

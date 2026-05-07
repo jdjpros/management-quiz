@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(*)",
+      "Read(//c/Users/강철사원/AppData/Local/Programs/Python/**)",
+      "Read(//c/Users/강철사원/AppData/Local/Programs/Python/Python312/**)",
+      "Read(//c/Users/강철사원/Downloads/행정법 작업/**)",
+      "Read(//c/Users/강철사원/Downloads/IT-PMP 작업/raw data_ocr/**)",
+      "mcp__Claude_Preview__preview_start",
+      "mcp__Claude_in_Chrome__tabs_context_mcp"
+    ],
+    "ask": [
+      "Bash(git push *)",
+      "Bash(powershell *rm *)",
+      "Bash(powershell *del *)",
+      "Bash(powershell *Remove-Item *)",
+      "Bash(rm -rf *)",
+      "Bash(del *)"
+    ]
+  }
+}

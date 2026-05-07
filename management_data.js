@@ -183,7 +183,7 @@ var O_TYPE      = new Set([
   'QA58','QA62','QA64','QA69','QA70','QA72','QA73','QA75','QA78',
   'QA81','QA84','QA86','QA88','QA89','QA90','QA94','QA104','QA105','QA108',
   // RA
-  'RA01','RA02','RA03','RA04','RA05',
+  'RA01','RA02','RA03',
   // RB
   'RB02','RB03','RB04','RB05',
   // SB

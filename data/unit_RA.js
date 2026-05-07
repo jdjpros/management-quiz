@@ -78,10 +78,10 @@ const UNIT_RA = [
         '④ 수용성'
       ],
       exps: [
-        {ox: 'X', t: '가용성(affordability)은 4A의 구성요소 중 하나로, 4P의 가격(price)에 대응된다. 소비자가 감당할 수 있는 가격인지를 나타낸다. 따라서 4A에 해당한다.'},
-        {ox: 'O', t: '촉진(promotion)은 4P의 구성요소이다. 4A에서 촉진(promotion)에 대응하는 것은 인지도(awareness)이다. 즉, 촉진은 판매자 관점의 4P 개념이며 구매자 관점의 4A에는 해당하지 않는다. 4A = 수용성(acceptability)·가용성(affordability)·접근성(accessibility)·인지도(awareness).'},
-        {ox: 'X', t: '인지도(awareness)는 4A의 구성요소 중 하나로, 4P의 촉진(promotion)에 대응된다. 소비자가 제품을 인지하고 있는지를 나타낸다. 따라서 4A에 해당한다.'},
-        {ox: 'X', t: '수용성(acceptability)은 4A의 구성요소 중 하나로, 4P의 제품(product)에 대응된다. 소비자가 제품을 받아들일 수 있는지를 나타낸다. 따라서 4A에 해당한다.'}
+        {ox: 'O', t: '가용성(affordability)은 4A의 구성요소 중 하나로, 4P의 가격(price)에 대응된다. 소비자가 감당할 수 있는 가격인지를 나타낸다. 따라서 4A에 해당한다.'},
+        {ox: 'X', t: '촉진(promotion)은 4P의 구성요소이다. 4A에서 촉진(promotion)에 대응하는 것은 인지도(awareness)이다. 즉, 촉진은 판매자 관점의 4P 개념이며 구매자 관점의 4A에는 해당하지 않는다. 4A = 수용성(acceptability)·가용성(affordability)·접근성(accessibility)·인지도(awareness).'},
+        {ox: 'O', t: '인지도(awareness)는 4A의 구성요소 중 하나로, 4P의 촉진(promotion)에 대응된다. 소비자가 제품을 인지하고 있는지를 나타낸다. 따라서 4A에 해당한다.'},
+        {ox: 'O', t: '수용성(acceptability)은 4A의 구성요소 중 하나로, 4P의 제품(product)에 대응된다. 소비자가 제품을 받아들일 수 있는지를 나타낸다. 따라서 4A에 해당한다.'}
       ]
     }
   ];

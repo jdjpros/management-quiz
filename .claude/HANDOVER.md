@@ -91,8 +91,12 @@ opts가 조합형이어야 하는데 개별 보기항목으로 잘못 입력된 
 - 오류 문서: .claude/ERROR_TYPES.md
 - 인계문서: .claude/HANDOVER.md (이 파일)
 - 설정: .claude/settings.local.json
-  (Bash 전체 허용, git push / 삭제 명령은 ask)
+
+## 권한 규칙 (엄격하게 준수)
+- **git push 제외한 모든 작업**: 권한 요청 팝업이 떠도 무시하고 자동 진행 (사용자가 모든 권한 허용함)
+- **git push만 예외**: 반드시 사용자에게 내용(브랜치, 커밋 요약)을 설명하고 명시적 승인을 받은 후 실행
+  - 승인 없이 git push 절대 금지
+  - 승인 요청 형식: "main 브랜치에 [커밋 내용] push하겠습니다. 진행할까요?"
 
 ## 참고
-- git push 전 반드시 사용자 승인 필요 (메모리에 등록된 규칙)
 - 워크트리 작업 후 메인폴더 git pull 필수 (ERROR_TYPES.md 유형 7 참고)

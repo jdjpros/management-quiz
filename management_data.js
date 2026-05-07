@@ -301,6 +301,8 @@ var Q_EXPS_BOX  = new Set([
   'WB10','WB14','WB66','WB69','WB71',
   // XA
   'XA06','XA07','XA44',
+  // YA
+  'YA10',
   // YB
   'YB06'
 ]);

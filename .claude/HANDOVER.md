@@ -170,5 +170,7 @@ isOtype
 <script src="data/unit_YA.js?v=20260508"></script>      ← 수정일자로 변경
 ```
 
-- 수정한 파일만 버전 올리면 됨 (전체 일괄 변경 불필요)
+- **수정한 파일만** 버전 올리면 됨 (손대지 않은 unit 파일은 그대로)
+- management_data.js 수정 시 → index.html의 management_data.js 버전 업데이트
+- data/unit_XX.js 수정 시 → index.html의 해당 unit_XX.js 버전 업데이트
 - 커밋 시 index.html도 함께 포함

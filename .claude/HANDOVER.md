@@ -157,3 +157,18 @@ isOtype
 
 ## 참고
 - 워크트리 작업 후 메인폴더 git pull 필수 (ERROR_TYPES.md 유형 7 참고)
+
+## ⚠️ 파일 수정 시 버전 업데이트 필수 (캐시 버스팅)
+
+`management_data.js` 또는 `data/unit_XX.js` 파일을 수정할 때마다
+**index.html의 해당 `?v=` 버전을 반드시 오늘 날짜로 업데이트**해야 함.
+버전을 올리지 않으면 브라우저가 캐시된 이전 버전을 계속 사용해 변경사항이 반영되지 않음.
+
+```html
+<!-- index.html 예시 -->
+<script src="management_data.js?v=20260508"></script>   ← 수정일자로 변경
+<script src="data/unit_YA.js?v=20260508"></script>      ← 수정일자로 변경
+```
+
+- 수정한 파일만 버전 올리면 됨 (전체 일괄 변경 불필요)
+- 커밋 시 index.html도 함께 포함

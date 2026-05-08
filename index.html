@@ -1781,9 +1781,9 @@ function parseBoxStem(stem){
   var lines=stem.replace(/\\n/g,'\n').split('\n'); var boxItems=[]; var titleLines=[]; var inBox=false; var cur=null;
   for(var li=0;li<lines.length;li++){
     var line=lines[li];
-    var bm=line.match(/^([A-E])[.\s、．]\s*(.*)/);
-    var km=line.match(/^([ㄱㄴㄷㄹㅁㅂㅅㅇㅈ])[.\s]\s*(.*)/);
-    var gm=line.match(/^([가나다라마바사아자])[.\s]\s*(.*)/);
+    var bm=line.match(/^([A-E])[.、．]\s*(.*)/);
+    var km=line.match(/^([ㄱㄴㄷㄹㅁㅂㅅㅇㅈ])[.]\s*(.*)/);
+    var gm=line.match(/^([가나다라마바사아자])[.]\s*(.*)/);
     var hit=bm||km||gm;
     if(hit){ inBox=true; if(cur) boxItems.push(cur); cur={label:hit[1],text:hit[2]}; }
     else if(inBox&&cur&&line.trim()){ cur.text+=' '+line.trim(); }

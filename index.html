@@ -901,7 +901,7 @@ body{background:var(--bg);color:var(--text);font-family:'Pretendard',sans-serif;
 <script src="data/unit_YA.js?v=20260508"></script>
 <script src="data/unit_YB.js?v=20260506"></script>
 <!-- ── 메뉴 및 설정 ── -->
-<script src="management_data.js?v=20260508b"></script>
+<script src="management_data.js?v=20260509"></script>
 <script>
 
 // ═══════════════════════════════════════════
@@ -1752,7 +1752,7 @@ function needsReview(qId){
   // 유형1: A~E, ㄱ~ㅈ 박스형
   var parsed=parseBoxStem(q.stem);
   if(parsed.items.length>0&&!Q3_TYPE.has(qId)){
-    var _lmap={'A':0,'B':1,'C':2,'D':3,'E':4,'ㄱ':0,'ㄴ':1,'ㄷ':2,'ㄹ':3,'ㅁ':4,'ㅂ':5,'ㅅ':6,'ㅇ':7,'ㅈ':8};
+    var _lmap={'A':0,'B':1,'C':2,'D':3,'E':4,'ㄱ':0,'ㄴ':1,'ㄷ':2,'ㄹ':3,'ㅁ':4,'ㅂ':5,'ㅅ':6,'ㅇ':7,'ㅈ':8,'가':0,'나':1,'다':2,'라':3,'마':4,'바':5,'사':6,'아':7,'자':8};
     return parsed.items.some(function(it){
       var jv=getBoxJudge(qId,it.label);
       var labelIdx=(_lmap[it.label]!==undefined?_lmap[it.label]:0);
@@ -2031,7 +2031,7 @@ function buildBoxItemRow(q2,item){
   var isFinal=(mode==='final');
   if(isReview){
     var orig=getBoxJudge(q2.id,label);
-    var _lmap0={'A':0,'B':1,'C':2,'D':3,'E':4,'ㄱ':0,'ㄴ':1,'ㄷ':2,'ㄹ':3,'ㅁ':4,'ㅂ':5,'ㅅ':6,'ㅇ':7,'ㅈ':8};
+    var _lmap0={'A':0,'B':1,'C':2,'D':3,'E':4,'ㄱ':0,'ㄴ':1,'ㄷ':2,'ㄹ':3,'ㅁ':4,'ㅂ':5,'ㅅ':6,'ㅇ':7,'ㅈ':8,'가':0,'나':1,'다':2,'라':3,'마':4,'바':5,'사':6,'아':7,'자':8};
     var _li0=(_lmap0[label]!==undefined?_lmap0[label]:0);
     var _bexp0=(q2.bexps&&q2.bexps[_li0])||null;
     var _exp0=_bexp0||q2.exps[_li0]||{ox:'O'};
@@ -2041,7 +2041,7 @@ function buildBoxItemRow(q2,item){
   }
   if(isFinal){
     var orig2=getBoxJudge(q2.id,label);
-    var _lmap0f={'A':0,'B':1,'C':2,'D':3,'E':4,'ㄱ':0,'ㄴ':1,'ㄷ':2,'ㄹ':3,'ㅁ':4,'ㅂ':5,'ㅅ':6,'ㅇ':7,'ㅈ':8};
+    var _lmap0f={'A':0,'B':1,'C':2,'D':3,'E':4,'ㄱ':0,'ㄴ':1,'ㄷ':2,'ㄹ':3,'ㅁ':4,'ㅂ':5,'ㅅ':6,'ㅇ':7,'ㅈ':8,'가':0,'나':1,'다':2,'라':3,'마':4,'바':5,'사':6,'아':7,'자':8};
     var _li0f=(_lmap0f[label]!==undefined?_lmap0f[label]:0);
     var _bexp0f=(q2.bexps&&q2.bexps[_li0f])||null;
     var _exp0f=_bexp0f||q2.exps[_li0f]||{ox:'O'};
@@ -2056,7 +2056,7 @@ function buildBoxItemRow(q2,item){
   var jCls=jv?({mastered:'judged-m',confused:'judged-c',failed:'judged-f'}[jv]):'';
   var expCls=expOpen?' exp-open':'';
   var selM=jv==='mastered'?' sel-m':''; var selC=jv==='confused'?' sel-c':''; var selF=jv==='failed'?' sel-f':'';
-  var _lmap={'A':0,'B':1,'C':2,'D':3,'E':4,'ㄱ':0,'ㄴ':1,'ㄷ':2,'ㄹ':3,'ㅁ':4,'ㅂ':5,'ㅅ':6,'ㅇ':7,'ㅈ':8};
+  var _lmap={'A':0,'B':1,'C':2,'D':3,'E':4,'ㄱ':0,'ㄴ':1,'ㄷ':2,'ㄹ':3,'ㅁ':4,'ㅂ':5,'ㅅ':6,'ㅇ':7,'ㅈ':8,'가':0,'나':1,'다':2,'라':3,'마':4,'바':5,'사':6,'아':7,'자':8};
   var labelIdx=(_lmap[label]!==undefined?_lmap[label]:0);
   var bexp=(q2.bexps&&q2.bexps[labelIdx])||null;
   var exp=bexp||q2.exps[labelIdx]||{t:'',ox:'O'};
@@ -3715,7 +3715,7 @@ function hasWrongOrConfused(q){
   // 유형1: A~E, ㄱ~ㅈ 박스형
   var parsed = parseBoxStem(q.stem);
   if(parsed.items.length > 0 && !Q3_TYPE.has(q.id)){
-    var _lmapH={'A':0,'B':1,'C':2,'D':3,'E':4,'ㄱ':0,'ㄴ':1,'ㄷ':2,'ㄹ':3,'ㅁ':4,'ㅂ':5,'ㅅ':6,'ㅇ':7,'ㅈ':8};
+    var _lmapH={'A':0,'B':1,'C':2,'D':3,'E':4,'ㄱ':0,'ㄴ':1,'ㄷ':2,'ㄹ':3,'ㅁ':4,'ㅂ':5,'ㅅ':6,'ㅇ':7,'ㅈ':8,'가':0,'나':1,'다':2,'라':3,'마':4,'바':5,'사':6,'아':7,'자':8};
     return parsed.items.some(function(it){
       var jv = getBoxJudge(q.id, it.label);
       var liH=(_lmapH[it.label]!==undefined?_lmapH[it.label]:0);

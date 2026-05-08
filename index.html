@@ -2312,7 +2312,14 @@ function mkCard(q){
 
   var qIdx=getCurrentData().findIndex(function(x){return x.id===q.id;})+1;
   var hdr=document.createElement('div'); hdr.className='qheader';
-  hdr.onclick=function(){toggleCard(q.id);};
+  (function(hdr, qid){
+    var _mx=0, _my=0;
+    hdr.addEventListener('mousedown', function(e){ _mx=e.clientX; _my=e.clientY; });
+    hdr.addEventListener('click', function(e){
+      if(Math.abs(e.clientX-_mx)>5 || Math.abs(e.clientY-_my)>5) return; // 드래그 선택 중이면 무시
+      toggleCard(qid);
+    });
+  })(hdr, q.id);
   var rvIcon=needsReview(q.id)?'★':'';
   var srsS=getSrsState(q.id); var srsBadge='';
   if(isSrsDue(q.id)&&srsS.lvl>0) srsBadge='<span class="srs-badge due">SRS</span>';

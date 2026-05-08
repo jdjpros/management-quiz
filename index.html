@@ -1775,7 +1775,7 @@ function needsReview(qId){
 }
 
 // ═══════════════════════════════════════════
-// parseBoxStem - A~E, ㄱ~ㅈ 모두 처리
+// parseBoxStem - A~E, ㄱ~ㅈ, 가~자 모두 처리
 // ═══════════════════════════════════════════
 function parseBoxStem(stem){
   var lines=stem.replace(/\\n/g,'\n').split('\n'); var boxItems=[]; var titleLines=[]; var inBox=false; var cur=null;
@@ -1783,7 +1783,8 @@ function parseBoxStem(stem){
     var line=lines[li];
     var bm=line.match(/^([A-E])[.\s、．]\s*(.*)/);
     var km=line.match(/^([ㄱㄴㄷㄹㅁㅂㅅㅇㅈ])[.\s]\s*(.*)/);
-    var hit=bm||km;
+    var gm=line.match(/^([가나다라마바사아자])[.\s]\s*(.*)/);
+    var hit=bm||km||gm;
     if(hit){ inBox=true; if(cur) boxItems.push(cur); cur={label:hit[1],text:hit[2]}; }
     else if(inBox&&cur&&line.trim()){ cur.text+=' '+line.trim(); }
     else if(!inBox){ titleLines.push(line); }

@@ -2608,17 +2608,6 @@ function refreshGnFc(qId,idx){
   updateFinalCount();
 }
 
-// 파이널모드 "외움" 후 카드 내 지문이 전부 사라지면 카드 제거
-function checkCardEmpty(qId){
-  var card=document.getElementById('q-'+qId); if(!card) return;
-  // 카드 안에 opt-row가 하나도 없으면 카드 제거
-  var rows=card.querySelectorAll('.opt-row');
-  if(rows.length===0){
-    card.style.transition='opacity .3s';
-    card.style.opacity='0';
-    setTimeout(function(){ card.remove(); updateFinalCount(); },300);
-  } else { updateFinalCount(); }
-}
 // 파이널모드 카운터 갱신 (졸업 / 남은 / 전체)
 function updateFinalCount(total, graduated){
   var el=document.getElementById('finalCount');
@@ -2630,15 +2619,6 @@ function updateFinalCount(total, graduated){
     }
     el.textContent='졸업 '+graduated+' / 남은 '+(total-graduated)+' / 전체 '+total;
   }
-}
-// 파이널모드 "외움" 후 원본 갱신 + 카드 갱신
-function refreshOptFinal(qId,idx){
-  var allQ=getAllQuestions(); var q=allQ.find(function(x){return x.id===qId;}); if(!q) return;
-  var el=document.getElementById('optrow-'+qId+'-'+idx);
-  // 원본이 O로 바뀌었으므로 buildOptRow가 null 반환 → 행 제거
-  var newRow=buildOptRow(q,idx-1);
-  if(el&&!newRow) el.remove();
-  checkCardEmpty(qId);
 }
 function refreshBoxItem(qId,label){
   var q=_findQ(qId); if(!q) return;

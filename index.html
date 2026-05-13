@@ -328,23 +328,24 @@ body{background:var(--bg);color:var(--text);font-family:'Pretendard',sans-serif;
 /* ── 대시보드 탭 ── */
 .dash-panel{display:none;padding:16px 0 60px;}
 .dash-panel.active{display:block;}
-.dash-section{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;margin-bottom:12px;}
-.dash-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:14px;display:flex;align-items:center;gap:6px;}
+.dash-section{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;margin-bottom:12px;}
+.dash-title{font-size:16px;font-weight:700;color:var(--text);margin-bottom:14px;display:flex;align-items:center;gap:7px;}
+.dash-subtitle{font-size:14px;font-weight:700;color:var(--dim);display:flex;align-items:center;gap:6px;}
 .dash-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;}
-.dash-unit{border:1px solid var(--border);border-radius:8px;padding:10px 13px;background:var(--surface2);transition:border-color .15s;}
+.dash-unit{border:1px solid var(--border);border-radius:8px;padding:11px 14px;background:var(--surface2);transition:border-color .15s;}
 .dash-unit:hover{border-color:var(--c0);}
-.dash-unit-name{font-size:11px;font-weight:600;color:var(--dim);margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.dash-unit-bar{height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:4px;}
-.dash-unit-fill{height:100%;border-radius:3px;transition:width .5s;}
+.dash-unit-name{font-size:13px;font-weight:600;color:var(--dim);margin-bottom:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.dash-unit-bar{height:7px;background:var(--border);border-radius:4px;overflow:hidden;margin-bottom:5px;}
+.dash-unit-fill{height:100%;border-radius:4px;transition:width .5s;}
 .dash-unit-fill.lvl-0{background:#e2e6f0;}
 .dash-unit-fill.lvl-1{background:#f59e0b;}
 .dash-unit-fill.lvl-2{background:#3b82f6;}
 .dash-unit-fill.lvl-3{background:#10b981;}
-.dash-unit-pct{font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--muted);}
-.dash-stat-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
-.dash-stat{flex:1;min-width:110px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;text-align:center;}
-.dash-stat-val{font-size:22px;font-weight:800;color:var(--c0);font-family:'JetBrains Mono',monospace;}
-.dash-stat-lbl{font-size:10.5px;color:var(--muted);margin-top:2px;}
+.dash-unit-pct{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);}
+.dash-stat-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:0;}
+.dash-stat{flex:1;min-width:120px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;text-align:center;}
+.dash-stat-val{font-size:26px;font-weight:800;color:var(--c0);font-family:'JetBrains Mono',monospace;}
+.dash-stat-lbl{font-size:12.5px;color:var(--muted);margin-top:4px;}
 
 /* SRS 배지 */
 .srs-badge{display:inline-block;font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;margin-left:5px;vertical-align:middle;}
@@ -384,6 +385,64 @@ body{background:var(--bg);color:var(--text);font-family:'Pretendard',sans-serif;
 .dark-card-title.collapsible.open{margin-bottom:16px;}
 .collapse-arrow{font-size:14px;color:rgba(255,255,255,.6);margin-left:8px;transition:transform .25s;}
 .dark-card-title.collapsible.open .collapse-arrow{transform:rotate(180deg);color:#fbbf24;}
+
+/* 회독 탭 (일별 학습 카드 내) */
+.round-tabs{display:flex;gap:6px;background:rgba(255,255,255,.06);padding:5px;border-radius:9px;margin-bottom:16px;flex-wrap:wrap;}
+.round-tab{flex:1;min-width:60px;padding:8px 14px;border-radius:6px;font-size:13px;font-weight:700;color:rgba(255,255,255,.6);background:transparent;border:none;cursor:pointer;transition:all .15s;font-family:Pretendard,sans-serif;display:flex;flex-direction:column;align-items:center;gap:2px;}
+.round-tab:hover{color:#fff;background:rgba(255,255,255,.08);}
+.round-tab.act{background:#fbbf24;color:#1e2540;box-shadow:0 2px 8px rgba(251,191,36,.3);}
+.round-tab .round-num{font-size:14px;}
+.round-tab .round-meta{font-size:10px;opacity:.7;font-weight:600;}
+.round-tab.act .round-meta{color:rgba(30,37,64,.75);}
+.round-tab.done{color:#6ee7b7;background:rgba(16,185,129,.15);}
+
+/* 캘린더 (다크) */
+.darkcal-period-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;}
+.darkcal-period-info{font-size:14px;font-weight:700;color:#fff;}
+.darkcal-period-info .accent{color:#fbbf24;}
+.darkcal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:7px;margin-bottom:14px;}
+.darkcal-weekday{font-size:13px;font-weight:700;color:rgba(147,197,253,.75);text-align:center;padding:6px 0;letter-spacing:.5px;}
+.darkcal-day{aspect-ratio:1;border-radius:9px;padding:8px 6px;text-align:left;cursor:pointer;transition:all .15s;display:flex;flex-direction:column;justify-content:space-between;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);position:relative;}
+.darkcal-day:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,.3);border-color:rgba(255,255,255,.25);}
+.darkcal-day-top{display:flex;justify-content:space-between;align-items:flex-start;}
+.darkcal-day-num{font-size:16px;font-weight:800;font-family:'JetBrains Mono',monospace;line-height:1;color:#fff;}
+.darkcal-day-emoji{font-size:14px;}
+.darkcal-day-amt{font-size:13px;font-weight:800;font-family:'JetBrains Mono',monospace;line-height:1;text-align:center;color:#fff;}
+.darkcal-day-mini{height:5px;background:rgba(0,0,0,.25);border-radius:3px;overflow:hidden;}
+.darkcal-day-mini-fill{height:100%;border-radius:3px;}
+.darkcal-day.done{background:rgba(34,197,94,.25);border-color:rgba(34,197,94,.5);}
+.darkcal-day.done .darkcal-day-mini-fill{background:#22c55e;}
+.darkcal-day.miss{background:rgba(239,68,68,.18);border-color:rgba(239,68,68,.4);}
+.darkcal-day.miss .darkcal-day-mini-fill{background:#ef4444;}
+.darkcal-day.today{background:linear-gradient(135deg,#2563eb,#1d4ed8);border-color:#3b82f6;box-shadow:0 4px 14px rgba(37,99,235,.5);}
+.darkcal-day.today .darkcal-day-mini-fill{background:#fbbf24;}
+.darkcal-day.future{background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.06);cursor:default;}
+.darkcal-day.future .darkcal-day-num{color:rgba(255,255,255,.4);}
+.darkcal-day.future .darkcal-day-amt{color:rgba(255,255,255,.3);}
+.darkcal-day.future .darkcal-day-mini{display:none;}
+.darkcal-legend{display:flex;gap:18px;font-size:12.5px;color:rgba(255,255,255,.7);justify-content:center;flex-wrap:wrap;padding:12px;background:rgba(0,0,0,.15);border-radius:8px;font-weight:600;margin-top:8px;}
+.darkcal-legend-item{display:flex;align-items:center;gap:6px;}
+.darkcal-legend-dot{width:14px;height:14px;border-radius:4px;}
+
+/* 단원별 진도율 (다크 한 줄) */
+.dark-units-cat-title{font-size:14px;font-weight:800;color:#93c5fd;margin:14px 0 6px;padding-left:4px;letter-spacing:.3px;display:flex;align-items:center;gap:8px;}
+.dark-units-cat-title:first-child{margin-top:0;}
+.dark-units-cat-title .count{font-size:11px;color:rgba(255,255,255,.5);font-weight:600;}
+.dark-units-list{display:flex;flex-direction:column;gap:5px;}
+.dark-units-row{display:grid;grid-template-columns:1fr 1.2fr 56px;gap:14px;align-items:center;padding:8px 10px;border-radius:7px;transition:background .15s;cursor:pointer;background:rgba(255,255,255,.04);}
+.dark-units-row:hover{background:rgba(255,255,255,.1);}
+.dark-units-name{font-size:13.5px;font-weight:700;color:rgba(255,255,255,.95);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.dark-units-bar{height:9px;background:rgba(0,0,0,.3);border-radius:5px;overflow:hidden;}
+.dark-units-fill{height:100%;border-radius:5px;transition:width .4s;}
+.dark-units-fill.lvl-3{background:linear-gradient(90deg,#34d399,#10b981);}
+.dark-units-fill.lvl-2{background:linear-gradient(90deg,#60a5fa,#3b82f6);}
+.dark-units-fill.lvl-1{background:linear-gradient(90deg,#fbbf24,#ea580c);}
+.dark-units-fill.lvl-0{background:rgba(255,255,255,.15);}
+.dark-units-pct{font-size:14px;font-weight:800;font-family:'JetBrains Mono',monospace;text-align:right;}
+.dark-units-pct.high{color:#6ee7b7;}
+.dark-units-pct.mid{color:#93c5fd;}
+.dark-units-pct.low{color:#fcd34d;}
+.dark-units-pct.zero{color:rgba(255,255,255,.35);}
 
 /* ── 통합 오늘 플랜 카드 (대시보드용) ── */
 .plan-card{background:linear-gradient(135deg,#1e2540,#2d3a6e);border-radius:var(--r);padding:22px 24px;color:#fff;position:relative;overflow:hidden;}
@@ -888,34 +947,23 @@ body{background:var(--bg);color:var(--text);font-family:'Pretendard',sans-serif;
     <!-- ① 오늘 플랜 현황 (상단 고정 — 자체 다크 카드) -->
     <div style="margin-bottom:12px;" id="dashTodaySection"></div>
 
-    <!-- ② 계획 대비 실제 진도 -->
-    <div class="dash-section" id="dashProgressSection">
-      <div class="dash-title">📈 계획 대비 실제 진도</div>
-      <div id="dashProgressBody"></div>
-    </div>
-
-    <!-- ③ 회독 캘린더 -->
-    <div class="dash-section" id="dashCalSection">
-      <div class="dash-title">📅 회독 캘린더</div>
+    <!-- ② 회독별 일일 학습현황 (다크 통합) -->
+    <div class="dark-card">
+      <div class="dark-card-title">
+        📅 회독별 일일 학습현황
+        <span class="dark-card-subtitle">날짜별 학습량 및 진행 상태</span>
+      </div>
       <div id="dashCalBody"></div>
     </div>
 
-    <!-- ④ 전체 학습 통계 -->
-    <div class="dash-section">
-      <div class="dash-title">📊 전체 학습 현황</div>
-      <div class="dash-stat-row" id="dashStatRow"></div>
-    </div>
-
-    <!-- ⑤ 최근 14일 학습 기록 -->
-    <div class="dash-section">
-      <div class="dash-title">📅 최근 14일 학습 기록</div>
-      <div class="stats-chart" id="statsChart"></div>
-    </div>
-
-    <!-- ⑥ 단원별 완료율 -->
-    <div class="dash-section">
-      <div class="dash-title">📚 단원별 완료율</div>
-      <div id="dashUnits"></div>
+    <!-- ③ 단원별 진도율 (다크 한 줄 압축, 접기/펼치기 가능 - 기본 접힘) -->
+    <div class="dark-card">
+      <div class="dark-card-title collapsible" onclick="toggleUnitsCollapse()" id="unitsTitle">
+        📚 단원별 진도율
+        <span class="dark-card-subtitle">학습 진도 한눈에</span>
+        <span class="collapse-arrow" id="unitsArrow">▾</span>
+      </div>
+      <div id="dashUnits" style="display:none;"></div>
     </div>
 
   </div>
@@ -3099,22 +3147,52 @@ function renderDashboard(){
     progSection.innerHTML = '<div style="font-size:12px;color:var(--muted);">플랜을 설정하면 계획 대비 진도를 확인할 수 있어요. <span style="cursor:pointer;color:var(--c0);text-decoration:underline;" onclick="openPlanOverlay()">플랜 설정하기</span></div>';
   }
 
-  // ── ③ 회독 캘린더 ────────────────────────────────
+  // ── ② 회독별 일일 학습현황 (다크 캘린더) ─────────────
   var calBody = document.getElementById('dashCalBody');
   if(calBody && plan){
     calBody.innerHTML = '';
-    // 군무원/공무원 모드일 때 범위 배너 표시
+    var currentRoundIdx = (tp&&tp.status==='active') ? (tp.round-1) : 0;
+    var selectedRoundIdx = (typeof window._selectedRoundIdx==='number') ? window._selectedRoundIdx : currentRoundIdx;
+    if(selectedRoundIdx >= plan.rounds.length) selectedRoundIdx = plan.rounds.length-1;
+
+    // 회독 탭 (1회독 ~ N회독)
+    var tabsHtml = '<div class="round-tabs">';
+    plan.rounds.forEach(function(r, ri){
+      var tabClass = '';
+      if(ri === selectedRoundIdx) tabClass = ' act';
+      else if(ri < currentRoundIdx) tabClass = ' done';
+      var meta = '';
+      if(ri < currentRoundIdx) meta = r.startDate.slice(5).replace('-','/')+' ✓';
+      else if(ri === currentRoundIdx) meta = '진행 중';
+      else meta = r.startDate.slice(5).replace('-','/')+' ~';
+      tabsHtml += '<button class="round-tab'+tabClass+'" onclick="window._selectedRoundIdx='+ri+';renderDashboard();">'
+        +'<span class="round-num">'+(ri+1)+'회독</span>'
+        +'<span class="round-meta">'+meta+'</span>'
+        +'</button>';
+    });
+    tabsHtml += '</div>';
+    calBody.insertAdjacentHTML('beforeend', tabsHtml);
+
+    // 선택된 회독 헤더
+    var r = plan.rounds[selectedRoundIdx];
+    var qPerDay2 = r.qPerDay || Math.ceil(allQ.length/r.days);
+    var headerHtml = '<div class="darkcal-period-row">'
+      +'<div class="darkcal-period-info">📅 <span class="accent">'+(selectedRoundIdx+1)+'회독</span> · '+r.startDate+' ~ '+r.endDate+' ('+r.days+'일 · 하루 ~'+qPerDay2+'문제)</div>'
+      +'</div>';
+    calBody.insertAdjacentHTML('beforeend', headerHtml);
+
+    // 군무원/공무원 모드 범위 배너
     if(planScopeMode === 'gwa'){
-      var scopeBanner = document.createElement('div');
-      scopeBanner.style.cssText = 'background:#fef9c3;border:1px solid #fde047;border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:11.5px;color:#854d0e;display:flex;align-items:center;gap:6px;';
-      scopeBanner.innerHTML = '<b>🎖️ 군무원/공무원 기출:</b> '+allQ.length+'문항'
-        +'<span style="margin-left:auto;cursor:pointer;color:#92400e;text-decoration:underline;" onclick="openPlanOverlay()">범위 수정</span>';
-      calBody.appendChild(scopeBanner);
+      var scopeBannerG = document.createElement('div');
+      scopeBannerG.style.cssText = 'background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.3);border-radius:8px;padding:9px 13px;margin-bottom:14px;font-size:12.5px;color:#fde68a;display:flex;align-items:center;gap:6px;font-weight:600;';
+      scopeBannerG.innerHTML = '<b>🎖️ 군무원/공무원 기출:</b> '+allQ.length+'문항'
+        +'<span style="margin-left:auto;cursor:pointer;color:#fbbf24;text-decoration:underline;" onclick="openPlanOverlay()">범위 수정</span>';
+      calBody.appendChild(scopeBannerG);
     }
-    // 단원 선택 모드일 때 범위 배너 표시
+    // 단원 선택 모드 범위 배너
     if(planScopeMode === 'unit' && planScopeIds.length > 0){
-      var scopeBanner = document.createElement('div');
-      scopeBanner.style.cssText = 'background:#dbeafe;border:1px solid #93c5fd;border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:11.5px;color:#1d4ed8;display:flex;align-items:center;gap:6px;flex-wrap:wrap;';
+      var scopeBannerU = document.createElement('div');
+      scopeBannerU.style.cssText = 'background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.3);border-radius:8px;padding:9px 13px;margin-bottom:14px;font-size:12.5px;color:#bfdbfe;display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-weight:600;';
       var scopeNames = [];
       MENU.forEach(function(p){
         p.mids.forEach(function(m){
@@ -3124,69 +3202,70 @@ function renderDashboard(){
           });
         });
       });
-      scopeBanner.innerHTML = '<b>📂 선택 범위:</b> '+allQ.length+'문항 — '
+      scopeBannerU.innerHTML = '<b>📂 선택 범위:</b> '+allQ.length+'문항 — '
         +(scopeNames.length<=4 ? scopeNames.join(' · ') : scopeNames.slice(0,4).join(' · ')+' 외 '+(scopeNames.length-4)+'개')
-        +'<span style="margin-left:auto;cursor:pointer;color:#2563eb;text-decoration:underline;" onclick="openPlanOverlay()">범위 수정</span>';
-      calBody.appendChild(scopeBanner);
+        +'<span style="margin-left:auto;cursor:pointer;color:#60a5fa;text-decoration:underline;" onclick="openPlanOverlay()">범위 수정</span>';
+      calBody.appendChild(scopeBannerU);
     }
+
+    // 캘린더 그리드
     var weekdays = ['일','월','화','수','목','금','토'];
-    plan.rounds.forEach(function(r, ri){
-      var title = document.createElement('div');
-      title.className = 'cal-round-title';
-      title.textContent = (ri+1)+'회독  '+r.startDate+' ~ '+r.endDate+' ('+r.days+'일 · 하루 ~'+Math.ceil(allQ.length/r.days)+'문제)';
-      calBody.appendChild(title);
-
-      // 요일 헤더
-      var grid = document.createElement('div');
-      grid.className = 'cal-grid';
-      weekdays.forEach(function(w){
-        var wd = document.createElement('div');
-        wd.className = 'cal-weekday';
-        wd.textContent = w;
-        grid.appendChild(wd);
-      });
-
-      // 첫날 요일 맞춰 빈칸
-      var firstDate = parseDate(r.startDate);
-      var firstDow = firstDate.getDay(); // 0=일
-      for(var pi=0; pi<firstDow; pi++){
-        var blank = document.createElement('div');
-        blank.className = 'cal-day not-plan';
-        grid.appendChild(blank);
-      }
-
-      // 날짜 채우기
-      for(var di=0; di<r.days; di++){
-        var ds = addDays(r.startDate, di);
-        var qPerDay2 = Math.ceil(allQ.length/r.days);
-        var sIdx = di*qPerDay2;
-        var eIdx = Math.min(sIdx+qPerDay2, allQ.length);
-        var dayQs = allQ.slice(sIdx, eIdx);
-
-        // 해당 날 완료 여부 판단
-        var dayDone = dayQs.filter(function(q){ return isQDone(q); }).length;
-        var dayTotal2 = dayQs.length;
-        var dayPct2 = dayTotal2>0?dayDone/dayTotal2:0;
-
-        var cls = 'cal-day ';
-        if(ds === today){ cls += 'today'; }
-        else if(ds < today){
-          cls += dayPct2>=1 ? 'past-done' : dayPct2>=0.5 ? 'past-partial' : 'past-miss';
-        } else { cls += 'future'; }
-
-        var dd2 = parseDate(ds);
-        var dayEl = document.createElement('div');
-        dayEl.className = cls;
-        dayEl.title = ds+'\nQ'+(sIdx+1)+'~Q'+eIdx+'\n'+dayDone+'/'+dayTotal2+'문항 완료';
-        dayEl.innerHTML = '<div class="cal-day-num">'+(di+1)+'</div><div class="cal-day-date">'+(dd2.getMonth()+1)+'/'+(dd2.getDate())+'</div>';
-        // 클릭하면 해당 범위 학습 시작
-        (function(s,e,_ds){ dayEl.onclick = function(){ jumpToDayRange(s,e,_ds); }; })(sIdx,eIdx,ds);
-        grid.appendChild(dayEl);
-      }
-      calBody.appendChild(grid);
+    var grid = document.createElement('div');
+    grid.className = 'darkcal-grid';
+    weekdays.forEach(function(w){
+      var wd = document.createElement('div');
+      wd.className = 'darkcal-weekday';
+      wd.textContent = w;
+      grid.appendChild(wd);
     });
+    var firstDate = parseDate(r.startDate);
+    var firstDow = firstDate.getDay();
+    for(var pi=0; pi<firstDow; pi++){
+      var blank = document.createElement('div');
+      blank.style.cssText = 'aspect-ratio:1;visibility:hidden;';
+      grid.appendChild(blank);
+    }
+    for(var di=0; di<r.days; di++){
+      var ds = addDays(r.startDate, di);
+      var sIdx = di*qPerDay2;
+      var eIdx = Math.min(sIdx+qPerDay2, allQ.length);
+      // 경영학은 act_+ds 키만 사용 (행정법의 act1_*은 미사용)
+      var dayActCount = parseInt(localStorage.getItem('act_'+ds)||'0');
+      var dayTotal2 = eIdx-sIdx;
+      var dayPct2 = dayTotal2>0?Math.min(dayActCount/dayTotal2, 1):0;
+      var cls = 'darkcal-day ';
+      var emoji = '';
+      var amtText = '';
+      if(ds === today){ cls += 'today'; emoji = '●'; amtText = dayActCount+' / '+dayTotal2; }
+      else if(ds < today){
+        if(dayPct2 >= 1){ cls += 'done'; emoji = '✓'; amtText = dayActCount+' / '+dayTotal2; }
+        else { cls += 'miss'; emoji = '✗'; amtText = dayActCount+' / '+dayTotal2; }
+      } else { cls += 'future'; amtText = '예정'; }
+      var dd2 = parseDate(ds);
+      var dayEl = document.createElement('div');
+      dayEl.className = cls;
+      dayEl.title = ds+'\nQ'+(sIdx+1)+'~Q'+eIdx+'\n그 날 학습: '+dayActCount+'개 / 배정: '+dayTotal2+'개';
+      var miniBarHtml = (ds < today || ds === today)
+        ? '<div class="darkcal-day-mini"><div class="darkcal-day-mini-fill" style="width:'+Math.round(dayPct2*100)+'%"></div></div>'
+        : '<div class="darkcal-day-mini"></div>';
+      dayEl.innerHTML = '<div class="darkcal-day-top"><div class="darkcal-day-num">'+(dd2.getDate())+'</div>'+(emoji?'<div class="darkcal-day-emoji">'+emoji+'</div>':'')+'</div>'
+        +'<div class="darkcal-day-amt">'+amtText+'</div>'
+        + miniBarHtml;
+      (function(s,e,_ds){ dayEl.onclick = function(){ jumpToDayRange(s,e,_ds); }; })(sIdx,eIdx,ds);
+      grid.appendChild(dayEl);
+    }
+    calBody.appendChild(grid);
+
+    // 범례
+    var legendHtml = '<div class="darkcal-legend">'
+      +'<span class="darkcal-legend-item"><span class="darkcal-legend-dot" style="background:#22c55e;"></span><strong>완료</strong></span>'
+      +'<span class="darkcal-legend-item"><span class="darkcal-legend-dot" style="background:#ef4444;"></span><strong>미완료</strong></span>'
+      +'<span class="darkcal-legend-item"><span class="darkcal-legend-dot" style="background:#3b82f6;"></span><strong>오늘</strong></span>'
+      +'<span class="darkcal-legend-item"><span class="darkcal-legend-dot" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);"></span><strong>예정</strong></span>'
+      +'</div>';
+    calBody.insertAdjacentHTML('beforeend', legendHtml);
   } else if(calBody){
-    calBody.innerHTML = '<div style="font-size:12px;color:var(--muted);">플랜을 설정하면 회독 캘린더를 볼 수 있어요.</div>';
+    calBody.innerHTML = '<div style="font-size:13px;color:rgba(255,255,255,.65);text-align:center;padding:20px 0;">플랜을 설정하면 회독별 일일 학습현황을 볼 수 있어요.</div>';
   }
 
   // ── ④ 전체 통계 수치 ─────────────────────────────
@@ -3222,14 +3301,22 @@ function renderDashboard(){
     });
   }
 
-  // ── ⑥ 단원별 완료율 ──────────────────────────────
+  // ── ③ 단원별 진도율 (다크 한 줄 압축) ──────────────────────
   var unitsEl=document.getElementById('dashUnits');
   if(unitsEl){
     unitsEl.innerHTML='';
     MENU.forEach(function(p){
-      var grp=document.createElement('div'); grp.style='margin-bottom:14px;';
-      grp.innerHTML='<div style="font-size:11.5px;font-weight:700;color:var(--dim);margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border);">'+p.label+'</div>';
-      var grid=document.createElement('div'); grid.className='dash-grid';
+      // 카테고리 제목 (대단원)
+      var unitsCount = 0;
+      p.mids.forEach(function(m){ unitsCount += (m.hasSub?m.subs:[m]).filter(function(u){return u.data&&u.data.length;}).length; });
+      if(unitsCount === 0) return;
+      var catTitle = document.createElement('div');
+      catTitle.className = 'dark-units-cat-title';
+      catTitle.innerHTML = p.label+' <span class="count">'+unitsCount+'개 단원</span>';
+      unitsEl.appendChild(catTitle);
+      // 단원 리스트
+      var list = document.createElement('div');
+      list.className = 'dark-units-list';
       p.mids.forEach(function(m){
         var units=m.hasSub?m.subs:[m];
         units.forEach(function(u){
@@ -3237,20 +3324,33 @@ function renderDashboard(){
           var doneU=u.data.filter(function(q){return isQDone(q);}).length;
           var pct=Math.round(doneU/u.data.length*100);
           var lvl=pct>=100?'lvl-3':pct>=60?'lvl-2':pct>=20?'lvl-1':'lvl-0';
+          var pctCls = pct>=100?'high':(pct>=60?'mid':(pct>=20?'low':'zero'));
           var inScope = planScopeMode==='all'
             || (planScopeMode==='gwa' && u.id.slice(-1)==='A')
             || planScopeIds.indexOf(u.id)>=0;
-          var unitDiv=document.createElement('div'); unitDiv.className='dash-unit';
-          if(!inScope) unitDiv.style.opacity='0.35';
-          unitDiv.innerHTML='<div class="dash-unit-name" title="'+u.label+'">'+u.label+'</div>'
-            +'<div class="dash-unit-bar"><div class="dash-unit-fill '+lvl+'" style="width:'+pct+'%"></div></div>'
-            +'<div class="dash-unit-pct">'+doneU+'/'+u.data.length+' ('+pct+'%)</div>';
-          unitDiv.onclick=function(){ var mid=MENU.reduce(function(a,pm){ return a||(pm.mids.find(function(mm){ return mm.id===m.id||(mm.hasSub&&mm.subs&&mm.subs.find(function(ss){return ss.id===u.id;}))||false; })||null); },null); if(mid){setMode('all');selectMid(mid);if(m.hasSub&&u.id)selectSub(u.id);} };
-          grid.appendChild(unitDiv);
+          var row = document.createElement('div');
+          row.className = 'dark-units-row';
+          if(!inScope) row.style.opacity = '0.45';
+          row.innerHTML = '<div class="dark-units-name" title="'+u.label+'">'+u.label+'</div>'
+            +'<div class="dark-units-bar"><div class="dark-units-fill '+lvl+'" style="width:'+pct+'%"></div></div>'
+            +'<div class="dark-units-pct '+pctCls+'">'+pct+'%</div>';
+          row.onclick = function(){
+            var mid = MENU.reduce(function(a,pm){ return a||(pm.mids.find(function(mm){ return mm.id===m.id||(mm.hasSub&&mm.subs&&mm.subs.find(function(ss){return ss.id===u.id;}))||false; })||null); },null);
+            if(mid){ setMode('all'); selectMid(mid); if(m.hasSub&&u.id) selectSub(u.id); }
+          };
+          list.appendChild(row);
         });
       });
-      grp.appendChild(grid); unitsEl.appendChild(grp);
+      unitsEl.appendChild(list);
     });
+    // 접기/펼치기 상태 복원 (기본 접힘)
+    var unitsTitleEl = document.getElementById('unitsTitle');
+    var savedOpen = localStorage.getItem('dash_units_open') === '1';
+    unitsEl.style.display = savedOpen ? '' : 'none';
+    if(unitsTitleEl){
+      if(savedOpen) unitsTitleEl.classList.add('open');
+      else unitsTitleEl.classList.remove('open');
+    }
   }
 }
 
@@ -3981,6 +4081,23 @@ function handleMainStudyBtn(){
     setMode('review');
   }
   window.scrollTo({ top: 200, behavior: 'smooth' });
+}
+
+// 단원별 진도율 접기/펼치기 토글 (대시보드)
+function toggleUnitsCollapse(){
+  var el = document.getElementById('dashUnits');
+  var title = document.getElementById('unitsTitle');
+  if(!el || !title) return;
+  var open = el.style.display !== 'none';
+  if(open){
+    el.style.display = 'none';
+    title.classList.remove('open');
+    localStorage.setItem('dash_units_open', '0');
+  } else {
+    el.style.display = '';
+    title.classList.add('open');
+    localStorage.setItem('dash_units_open', '1');
+  }
 }
 
 // ── 마이그레이션 마법사 (대시보드 흐름 v4 적용 안내) ─────────
@@ -4900,9 +5017,177 @@ function getPassQuestions(todayQs, roundIdx, passNum, today){
 function renderHelpPanel(){
   var el = document.getElementById('helpPanel');
   if(!el) return;
+  if(!document.getElementById('hvw-styles')){
+    var st = document.createElement('style');
+    st.id = 'hvw-styles';
+    st.textContent =
+      '.hvw .vssec{margin:0 0 44px}' +
+      '.hvw .vssec-t{font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.35);margin-bottom:14px;display:flex;align-items:center;gap:8px}' +
+      '.hvw .vssec-t::after{content:"";flex:1;height:1px;background:rgba(255,255,255,.1)}' +
+      '.hvw .vscard{background:#1a2035;border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:22px}' +
+      '.hvw .vshead{font-size:16px;font-weight:800;color:#fff;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:8px}' +
+      '.hvw .jcards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px}' +
+      '.hvw .jcard{border-radius:12px;padding:20px 14px;text-align:center}' +
+      '.hvw .jcard.jo{background:rgba(34,197,94,.15);border:1.5px solid rgba(34,197,94,.4)}' +
+      '.hvw .jcard.jtr{background:rgba(249,115,22,.13);border:1.5px solid rgba(249,115,22,.4)}' +
+      '.hvw .jcard.jx{background:rgba(239,68,68,.15);border:1.5px solid rgba(239,68,68,.4)}' +
+      '.hvw .jicon{font-size:28px;margin-bottom:8px}' +
+      '.hvw .jbtn{display:inline-block;padding:5px 16px;border-radius:20px;font-size:15px;font-weight:800;margin-bottom:10px}' +
+      '.hvw .jcard.jo .jbtn{background:rgba(34,197,94,.25);color:#4ade80}' +
+      '.hvw .jcard.jtr .jbtn{background:rgba(249,115,22,.22);color:#fb923c}' +
+      '.hvw .jcard.jx .jbtn{background:rgba(239,68,68,.22);color:#f87171}' +
+      '.hvw .jmean{font-size:16px;font-weight:700;color:#fff;margin-bottom:5px}' +
+      '.hvw .jsub{font-size:12.5px;color:rgba(255,255,255,.5);margin:4px 0 10px}' +
+      '.hvw .jtag{font-size:13px;font-weight:700;padding:4px 12px;border-radius:20px;display:inline-block}' +
+      '.hvw .jcard.jo .jtag{background:rgba(34,197,94,.2);color:#86efac}' +
+      '.hvw .jcard.jtr .jtag{background:rgba(249,115,22,.18);color:#fdba74}' +
+      '.hvw .jcard.jx .jtag{background:rgba(239,68,68,.18);color:#fca5a5}' +
+      '.hvw .jflow{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.05);border-radius:10px;padding:14px 18px;font-size:13.5px;color:rgba(255,255,255,.7);flex-wrap:wrap}' +
+      '.hvw .jflow b{color:#fff}' +
+      '.hvw .jfa{color:rgba(255,255,255,.3);font-size:18px}' +
+      '.hvw .flwrap{display:flex;align-items:stretch;gap:0;margin-bottom:14px}' +
+      '.hvw .fnode{flex:1;border-radius:12px;padding:16px 10px;text-align:center}' +
+      '.hvw .fnode.fp1{background:rgba(59,130,246,.18);border:1.5px solid rgba(59,130,246,.4)}' +
+      '.hvw .fnode.fp2{background:rgba(249,115,22,.13);border:1.5px solid rgba(249,115,22,.35)}' +
+      '.hvw .fnode.fp3{background:rgba(168,85,247,.15);border:1.5px solid rgba(168,85,247,.35)}' +
+      '.hvw .fnode.fdone{background:rgba(34,197,94,.15);border:1.5px solid rgba(34,197,94,.4)}' +
+      '.hvw .farr{display:flex;align-items:center;padding:0 5px;color:rgba(255,255,255,.3);font-size:20px;flex-shrink:0}' +
+      '.hvw .fpass{font-size:13px;font-weight:700;letter-spacing:1px;margin-bottom:8px}' +
+      '.hvw .fnode.fp1 .fpass{color:#93c5fd}' +
+      '.hvw .fnode.fp2 .fpass{color:#fdba74}' +
+      '.hvw .fnode.fp3 .fpass{color:#d8b4fe}' +
+      '.hvw .fnode.fdone .fpass{color:#86efac}' +
+      '.hvw .fic{font-size:24px;margin-bottom:6px}' +
+      '.hvw .flbl{font-size:15px;font-weight:800;color:#fff;margin-bottom:5px}' +
+      '.hvw .fsub{font-size:12.5px;color:rgba(255,255,255,.6);line-height:1.6}' +
+      '.hvw .ftag{display:inline-block;margin-top:8px;font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px}' +
+      '.hvw .fnode.fp1 .ftag{background:rgba(59,130,246,.25);color:#93c5fd}' +
+      '.hvw .fnode.fp2 .ftag{background:rgba(249,115,22,.2);color:#fdba74}' +
+      '.hvw .fnode.fp3 .ftag{background:rgba(168,85,247,.2);color:#d8b4fe}' +
+      '.hvw .fnode.fdone .ftag{background:rgba(34,197,94,.2);color:#86efac}' +
+      '.hvw .fnote{background:rgba(255,255,255,.05);border-radius:10px;padding:12px 16px;font-size:13px;color:rgba(255,255,255,.6);display:flex;gap:12px;flex-wrap:wrap;line-height:1.7}' +
+      '.hvw .fnote b{color:#fff}' +
+      '.hvw .rgrid{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}' +
+      '.hvw .rset{display:flex;align-items:stretch;gap:8px}' +
+      '.hvw .rset-l{width:50px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:rgba(255,255,255,.55);flex-shrink:0;background:rgba(255,255,255,.05);border-radius:8px;padding:4px 6px;text-align:center}' +
+      '.hvw .rblocks{display:flex;gap:6px;flex:1}' +
+      '.hvw .rblk{flex:1;border-radius:10px;padding:12px 6px;text-align:center}' +
+      '.hvw .rblk.rf1{background:rgba(59,130,246,.2);border:1.5px solid rgba(59,130,246,.45)}' +
+      '.hvw .rblk.rf2{background:rgba(52,211,153,.15);border:1.5px solid rgba(52,211,153,.4)}' +
+      '.hvw .rblk.rf3{background:rgba(249,115,22,.15);border:1.5px solid rgba(249,115,22,.38)}' +
+      '.hvw .rblk.rev{background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.15)}' +
+      '.hvw .rblk.rst{position:relative}' +
+      '.hvw .rblk.rst::before{content:"🔄 초기화";position:absolute;top:-9px;left:50%;transform:translateX(-50%);font-size:9px;font-weight:700;background:#374151;color:#9ca3af;padding:2px 6px;border-radius:4px;white-space:nowrap}' +
+      '.hvw .rnum{font-size:16px;font-weight:800;color:#fff;margin-bottom:3px}' +
+      '.hvw .ric{font-size:16px;margin-bottom:4px}' +
+      '.hvw .rlbl{font-size:12.5px;font-weight:600;color:rgba(255,255,255,.65)}' +
+      '.hvw .rleg{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:rgba(255,255,255,.6)}' +
+      '.hvw .rleg span{display:flex;align-items:center;gap:5px}' +
+      '.hvw .ldot{width:10px;height:10px;border-radius:3px;flex-shrink:0}' +
+      '.hvw .qwrap{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:center;margin-bottom:14px}' +
+      '.hvw .qlbl{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.4);text-align:center;margin-bottom:8px}' +
+      '.hvw .qdays{display:flex;flex-direction:column;gap:6px}' +
+      '.hvw .qday{border-radius:8px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:700}' +
+      '.hvw .qday.qm{background:rgba(239,68,68,.13);border:1px solid rgba(239,68,68,.3);color:#fca5a5}' +
+      '.hvw .qday.qt{background:rgba(59,130,246,.18);border:1px solid rgba(59,130,246,.4);color:#93c5fd}' +
+      '.hvw .qday.qd{background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.35);color:#86efac}' +
+      '.hvw .qdn{color:rgba(255,255,255,.8);font-weight:600;font-size:13px}' +
+      '.hvw .qdc{font-family:monospace}' +
+      '.hvw .qdb{font-size:11px;font-weight:700;padding:2px 7px;border-radius:4px}' +
+      '.hvw .qday.qm .qdb{background:rgba(239,68,68,.2);color:#f87171}' +
+      '.hvw .qday.qt .qdb{background:rgba(59,130,246,.2);color:#60a5fa}' +
+      '.hvw .qday.qd .qdb{background:rgba(34,197,94,.2);color:#4ade80}' +
+      '.hvw .qarr{display:flex;flex-direction:column;align-items:center;gap:4px;color:rgba(255,255,255,.35)}' +
+      '.hvw .qarr small{font-size:10px;font-weight:700;letter-spacing:1px;color:rgba(255,255,255,.3)}' +
+      '.hvw .qnote{display:flex;align-items:flex-start;gap:10px;background:rgba(249,115,22,.08);border:1px solid rgba(249,115,22,.25);border-radius:10px;padding:12px 14px;font-size:13px;color:rgba(255,255,255,.7);line-height:1.7}' +
+      '.hvw .qnote b{color:#fb923c}' +
+      '.hvw .sgrid{display:flex;flex-direction:column}' +
+      '.hvw .srow{display:flex;align-items:stretch}' +
+      '.hvw .sline{display:flex;flex-direction:column;align-items:center;width:44px;flex-shrink:0}' +
+      '.hvw .scirc{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;z-index:1}' +
+      '.hvw .scon{width:2px;flex:1;background:rgba(255,255,255,.1);min-height:14px}' +
+      '.hvw .scon.last{background:transparent}' +
+      '.hvw .sbody{flex:1;padding:2px 0 20px 4px}' +
+      '.hvw .stitle{font-size:15px;font-weight:800;color:#fff;margin-bottom:4px;line-height:32px}' +
+      '.hvw .sdesc{font-size:13px;color:rgba(255,255,255,.6);line-height:1.7}' +
+      '.hvw .srow:nth-child(1) .scirc{background:rgba(59,130,246,.3);color:#93c5fd;border:1.5px solid rgba(59,130,246,.5)}' +
+      '.hvw .srow:nth-child(2) .scirc{background:rgba(59,130,246,.3);color:#93c5fd;border:1.5px solid rgba(59,130,246,.5)}' +
+      '.hvw .srow:nth-child(3) .scirc{background:rgba(59,130,246,.25);color:#93c5fd;border:1.5px solid rgba(59,130,246,.4)}' +
+      '.hvw .srow:nth-child(4) .scirc{background:rgba(249,115,22,.22);color:#fb923c;border:1.5px solid rgba(249,115,22,.45)}' +
+      '.hvw .srow:nth-child(5) .scirc{background:rgba(168,85,247,.22);color:#c084fc;border:1.5px solid rgba(168,85,247,.45)}' +
+      '.hvw .srow:nth-child(6) .scirc{background:rgba(34,197,94,.22);color:#4ade80;border:1.5px solid rgba(34,197,94,.45)}' +
+      '.hvw .srow:nth-child(7) .scirc{background:rgba(249,115,22,.22);color:#fb923c;border:1.5px solid rgba(249,115,22,.45)}';
+    document.head.appendChild(st);
+  }
   el.innerHTML = '<div style="max-width:920px;margin:0 auto;padding:16px 14px 60px;">'
   + '<div class="dash-section">'
   + '<div class="dash-title">📖 경영학 기출문제집 OX풀이 사용 설명서</div>'
+  + '<p style="font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--dim);margin:4px 0 20px;display:flex;align-items:center;gap:10px;">🖼 한 눈에 보기 <span style="flex:1;height:1px;background:var(--border);display:inline-block;"></span></p>'
+  + '<div class="hvw">'
+  // ① 판정 버튼
+  + '<div class="vssec"><div class="vssec-t">① O / △ / X 판정 버튼</div><div class="vscard">'
+  + '<div class="vshead">🔘 판정 버튼 — 각 지문마다 학습 상태를 기록합니다</div>'
+  + '<div class="jcards">'
+  + '<div class="jcard jo"><div class="jicon">✅</div><div class="jbtn">O</div><div class="jmean">완벽히 알겠다</div><div class="jsub">확실히 이해됨</div><div class="jtag">복습 제외</div></div>'
+  + '<div class="jcard jtr"><div class="jicon">🔁</div><div class="jbtn">△</div><div class="jmean">한 번 더 볼게</div><div class="jsub">애매하게 알겠음</div><div class="jtag">복습 포함</div></div>'
+  + '<div class="jcard jx"><div class="jicon">❌</div><div class="jbtn">X</div><div class="jmean">모르겠다 / 틀렸다</div><div class="jsub">확실히 모름</div><div class="jtag">복습 포함</div></div>'
+  + '</div>'
+  + '<div class="jflow"><b>판정 버튼 클릭</b><span class="jfa">→</span>해설 자동 펼침<span class="jfa">→</span><b>△·X 지문</b>은 2차·3차 복습에 자동 포함<span class="jfa">→</span>원본 데이터에 저장</div>'
+  + '</div></div>'
+  // ② 하루 학습 흐름
+  + '<div class="vssec"><div class="vssec-t">② 하루 학습 흐름 (1차 → 2차 → 3차)</div><div class="vscard">'
+  + '<div class="vshead">📅 하루 차수 진행 흐름</div>'
+  + '<div class="flwrap">'
+  + '<div class="fnode fp1"><div class="fpass">1차</div><div class="fic">📖</div><div class="flbl">학습모드</div><div class="fsub">전체 지문<br>O/△/X 판정<br>해설 확인</div><div class="ftag">원본 저장</div></div>'
+  + '<div class="farr">→</div>'
+  + '<div class="fnode fp2"><div class="fpass">2차</div><div class="fic">🔁</div><div class="flbl">복습모드</div><div class="fsub">△·X 지문만<br>닫힌 상태로 재도전<br>임시 판정</div><div class="ftag">원본 보존</div></div>'
+  + '<div class="farr">→</div>'
+  + '<div class="fnode fp3"><div class="fpass">3차</div><div class="fic">🔁</div><div class="flbl">복습모드</div><div class="fsub">2차에서 남은<br>△·X 지문 점검<br>임시 판정 리셋</div><div class="ftag">원본 보존</div></div>'
+  + '<div class="farr">→</div>'
+  + '<div class="fnode fdone"><div class="fpass">완료</div><div class="fic">🎉</div><div class="flbl">오늘 종료</div><div class="fsub">녹색 완료<br>메시지 표시<br>푹 쉬세요</div><div class="ftag">다음날 자동 이어짐</div></div>'
+  + '</div>'
+  + '<div class="fnote"><div>📌 <b>1차</b>는 원본 O/△/X 데이터에 저장 &nbsp;|&nbsp; <b>2·3차</b>는 임시 판정(rv_*)으로만 저장 — 원본 영향 없음</div><div>💡 대시보드 <b>📚 이어서 학습 시작</b> 버튼 하나로 1차→2차→3차 자동 안내</div></div>'
+  + '</div></div>'
+  // ③ 9회독 구조
+  + '<div class="vssec"><div class="vssec-t">③ 9회독 구조</div><div class="vscard">'
+  + '<div class="vshead">🔄 3세트 × 3회독 구조</div>'
+  + '<div class="rgrid">'
+  + '<div class="rset"><div class="rset-l">세트 1</div><div class="rblocks"><div class="rblk rf1"><div class="ric">📖</div><div class="rnum">1회독</div><div class="rlbl">전체 학습</div></div><div class="rblk rev"><div class="ric">🔁</div><div class="rnum">2회독</div><div class="rlbl">△·X 복습</div></div><div class="rblk rev"><div class="ric">🔁</div><div class="rnum">3회독</div><div class="rlbl">△·X 마무리</div></div></div></div>'
+  + '<div class="rset" style="margin-top:18px;"><div class="rset-l">세트 2</div><div class="rblocks"><div class="rblk rf2 rst"><div class="ric">📖</div><div class="rnum">4회독</div><div class="rlbl">전체 재학습</div></div><div class="rblk rev"><div class="ric">🔁</div><div class="rnum">5회독</div><div class="rlbl">△·X 복습</div></div><div class="rblk rev"><div class="ric">🔁</div><div class="rnum">6회독</div><div class="rlbl">△·X 마무리</div></div></div></div>'
+  + '<div class="rset" style="margin-top:18px;"><div class="rset-l">세트 3</div><div class="rblocks"><div class="rblk rf3 rst"><div class="ric">📖</div><div class="rnum">7회독</div><div class="rlbl">전체 재학습</div></div><div class="rblk rev"><div class="ric">🔁</div><div class="rnum">8회독</div><div class="rlbl">△·X 복습</div></div><div class="rblk rev"><div class="ric">🔁</div><div class="rnum">9회독</div><div class="rlbl">최종 마무리</div></div></div></div>'
+  + '</div>'
+  + '<div class="rleg"><span><div class="ldot" style="background:rgba(59,130,246,.65);"></div> 전체 학습 (학습모드)</span><span><div class="ldot" style="background:rgba(255,255,255,.25);"></div> △·X 복습 (복습모드)</span><span><div class="ldot" style="background:#374151;"></div> 🔄 시작 시 판정 데이터 자동 초기화</span></div>'
+  + '</div></div>'
+  // ④ 이월
+  + '<div class="vssec"><div class="vssec-t">④ 이월(밀린 진도) 자동 처리</div><div class="vscard">'
+  + '<div class="vshead">📦 밀린 진도는 다음날 큐에 자동 합산됩니다</div>'
+  + '<div class="qwrap">'
+  + '<div><div class="qlbl">❌ 이전 방식</div><div class="qdays"><div class="qday qm"><span class="qdn">10일</span><span class="qdc">10 / 18</span><span class="qdb">8개 미완</span></div><div class="qday qt"><span class="qdn">11일 큐</span><span class="qdc">18개</span><span class="qdb">새 것만</span></div><div style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:10px 12px;font-size:13px;color:#f87171;margin-top:4px;line-height:1.6;">⚠ 10일 잔여 8개가 계속 밀림<br>영원히 뒤처진 상태 지속</div></div></div>'
+  + '<div class="qarr"><span style="font-size:26px;">→</span><small>수정 후</small></div>'
+  + '<div><div class="qlbl">✅ 현재 방식</div><div class="qdays"><div class="qday qm"><span class="qdn">10일</span><span class="qdc">10 / 18</span><span class="qdb">8개 이월</span></div><div class="qday qt"><span class="qdn">11일 큐</span><span class="qdc">26개</span><span class="qdb">8이월+18</span></div><div style="background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);border-radius:8px;padding:10px 12px;font-size:13px;color:#4ade80;margin-top:4px;line-height:1.6;">✓ 26개 완료 시<br>10일 🟢 + 11일 🟢 동시 완료</div></div></div>'
+  + '</div>'
+  + '<div class="qnote"><span style="font-size:15px;">⚠</span><div><b>한도 1.5배 초과 시 자동 알림</b> — 밀린 양이 너무 많아 하루 목표의 1.5배를 넘으면 대시보드에 경고 배너와 <b>📅 일정 재조정</b> 버튼이 자동 표시됩니다<br><span style="color:rgba(255,255,255,.45);font-size:12px;">예: 하루 18문제 기준 → 한도 27문제. 초과 시 알림 발동</span></div></div>'
+  + '</div></div>'
+  // ⑤ 권장 학습 순서
+  + '<div class="vssec"><div class="vssec-t">⑤ 권장 학습 순서</div><div class="vscard">'
+  + '<div class="vshead">🗺 이 순서대로 하면 됩니다</div>'
+  + '<div class="sgrid">'
+  + '<div class="srow"><div class="sline"><div class="scirc">1</div><div class="scon"></div></div><div class="sbody"><div class="stitle">📅 회독 플랜 설정</div><div class="sdesc">대시보드 → 시험일 + 학습 범위 입력 → 9회독 전체 일정 자동 계산</div></div></div>'
+  + '<div class="srow"><div class="sline"><div class="scirc">2</div><div class="scon"></div></div><div class="sbody"><div class="stitle">📚 이어서 학습 시작</div><div class="sdesc">대시보드의 버튼 하나 클릭 → 시스템이 오늘 차수와 모드를 자동 안내</div></div></div>'
+  + '<div class="srow"><div class="sline"><div class="scirc">3</div><div class="scon"></div></div><div class="sbody"><div class="stitle">📖 1차 — 학습모드</div><div class="sdesc">오늘 분량 지문 읽기 → O / △ / X 판정 → 해설 확인 → 원본 저장</div></div></div>'
+  + '<div class="srow"><div class="sline"><div class="scirc">4</div><div class="scon"></div></div><div class="sbody"><div class="stitle">🔁 2차 — 복습모드</div><div class="sdesc">1차에서 △·X 표시한 지문을 닫힌 상태로 다시 풀기 (임시 판정, 원본 보존)</div></div></div>'
+  + '<div class="srow"><div class="sline"><div class="scirc">5</div><div class="scon"></div></div><div class="sbody"><div class="stitle">🔁 3차 — 복습모드</div><div class="sdesc">2차에서 남은 △·X 지문 마지막 점검 → 모두 완료 시 차수 자동 종료</div></div></div>'
+  + '<div class="srow"><div class="sline"><div class="scirc">6</div><div class="scon"></div></div><div class="sbody"><div class="stitle">🎉 오늘 완료 — 쉬기</div><div class="sdesc">녹색 완료 메시지 확인 후 오늘 학습 종료. 앞당기지 않아도 됩니다</div></div></div>'
+  + '<div class="srow"><div class="sline"><div class="scirc">7</div><div class="scon last"></div></div><div class="sbody"><div class="stitle">🎯 파이널체크 (시험 직전)</div><div class="sdesc">남은 △·X 지문 해설 읽고 ✅ 외움 버튼으로 하나씩 제거 → 시험 최종 점검</div></div></div>'
+  + '</div>'
+  + '</div></div>'
+  + '</div>' // end .hvw
+  // 구분선
+  + '<div style="display:flex;align-items:center;gap:12px;margin:36px 0 28px;">'
+  + '<div style="flex:1;height:1px;background:var(--border);"></div>'
+  + '<span style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--dim);">📋 항목별 상세 설명</span>'
+  + '<div style="flex:1;height:1px;background:var(--border);"></div>'
+  + '</div>'
   + '<div style="font-size:13px;color:var(--dim);line-height:1.9;">'
 
   // ① 판정 버튼
@@ -4948,7 +5233,7 @@ function renderHelpPanel(){
   + '<li>복습모드의 O/△/X 판정은 <b>임시 저장</b>으로, 원본 데이터에 영향을 주지 않습니다</li>'
   + '<li>다음 차수(예: 2차→3차)가 되면 임시 판정이 리셋되어 <b>지문이 다시 닫힌 상태</b>로 나타납니다</li>'
   + '<li>플랜이 있으면 상단 칩이 <b>오늘 △·X 문항 기준</b>으로 표시됩니다</li>'
-  + '<li><b>🗑 복습 초기화</b> 버튼을 누르면 임시 판정만 삭제 — 원본 데이터(△·X 지문 목록) 보존</li>'
+  + '<li><b>🗑 복습 초기화</b> 버튼(상단 액션 바)을 누르면 임시 판정만 삭제 — 원본 데이터(△·X 지문 목록) 보존</li>'
   + '</ul>'
 
   + '<p style="font-weight:700;color:var(--correct);margin:10px 0 3px;">🎯 파이널체크</p>'
@@ -4963,11 +5248,13 @@ function renderHelpPanel(){
 
   + '<p style="font-weight:700;color:var(--c1);margin:10px 0 3px;">📊 대시보드</p>'
   + '<ul style="padding-left:18px;margin:0 0 8px;">'
-  + '<li>오늘의 회독 플랜 현황 및 진행률 확인</li>'
-  + '<li>계획 대비 실제 진도 비교 그래프</li>'
-  + '<li>회독 캘린더 (날짜 클릭 시 해당 범위 학습 가능)</li>'
-  + '<li>최근 14일 학습 기록 차트 및 단원별 완료율</li>'
-  + '<li>진도 미달 시 몰아치기 / 일정 재조정 / 하루 분량 늘리기 옵션</li>'
+  + '<li>오늘의 회독 플랜 현황 및 진행률 확인 (통합 다크 카드)</li>'
+  + '<li><b>📚 이어서 학습 시작</b> 버튼 하나로 차수 자동 진행 (1차 → 2차 → 3차)</li>'
+  + '<li>밀린 분량은 자동으로 흡수 — 별도 조작 불필요</li>'
+  + '<li>밀린 분량이 일일 목표의 <b>1.5배 초과</b> 시 한도 알림 + 📅 재조정 버튼 자동 표시</li>'
+  + '<li>3차 완료 시 🎉 녹색 완료 메시지 표시 — 충분한 휴식 권장</li>'
+  + '<li>회독별 일일 학습현황 (회독 탭 + 다크 캘린더, 날짜 클릭 시 해당 범위 학습 가능)</li>'
+  + '<li>단원별 진도율 (다크 한 줄 압축, 기본 접힘 — 제목 클릭으로 펼침/접기)</li>'
   + '<li>단원 선택 범위 설정 시 범위 밖 단원은 흐리게 표시</li>'
   + '</ul>'
 
@@ -4997,6 +5284,7 @@ function renderHelpPanel(){
   + '<li>회독 일수 기준: 1회독 D1, 4회독 D1×0.85, 7회독 D1×0.70 (반복으로 속도 증가)</li>'
   + '<li>2·3회독은 1회독에서 체크된 △·X 지문 수가 고정이므로 동일한 양을 봅니다</li>'
   + '<li>△·X 비율이 ±20% 이상 변하면 일정 재조정 알림이 표시됩니다</li>'
+  + '<li><b>⚠ 한도 1.5배 초과 알림</b> — 오늘 분량(밀린 분량 포함)이 일일 목표의 1.5배를 넘으면 대시보드에 경고 알림과 <b>📅 일정 재조정</b> 버튼이 자동으로 표시됩니다 (예: 평소 30문제/일 → 한도 45문제)</li>'
   + '<li>플랜 설정 탭의 <b>🗑 전체 초기화</b> 버튼으로 플랜만 삭제 (학습 데이터 보존)</li>'
   + '<li>로그인한 사용자마다 <b>독립적인 플랜</b>을 가집니다</li>'
   + '</ul>'
@@ -5010,6 +5298,7 @@ function renderHelpPanel(){
   + '<li>선택 범위는 플랜 일수 계산, 대시보드 진도, 파이널체크 등 모든 곳에 반영됩니다</li>'
   + '<li>플랜 진행 중 범위를 변경하면 경고 팝업이 표시됩니다</li>'
   + '<li>대시보드 캘린더 상단에 현재 선택 범위가 표시됩니다</li>'
+  + '<li>학습 화면 상단 단원 사이드바에는 <b>좌우 화살표(‹ ›)</b>가 있어 대단원/중단원/소단원 탭이 화면을 넘칠 때 가로 스크롤로 이전·다음 단원을 빠르게 이동할 수 있습니다</li>'
   + '</ul>'
 
   // ⑦ 동기화 및 계정
@@ -5027,9 +5316,11 @@ function renderHelpPanel(){
   + '<p style="font-weight:800;color:var(--text);font-size:14px;margin:20px 0 6px;padding-bottom:4px;border-bottom:2px solid var(--border);">⑧ 기타 기능</p>'
   + '<ul style="padding-left:18px;margin:0 0 16px;">'
   + '<li><b>🔍 검색</b> — 지문, 선택지, 해설 전체를 키워드로 검색</li>'
+  + '<li><b>🗑 복습 초기화</b> — 복습모드의 임시 판정만 삭제. 원본 데이터(△·X 지문 목록)는 유지됩니다 (학습/복습 화면 상단 액션 바)</li>'
+  + '<li><b>📊 단원별 진도율 카드 접기/펼치기</b> — 대시보드 단원별 진도율 카드는 <b>기본 접힘 상태</b>로 시작합니다. 카드 제목을 클릭하면 펼쳐지고, 펼친 상태는 다음 진입까지 유지됩니다</li>'
   + '<li><b>전체 초기화</b> — 모든 O/△/X 판정 데이터를 완전히 삭제 (학습 처음부터 다시 시작)</li>'
-  + '<li><b>🗑 복습 초기화</b> — 복습모드의 임시 판정만 삭제. 원본 데이터(△·X 지문 목록)는 유지됩니다</li>'
   + '<li><b>뒤로가기 버튼</b> — 앱이 닫히지 않도록 방지됩니다</li>'
+  + '<li><b>🎯 새 학습 흐름 안내 (마이그레이션)</b> — 새 버전 첫 진입 시, 기존에 누락된 2/3차 복습 분량을 분석해 처리 방법을 선택할 수 있습니다 (📅 자동 분산 / ⏭ 건너뛰기 / 나중에 결정). 나중에 결정한 경우 경과 기간에 따라 작은 점 → 배너 → 모달 순서로 안내가 점진적으로 강해집니다</li>'
   + '</ul>'
 
   // 권장 학습 순서
@@ -5037,10 +5328,12 @@ function renderHelpPanel(){
   + '<p style="font-weight:700;color:#166534;margin-bottom:6px;">💡 권장 학습 순서</p>'
   + '<ol style="padding-left:18px;margin:0;font-size:12.5px;color:var(--dim);line-height:2.2;">'
   + '<li>📅 대시보드에서 <b>회독 플랜 설정</b> (시험일 + 학습 범위 입력)</li>'
-  + '<li>📖 <b>학습모드</b>에서 오늘 분량 지문 읽고 O/△/X 판정 → 해설 확인</li>'
-  + '<li>🔁 <b>복습모드</b>에서 △·X 지문을 닫힌 상태로 다시 풀기 (임시 판정, 원본 보존)</li>'
-  + '<li>🔁 다음 차수에 복습모드 재진입 → 임시 판정 리셋, 처음부터 다시 풀기</li>'
-  + '<li>🎯 시험 직전 <b>파이널체크</b>에서 남은 △·X 지문 해설 읽고 ✅ 외움으로 하나씩 제거</li>'
+  + '<li>📚 대시보드의 <b>이어서 학습 시작</b> 버튼을 눌러 오늘 차수 학습 시작 (시스템이 자동으로 1차→2차→3차 안내)</li>'
+  + '<li>📖 <b>1차 (학습모드)</b> — 오늘 분량 지문 읽고 O/△/X 판정 → 해설 확인 → 원본 저장</li>'
+  + '<li>🔁 <b>2차 (복습모드)</b> — △·X 지문을 닫힌 상태로 다시 풀기 (임시 판정, 원본 보존)</li>'
+  + '<li>🔁 <b>3차 (복습모드)</b> — 2차에서 남은 △·X 지문 마지막 점검</li>'
+  + '<li>🎉 3차 완료 후 녹색 완료 메시지 확인 — 오늘 학습 종료, 푹 쉬기</li>'
+  + '<li>🎯 시험 직전 <b>파이널체크</b>에서 남은 △·X 지문 해설 읽고 ✅ 외움 버튼으로 하나씩 제거</li>'
   + '</ol>'
   + '</div>'
 

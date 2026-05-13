@@ -324,21 +324,6 @@ body{background:var(--bg);color:var(--text);font-family:'Pretendard',sans-serif;
 .sync-btn.import:hover{background:#60a5fa;color:#000;}
 .sync-info{font-size:10px;color:rgba(255,255,255,.35);margin-left:auto;}
 
-/* ── 타이머 바 ── */
-.timer-bar{background:#0f172a;border-bottom:1px solid rgba(255,255,255,.06);padding:4px 14px;transition:all .2s;}
-.timer-bar.collapsed .timer-inner{display:none;}
-.timer-bar.collapsed{padding:0;}
-.timer-toggle{position:absolute;right:14px;top:50%;transform:translateY(-50%);border:none;background:rgba(255,255,255,.08);color:rgba(255,255,255,.4);cursor:pointer;font-size:10px;padding:2px 7px;border-radius:3px;transition:all .15s;}
-.timer-toggle:hover{background:rgba(255,255,255,.15);color:#fff;}
-.timer-bar-wrapper{position:relative;}
-.timer-inner{max-width:920px;margin:0 auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
-.timer-display{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:#f0f9ff;letter-spacing:.08em;min-width:58px;}
-.timer-btn{border:1px solid rgba(255,255,255,.18);border-radius:5px;background:rgba(255,255,255,.07);color:rgba(255,255,255,.7);cursor:pointer;font-size:11px;padding:3px 9px;transition:all .15s;}
-.timer-btn:hover{background:rgba(255,255,255,.15);color:#fff;}
-.timer-btn.running{border-color:#4ade80;color:#4ade80;}
-.timer-sep{color:rgba(255,255,255,.2);font-size:11px;}
-.today-stat{font-size:10.5px;color:rgba(255,255,255,.45);margin-left:auto;}
-.today-stat span{color:#93c5fd;font-weight:700;}
 
 /* ── 대시보드 탭 ── */
 .dash-panel{display:none;padding:16px 0 60px;}
@@ -665,20 +650,6 @@ body{background:var(--bg);color:var(--text);font-family:'Pretendard',sans-serif;
   </div>
 </div>
 
-<!-- 타이머 바 -->
-<div class="timer-bar-wrapper">
-  <div class="timer-bar" id="timerBar">
-    <div class="timer-inner">
-      <span style="font-size:10.5px;color:rgba(255,255,255,.4);flex-shrink:0;">⏱ 학습</span>
-      <span class="timer-display" id="timerDisplay">00:00</span>
-      <button class="timer-btn" id="timerBtn" onclick="toggleTimer()">▶ 시작</button>
-      <button class="timer-btn" onclick="resetTimer()" title="초기화">↺</button>
-      <span class="timer-sep">|</span>
-      <span class="today-stat">오늘: <span id="todayCount">0</span>문항 완료 &nbsp;|&nbsp; 연속 <span id="streakDays">0</span>일</span>
-    </div>
-  </div>
-  <button class="timer-toggle" id="timerToggle" onclick="toggleTimerBar()" title="타이머 접기/펼치기">⏱</button>
-</div>
 <div class="search-bar" id="searchBar">
   <div class="search-inner">
     <div class="search-wrap">
@@ -2710,56 +2681,6 @@ function updateProg(){
 
 
 // ═══════════════════════════════════════════
-// 타이머
-// ═══════════════════════════════════════════
-var timerSec = 0, timerRunning = false, timerInterval = null;
-function toggleTimer(){
-  timerRunning = !timerRunning;
-  var btn = document.getElementById('timerBtn');
-  if(timerRunning){
-    btn.textContent = '⏸ 일시정지'; btn.className = 'timer-btn running';
-    timerInterval = setInterval(function(){
-      timerSec++;
-      var h = Math.floor(timerSec/3600), m = Math.floor((timerSec%3600)/60), s = timerSec%60;
-      var disp = (h>0?('0'+h).slice(-2)+':':'')+ ('0'+m).slice(-2)+':'+('0'+s).slice(-2);
-      var el = document.getElementById('timerDisplay'); if(el) el.textContent = disp;
-      // 30분마다 로컬 저장
-      if(timerSec % 60 === 0) saveTimerToday();
-    }, 1000);
-  } else {
-    clearInterval(timerInterval);
-    btn.textContent = '▶ 시작'; btn.className = 'timer-btn';
-    saveTimerToday();
-  }
-}
-function resetTimer(){
-  clearInterval(timerInterval); timerRunning = false; timerSec = 0;
-  var btn = document.getElementById('timerBtn'); if(btn){ btn.textContent='▶ 시작'; btn.className='timer-btn'; }
-  var el = document.getElementById('timerDisplay'); if(el) el.textContent = '00:00';
-}
-function toggleTimerBar(){
-  var bar = document.getElementById('timerBar');
-  var btn = document.getElementById('timerToggle');
-  if(!bar) return;
-  var collapsed = bar.classList.toggle('collapsed');
-  if(btn) btn.textContent = collapsed ? '⏱+' : '⏱';
-  localStorage.setItem('timer_collapsed', collapsed?'1':'0');
-}
-function initTimerBarState(){
-  if(localStorage.getItem('timer_collapsed')==='1'){
-    var bar = document.getElementById('timerBar');
-    var btn = document.getElementById('timerToggle');
-    if(bar) bar.classList.add('collapsed');
-    if(btn) btn.textContent = '⏱+';
-  }
-}
-function saveTimerToday(){
-  var key = 'timer_' + todayStr();
-  var prev = parseInt(localStorage.getItem(key)||'0');
-  localStorage.setItem(key, prev + 60); // 1분 단위 저장은 별도로 안 쓰고 누적만
-}
-
-// ═══════════════════════════════════════════
 // 오늘 학습량 / 연속일
 // ═══════════════════════════════════════════
 function todayStr(){ var d=new Date(); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
@@ -2912,21 +2833,13 @@ function renderDashboard(){
     if(diff < 0){
       delayHtml = '<div class="delay-alert '+statusClass+'" style="margin-top:12px;">'
         +'<div class="delay-alert-title">'+statusMsg+'</div>'
-        +'<div class="delay-alert-desc">처리 방법을 선택해 주세요.</div>'
-        +'<div class="delay-actions">'
-        +'<button class="delay-btn catch" onclick="catchUpPlan()">🔥 오늘 몰아치기</button>'
-        +'<button class="delay-btn replan" onclick="replanFromToday()">📅 일정 재조정</button>'
-        +'<button class="delay-btn ignore" onclick="ignorDelay()">일단 무시</button>'
-        +'</div></div>';
+        +'<div class="delay-alert-desc">이어서 학습 버튼을 누르면 밀린 분량이 자동으로 처리됩니다.</div>'
+        +'</div>';
     } else if(diff > 0) {
-      // 앞서가는 경우: 플랜 앞당기기
-      var aheadDays = tp&&tp.status==='active'&&tp.qPerDay>0 ? Math.round(diff/tp.qPerDay) : 0;
       delayHtml = '<div class="delay-alert ok" style="margin-top:12px;">'
         +'<div class="delay-alert-title">'+statusMsg+'</div>'
-        +'<div class="delay-alert-desc">진도가 앞서있어요!</div>'
-        +'<div class="delay-actions">'
-        +(aheadDays>=2?'<button class="delay-btn replan" onclick="replanFaster()">⚡ 플랜 앞당기기 (약 '+aheadDays+'일)</button>':'')
-        +'</div></div>';
+        +'<div class="delay-alert-desc">진도가 앞서있어요! 페이스를 유지하세요 💪</div>'
+        +'</div>';
     } else {
       delayHtml = '<div class="delay-alert ok" style="margin-top:12px;"><div class="delay-alert-title">'+statusMsg+'</div></div>';
     }
@@ -3250,43 +3163,6 @@ function replanFromToday(){
   alert('✅ 일정이 재조정됐습니다!\n\n'
     + '현재 회독: ' + newQpd + '문항/일로 조정\n'
     + '실제 △·X ' + actualWrongCount + '문항(' + Math.round(rActual*100) + '%) 기준으로\n이후 회독 문항수 재산정 완료');
-}
-
-// ── 빠른 진도 반영 플랜 앞당기기 ────────────────────────
-// 실제 진도가 계획보다 앞선 경우 시작일을 앞당겨 일정 재계산
-function replanFaster(){
-  var plan = loadPlan();
-  if(!plan) return;
-  var allQ = getPlanQuestions();
-  var actualDone = allQ.filter(function(q){ return isQDone(q); }).length;
-  var expectedDone = calcExpectedDone(plan, todayStr(), allQ);
-  var diff = actualDone - expectedDone;
-  if(diff <= 0){ alert('현재 계획보다 앞서있지 않아요.'); return; }
-
-  var tp = getTodayPlan();
-  var qPerDay = (tp&&tp.qPerDay>0) ? tp.qPerDay : Math.ceil(allQ.length/(plan.d1||21));
-  var aheadDays = Math.round(diff / qPerDay);
-
-  if(!confirm(
-    '⚡ 플랜 앞당기기\n\n'
-    +'현재 계획보다 약 '+aheadDays+'일 앞서있어요.\n'
-    +'오늘부터 일정을 앞당겨 재계산합니다.\n\n'
-    +'시험일: '+plan.examDate+'\n'
-    +'진행 기록은 유지됩니다. 재조정할까요?'
-  )) return;
-
-  // 앞당긴 시작일 계산: 실제 진도만큼 앞선 날짜를 새 "오늘"로 설정
-  // 단순히 오늘 기준으로 재계산 (calcPlan이 실제 완료 문항 반영)
-  var newPlan = calcPlan(todayStr(), plan.examDate, plan.d1||21, plan.goalRounds||9);
-  newPlan.aheadReplan = true;
-  savePlanData(newPlan);
-  renderDashboard();
-  renderTodayBanner();
-  alert('✅ 플랜이 앞당겨졌습니다!\n\n약 '+aheadDays+'일 앞선 진도 반영 완료\n남은 일정이 최적화됐어요 🚀');
-}
-
-function ignorDelay(){
-  renderDashboard(); // 그냥 닫기 (아무것도 안 함)
 }
 
 // ── 차수 완료 팝업 ──────────────────────────────────────
@@ -4372,7 +4248,6 @@ cleanOldRvKeys();   // 3일 이상 된 임시 판정 키 자동 정리
     }
   }catch(e){}
 })();
-initTimerBarState();
 renderTabs();
 renderAll();
 updateProg();
@@ -4691,7 +4566,6 @@ function renderHelpPanel(){
   // ⑧ 기타 기능
   + '<p style="font-weight:800;color:var(--text);font-size:14px;margin:20px 0 6px;padding-bottom:4px;border-bottom:2px solid var(--border);">⑧ 기타 기능</p>'
   + '<ul style="padding-left:18px;margin:0 0 16px;">'
-  + '<li><b>⏱ 타이머</b> — 학습 시간 측정. 상단 ⏱ 버튼으로 접기/펼치기. 오늘 완료 문항 수와 연속 학습일 자동 기록</li>'
   + '<li><b>🔍 검색</b> — 지문, 선택지, 해설 전체를 키워드로 검색</li>'
   + '<li><b>전체 초기화</b> — 모든 O/△/X 판정 데이터를 완전히 삭제 (학습 처음부터 다시 시작)</li>'
   + '<li><b>🗑 복습 초기화</b> — 복습모드의 임시 판정만 삭제. 원본 데이터(△·X 지문 목록)는 유지됩니다</li>'

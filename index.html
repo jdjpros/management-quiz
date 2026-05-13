@@ -2052,16 +2052,56 @@ function setRvGnJudge(qId,idx,level){
     if(cur===level) localStorage.removeItem(k); else localStorage.setItem(k,level);
   }catch(e){}
 }
-// 복습모드에서 문제 전체 판정 완료 여부 (임시 rv_ 기준)
+// 복습모드에서 문제 전체 판정 완료 여부 — 1차에서 틀린 지문만 rv 판정 요구 (행정법 a9e93eb 기준)
 function isQRvDone(q){
+  // 유형2/3: ㄱㄴㄷ형 — 1차에서 틀린 지문만 rv 판정 요구
   if(Q_OPTS_BOX.has(q.id)||Q_EXPS_BOX.has(q.id)){
-    return q.exps.every(function(e,i){ return getRvGnJudge(q.id,i)!==null; });
+    var cnt=q.exps.length; if(!cnt) return false;
+    var any2=false;
+    for(var i=0;i<cnt;i++){
+      var jv2=getGnJudge(q.id,i);
+      var ox2=(q.exps[i]&&q.exps[i].ox)||'O';
+      if(_isReviewTarget(jv2,ox2)){
+        any2=true;
+        if(getRvGnJudge(q.id,i)===null) return false;
+      }
+    }
+    return any2;
   }
+  // 유형1: 박스형 — 1차에서 틀린 라벨만 rv 판정 요구
   var parsed=parseBoxStem(q.stem);
-  if(parsed.items.length>0&&!Q3_TYPE.has(q.id)){
-    return parsed.items.every(function(it){ return getRvBoxJudge(q.id,it.label)!==null; });
+  var boxMode=parsed.items.length>0&&!Q3_TYPE.has(q.id);
+  if(boxMode){
+    var _lmapR={'A':0,'B':1,'C':2,'D':3,'E':4,'ㄱ':0,'ㄴ':1,'ㄷ':2,'ㄹ':3,'ㅁ':4,'ㅂ':5,'ㅅ':6,'ㅇ':7,'ㅈ':8};
+    var anyB=false;
+    for(var bi=0;bi<parsed.items.length;bi++){
+      var it=parsed.items[bi];
+      var jvB=getBoxJudge(q.id,it.label);
+      var liR=(_lmapR[it.label]!==undefined?_lmapR[it.label]:0);
+      var bexpR=(q.bexps&&q.bexps[liR])||null;
+      var expR=bexpR||q.exps[liR]||{ox:'O'};
+      var oxR=expR.ox||'O';
+      if(_isReviewTarget(jvB,oxR)){
+        anyB=true;
+        if(getRvBoxJudge(q.id,it.label)===null) return false;
+      }
+    }
+    return anyB;
   }
-  return q.opts.every(function(o,i){ return getRvJudge(q.id,i+1)!==null; });
+  // 일반 4지선다 — 1차에서 틀린 지문만 rv 판정 요구
+  if(!q.opts||q.opts.length===0) return false;
+  var isOtypeR=O_TYPE.has(q.id);
+  var anyO=false;
+  for(var k=1;k<=q.opts.length;k++){
+    var jvO=getOptJudge(q.id,k);
+    var isAnsR=(k===q.ans);
+    var oxR2=isOtypeR?(isAnsR?'O':'X'):(isAnsR?'X':'O');
+    if(_isReviewTarget(jvO,oxR2)){
+      anyO=true;
+      if(getRvJudge(q.id,k)===null) return false;
+    }
+  }
+  return anyO;
 }
 // 복습모드에서 해당 지문이 임시 O 처리됐는지
 function isRvDone(qId,idx,type){
@@ -3000,8 +3040,7 @@ function renderDashboard(){
         +'</div>';
     } else if(tp && tp.status==='active'){
       // 통합 다크 카드 1개로 렌더링 — 차수 타임라인 + 진도 영역 + 통합 메인 버튼 + 진도 밀림 인라인 알림
-      // 경영학은 getTodayPassDone(passQs) 1인자 시그니처 유지
-      var done0=getTodayPassDone(tp.passQs), total0=tp.passQs.length;
+      var done0=getTodayPassDone(tp.passQs, tp.passNum), total0=tp.passQs.length;
       var pct0=total0>0?Math.round(done0/total0*100):100;
 
       // 전체 진도 (계획 vs 실제)
@@ -3075,8 +3114,8 @@ function renderDashboard(){
         } else {
           var remainQ = total0 - done0;
           mainSub = pn+'차 '+(tp.isFullPass ? '학습' : '복습')+' · 남은 '+remainQ+'문제';
-          if(sq && sq.extraCount > 0){
-            mainSub += ' (+밀린 '+sq.extraCount+'문제 포함)';
+          if(tp.carryover > 0){
+            mainSub += ' (+밀린 '+tp.carryover+'문제 포함)';
           }
         }
         actionHtml = '<div class="plan-action-wrap"><button class="plan-action-btn p1" onclick="handleMainStudyBtn()">'
@@ -3890,26 +3929,49 @@ function getTodayPlan(){
 
     var dayInRound = diffDays(r.startDate, today); // 0-based
 
-    // 대상 문제 결정
+    // 대상 문제 결정 (큐 방식 — 어제 잔여 자동 흡수)
     var targetQs;
+    var _totalPool = allQ.length; // carryover 계산용 전체 풀 크기
+    var _allDoneFallback = false; // 전부 완료된 경우 날짜 기반 fallback
     if(r.isFullRound){
-      // 1회독: 미완료 우선, 4회독: 전체(초기화 후)
-      if(ri===0){
-        var notDone = allQ.filter(function(q){ return !isQDone(q); });
-        targetQs = notDone.length>0 ? notDone : allQ;
+      // 1·4회독: 미완료 문제를 큐처럼 앞에서부터 (어제 잔여 자동 흡수)
+      var notDone = allQ.filter(function(q){ return !isQDone(q); });
+      if(notDone.length>0){
+        targetQs = notDone;
       } else {
-        targetQs = allQ; // 4회독은 초기화 후 전체
+        targetQs = allQ;
+        _allDoneFallback = true; // 전부 완료 → 날짜 기반 slice fallback
       }
     } else {
-      // 2/3회독: △·X 문항만
-      targetQs = allQ.filter(function(q){ return hasWrongOrConfused(q); });
-      if(targetQs.length===0) targetQs = allQ; // 없으면 전체 fallback
+      // 2/3회독: △·X 문항을 큐처럼 (미복습 우선, 어제 잔여 자동 흡수)
+      var allWrong = allQ.filter(function(q){ return hasWrongOrConfused(q); });
+      if(allWrong.length===0) allWrong = allQ;
+      _totalPool = allWrong.length; // △·X 총 수
+      var notRvDone = allWrong.filter(function(q){ return !isQRvDone(q); });
+      if(notRvDone.length>0){
+        targetQs = notRvDone;
+      } else {
+        targetQs = allWrong;
+        _allDoneFallback = true; // 전부 복습 완료 → 날짜 기반 fallback
+      }
     }
 
-    var qPerDay = Math.max(1, Math.ceil(targetQs.length / r.days));
+    // qPerDay: 플랜 저장값 우선 (생성 시 고정), 없으면 전체 풀 기준 재계산
+    var qPerDay = r.qPerDay || Math.max(1, Math.ceil(_totalPool / r.days));
 
-    var startIdx = Math.max(0, Math.min(dayInRound * qPerDay, targetQs.length));
-    var endIdx   = Math.max(startIdx, Math.min(startIdx + qPerDay, targetQs.length));
+    var startIdx, endIdx, carryover = 0;
+    if(!_allDoneFallback){
+      // 큐 방식: 어제까지 밀린 분량 + 오늘 할당량
+      var alreadyDone    = _totalPool - targetQs.length;              // 지금까지 완료한 수
+      var shouldHaveDone = Math.min((dayInRound + 1) * qPerDay, _totalPool); // 오늘까지 완료해야 할 수
+      carryover = Math.max(0, shouldHaveDone - alreadyDone);          // 밀린 수
+      startIdx = 0;
+      endIdx   = Math.min(carryover + qPerDay, targetQs.length);
+    } else {
+      // 전부 완료 fallback: 날짜 기반 슬라이스
+      startIdx = Math.max(0, Math.min(dayInRound * qPerDay, targetQs.length));
+      endIdx   = Math.max(startIdx, Math.min(startIdx + qPerDay, targetQs.length));
+    }
     var todayQs  = targetQs.slice(startIdx, endIdx);
 
     // 초기화 필요 회독(4회독, 7회독) 첫날 자동 초기화 체크
@@ -3947,6 +4009,7 @@ function getTodayPlan(){
       startIdx:    startIdx,
       endIdx:      endIdx,
       qPerDay:     qPerDay,
+      carryover:   carryover,
       targetTotal: targetQs.length,
       daysLeft:    diffDays(today, plan.examDate),
       wrongRatio:  plan.wrongRatio||0.5
@@ -4012,7 +4075,11 @@ function hasWrongOrConfused(q){
 }
 
 // 오늘 패스에서 완료한 문제 수
-function getTodayPassDone(passQs){
+// passNum >= 2 이면 isQRvDone(임시 rv 판정) 기준, 1차이면 해설 열람(_e) 기준
+function getTodayPassDone(passQs, passNum){
+  if(passNum && passNum >= 2){
+    return passQs.filter(function(q){ return isQRvDone(q); }).length;
+  }
   return passQs.filter(function(q){
     if(Q_OPTS_BOX.has(q.id)||Q_EXPS_BOX.has(q.id)){
       return q.exps.every(function(e,i){ return getGnExp(q.id,i); });
@@ -4057,7 +4124,7 @@ function renderTodayBanner(){
     return;
   }
 
-  var done = getTodayPassDone(tp.passQs);
+  var done = getTodayPassDone(tp.passQs, tp.passNum);
   var total = tp.passQs.length;
   var pct = total>0 ? Math.round(done/total*100) : 0;
   var passLabel = ['1차 (전체 지문)','2차 (△·X 지문)','3차 (△·X 지문)'][tp.passNum-1];
@@ -4119,8 +4186,7 @@ function getStudyQueue(){
 function handleMainStudyBtn(){
   var tp = getTodayPlan();
   if(!tp || tp.status !== 'active') return;
-  // 경영학은 getTodayPassDone(passQs) 1인자 시그니처 유지
-  var done0 = getTodayPassDone(tp.passQs);
+  var done0 = getTodayPassDone(tp.passQs, tp.passNum);
   var total0 = tp.passQs.length;
   var curIsDone = (total0 > 0 && done0 >= total0);
   if(curIsDone && tp.passNum < 3){

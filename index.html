@@ -1394,8 +1394,8 @@ function loadCloudState(uid){
             if(cloudPlan){ localStorage.setItem(getPlanKey(), JSON.stringify(cloudPlan)); }
             // 클라우드 복습모드 임시판정 복원
             if(cloudRv){ Object.keys(cloudRv).forEach(function(k){ if(k.indexOf('rv_')===0) localStorage.setItem(k, cloudRv[k]); }); }
-            // 클라우드 활동 기록 복원 (달력 학습량)
-            if(cloudAct){ Object.keys(cloudAct).forEach(function(k){ if(k.indexOf('act_')===0) localStorage.setItem(k, cloudAct[k]); }); }
+            // 클라우드 활동 기록 복원 (달력 학습량 — act1_* 기반)
+            if(cloudAct){ Object.keys(cloudAct).forEach(function(k){ if(k.indexOf('act1_')===0) localStorage.setItem(k, cloudAct[k]); }); }
             // 클라우드 기타 플래그 복원 (회독 리셋·재조정·마이그레이션 등)
             if(cloudMisc){ Object.keys(cloudMisc).forEach(function(k){ localStorage.setItem(k, cloudMisc[k]); }); }
           }
@@ -1469,12 +1469,12 @@ function pushToCloud(uid, showMsg){
   var planData = loadPlan();
   var rvData = {}, actData = {}, miscData = {};
   var miscPrefixes = ['round_reset_', 'round2_replan_', 'pass_done_pop_'];
-  var miscSingles  = ['migration_v4_done','migration_v4_deferred_at','migration_v4_shown','migrated_review_v1'];
+  var miscSingles  = ['migration_v4_done','migration_v4_deferred_at','migration_v4_shown','migrated_review_v1','act1_tracking_start'];
   for(var i=0; i<localStorage.length; i++){
     var k = localStorage.key(i);
     if(!k) continue;
-    if(k.indexOf('rv_')===0)  { rvData[k]  = localStorage.getItem(k); continue; }
-    if(k.indexOf('act_')===0) { actData[k] = localStorage.getItem(k); continue; }
+    if(k.indexOf('rv_')===0)   { rvData[k]  = localStorage.getItem(k); continue; }
+    if(k.indexOf('act1_')===0) { actData[k] = localStorage.getItem(k); continue; }
     for(var pi=0; pi<miscPrefixes.length; pi++){
       if(k.indexOf(miscPrefixes[pi])===0){ miscData[k]=localStorage.getItem(k); break; }
     }
@@ -2116,7 +2116,11 @@ function setOptJudge(qId,idx,level){
   if(!state[qId+'_e']) state[qId+'_e']={};
   var wasNew = !state[qId+'_e'][idx];
   state[qId+'_e'][idx]=true;
-  if(wasNew){ recordActivity(); setSrsState(qId, level==='mastered'); renderTodayBanner(); }
+  if(wasNew){
+    var _q1 = getAllQuestions().find(function(x){return x.id===qId;});
+    if(_q1 && isQDone(_q1)) recordActivity(getQOwnerDate(qId));
+    setSrsState(qId, level==='mastered'); renderTodayBanner();
+  }
   saveState(); refreshOpt(qId,idx); updateProg();
 }
 function getOptReview(qId,idx){ return !!(state[qId+'_r']||{})[idx]; }
@@ -2132,7 +2136,11 @@ function setBoxJudge(qId,label,level){
   var ek=qId+'_be'; if(!state[ek]) state[ek]={};
   var wasNew = !state[ek][label];
   state[ek][label]=true;
-  if(wasNew){ recordActivity(); setSrsState(qId, level==='mastered'); renderTodayBanner(); }
+  if(wasNew){
+    var _q2 = getAllQuestions().find(function(x){return x.id===qId;});
+    if(_q2 && isQDone(_q2)) recordActivity(getQOwnerDate(qId));
+    setSrsState(qId, level==='mastered'); renderTodayBanner();
+  }
   saveState(); refreshBoxItem(qId,label); updateProg();
 }
 function getBoxExp(qId,label){ return !!(state[qId+'_be']||{})[label]; }
@@ -2148,7 +2156,11 @@ function setGnJudge(qId,idx,level){
   var wasNew = !state[qId+'_be_'+idx];
   if(state[qId+'_bj_'+idx]===level) delete state[qId+'_bj_'+idx]; else state[qId+'_bj_'+idx]=level;
   state[qId+'_be_'+idx]=true;
-  if(wasNew){ recordActivity(); setSrsState(qId, level==='mastered'); renderTodayBanner(); }
+  if(wasNew){
+    var _q3 = getAllQuestions().find(function(x){return x.id===qId;});
+    if(_q3 && isQDone(_q3)) recordActivity(getQOwnerDate(qId));
+    setSrsState(qId, level==='mastered'); renderTodayBanner();
+  }
   saveState(); refreshGnRow(qId,idx); updateProg();
   _maybeShowBoxAns(qId);
 }
@@ -2947,13 +2959,51 @@ function updateProg(){
 // 오늘 학습량 / 연속일
 // ═══════════════════════════════════════════
 function todayStr(){ var d=new Date(); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
-function recordActivity(){
-  var k = 'act_' + todayStr();
-  var n = parseInt(localStorage.getItem(k)||'0') + 1;
-  localStorage.setItem(k, n);
+function recordActivity(ownerDate){
+  var today = todayStr();
+  var k = 'act_' + today;
+  localStorage.setItem(k, parseInt(localStorage.getItem(k)||'0') + 1);
+  // 1차 학습 전용 카운터 — ownerDate 기반으로 이월 문제 정확 추적
+  var tp2 = getTodayPlan();
+  if(!tp2 || tp2.status !== 'active' || tp2.isFullPass){
+    var targetDate = ownerDate || today;
+    var k1 = 'act1_' + targetDate;
+    var newCount = parseInt(localStorage.getItem(k1)||'0') + 1;
+    localStorage.setItem(k1, newCount);
+    // 오늘 실제 학습량 카운터 (배지·통계용 — ownerDate 무관)
+    var kWork = 'act1_work_' + today;
+    localStorage.setItem(kWork, parseInt(localStorage.getItem(kWork)||'0') + 1);
+    // 해당 날짜 완료일 기록 (처음 할당량에 도달한 날)
+    var completeKey = 'act1_complete_' + targetDate;
+    if(!localStorage.getItem(completeKey)){
+      var plan2 = tp2 ? tp2.plan : null;
+      var r2 = plan2 && plan2.rounds && tp2.round >= 1 ? plan2.rounds[tp2.round-1] : null;
+      var quota2 = r2 ? (r2.qPerDay||0) : 0;
+      if(quota2 > 0 && newCount >= quota2) localStorage.setItem(completeKey, today);
+    }
+  }
   updateTodayUI();
-  // 통계 기록에도 추가
   updateStatHistory();
+}
+// 문제가 플랜상 배정된 날짜(ownerDate) 반환 — 이월 시나리오에서 정확도 향상
+function getQOwnerDate(qId){
+  var tp = getTodayPlan();
+  if(!tp || tp.status !== 'active') return todayStr();
+  var plan = tp.plan;
+  if(!plan || !plan.rounds || tp.round < 1) return todayStr();
+  var r = plan.rounds[tp.round-1];
+  if(!r) return todayStr();
+  // 전체 회독(1·4회독): 문제 인덱스로 ownerDate 계산 (이월 분량 정확 반영)
+  if(tp.isFullRound){
+    var allQ = getAllQuestions();
+    var qIdx = -1;
+    for(var i=0; i<allQ.length; i++){ if(allQ[i].id === qId){ qIdx=i; break; } }
+    if(qIdx < 0) return todayStr();
+    var dayOffset = Math.floor(qIdx / (tp.qPerDay||1));
+    return addDays(r.startDate, dayOffset);
+  }
+  // △·X 회독(2/3회독): 오늘이 ownerDate
+  return todayStr();
 }
 function updateTodayUI(){
   var k = 'act_' + todayStr();
@@ -3051,8 +3101,8 @@ function renderDashboard(){
       var diff = actualDone - expectedDone;
       var diffDays2 = (tp.qPerDay>0) ? Math.round(Math.abs(diff)/tp.qPerDay) : 0;
 
-      // 오늘 활동 카운트 (경영학은 act_+today 사용)
-      var todayActCount = parseInt(localStorage.getItem('act_'+today)||'0');
+      // 오늘 실제 학습량 (ownerDate 무관 — 배지·완료 메시지용)
+      var todayActCount = parseInt(localStorage.getItem('act1_work_'+today)||'0');
 
       // 차수 타임라인 (1차/2차/3차 동그라미 상태 표시)
       var pn = tp.passNum;
@@ -3324,22 +3374,30 @@ function renderDashboard(){
       var ds = addDays(r.startDate, di);
       var sIdx = di*qPerDay2;
       var eIdx = Math.min(sIdx+qPerDay2, allQ.length);
-      // 경영학은 act_+ds 키만 사용 (행정법의 act1_*은 미사용)
-      var dayActCount = parseInt(localStorage.getItem('act_'+ds)||'0');
+      // act1_ds: 원래 배정일 기반 학습량 (이월 문제 정확 추적)
+      var dayActCount = parseInt(localStorage.getItem('act1_'+ds)||'0');
       var dayTotal2 = eIdx-sIdx;
+      // 분자 캡: 배정량 초과 학습은 다른 날의 몫이므로 표시는 분모와 같게
+      var displayCount = Math.min(dayActCount, dayTotal2);
       var dayPct2 = dayTotal2>0?Math.min(dayActCount/dayTotal2, 1):0;
       var cls = 'darkcal-day ';
       var emoji = '';
       var amtText = '';
-      if(ds === today){ cls += 'today'; emoji = '●'; amtText = dayActCount+' / '+dayTotal2; }
+      if(ds === today){ cls += 'today'; emoji = '●'; amtText = displayCount+' / '+dayTotal2; }
       else if(ds < today){
-        if(dayPct2 >= 1){ cls += 'done'; emoji = '✓'; amtText = dayActCount+' / '+dayTotal2; }
-        else { cls += 'miss'; emoji = '✗'; amtText = dayActCount+' / '+dayTotal2; }
+        if(dayPct2 >= 1){ cls += 'done'; emoji = '✓'; amtText = displayCount+' / '+dayTotal2; }
+        else { cls += 'miss'; emoji = '✗'; amtText = displayCount+' / '+dayTotal2; }
       } else { cls += 'future'; amtText = '예정'; }
+      // 늦게 완료된 날: "(N월 N일 완료)" 소형 표시
+      var completedAt = (ds < today) ? localStorage.getItem('act1_complete_'+ds) : null;
+      if(completedAt && completedAt > ds){
+        var cd = parseDate(completedAt);
+        amtText += '<br><span style="font-size:9px;opacity:.65;font-weight:600;">'+(cd.getMonth()+1)+'월 '+cd.getDate()+'일 완료</span>';
+      }
       var dd2 = parseDate(ds);
       var dayEl = document.createElement('div');
       dayEl.className = cls;
-      dayEl.title = ds+'\nQ'+(sIdx+1)+'~Q'+eIdx+'\n그 날 학습: '+dayActCount+'개 / 배정: '+dayTotal2+'개';
+      dayEl.title = ds+'\nQ'+(sIdx+1)+'~Q'+eIdx+'\n그 날 학습: '+dayActCount+'개 / 배정: '+dayTotal2+'개'+(completedAt && completedAt > ds ? '\n완료일: '+completedAt : '');
       var miniBarHtml = (ds < today || ds === today)
         ? '<div class="darkcal-day-mini"><div class="darkcal-day-mini-fill" style="width:'+Math.round(dayPct2*100)+'%"></div></div>'
         : '<div class="darkcal-day-mini"></div>';

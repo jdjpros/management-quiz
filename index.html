@@ -987,60 +987,15 @@ body{background:var(--bg);color:var(--text);font-family:'Pretendard',sans-serif;
   </div>
 </div>
 
-<!-- ── 단원 데이터 (data/unit_XX.js) ── -->
-<script src="data/unit_AA.js?v=20260411"></script>
-<script src="data/unit_AB.js?v=20260411b"></script>
-<script src="data/unit_BA.js?v=20260428"></script>
-<script src="data/unit_BB.js?v=20260411"></script>
-<script src="data/unit_CA.js?v=20260506"></script>
-<script src="data/unit_CB.js?v=20260506"></script>
-<script src="data/unit_DA.js?v=20260411"></script>
-<script src="data/unit_DB.js?v=20260411"></script>
-<script src="data/unit_EA.js?v=20260411"></script>
-<script src="data/unit_EB.js?v=20260411"></script>
-<script src="data/unit_FA.js?v=20260411"></script>
-<script src="data/unit_FB.js?v=20260507"></script>
-<script src="data/unit_GA.js?v=20260507"></script>
-<script src="data/unit_GB.js?v=20260507"></script>
-<script src="data/unit_HA.js?v=20260428"></script>
-<script src="data/unit_HB.js?v=20260428"></script>
-<script src="data/unit_IA.js?v=20260411"></script>
-<script src="data/unit_IB.js?v=20260411"></script>
-<script src="data/unit_JA.js?v=20260412"></script>
-<script src="data/unit_JB.js?v=20260412"></script>
-<script src="data/unit_KA.js?v=20260411"></script>
-<script src="data/unit_KB.js?v=20260411"></script>
-<script src="data/unit_LA.js?v=20260411"></script>
-<script src="data/unit_LB.js?v=20260412"></script>
-<script src="data/unit_MA.js?v=20260428"></script>
-<script src="data/unit_MB.js?v=20260507"></script>
-<script src="data/unit_NA.js?v=20260411"></script>
-<script src="data/unit_NB.js?v=20260506"></script>
-<script src="data/unit_OA.js?v=20260411"></script>
-<script src="data/unit_OB.js?v=20260411"></script>
-<script src="data/unit_PA.js?v=20260412"></script>
-<script src="data/unit_PB.js?v=20260412"></script>
-<script src="data/unit_QA.js?v=20260507"></script>
-<script src="data/unit_QB.js?v=20260428"></script>
-<script src="data/unit_RA.js?v=20260507"></script>
-<script src="data/unit_RB.js?v=20260412"></script>
-<script src="data/unit_SA.js?v=20260506"></script>
-<script src="data/unit_SB.js?v=20260412"></script>
-<script src="data/unit_TA.js?v=20260506"></script>
-<script src="data/unit_TB.js?v=20260412"></script>
-<script src="data/unit_UA.js?v=20260428"></script>
-<script src="data/unit_UB.js?v=20260507"></script>
-<script src="data/unit_VA.js?v=20260412"></script>
-<script src="data/unit_VB.js?v=20260412"></script>
-<script src="data/unit_WA.js?v=20260509"></script>
-<script src="data/unit_WB.js?v=20260507"></script>
-<script src="data/unit_XA.js?v=20260510"></script>
-<script src="data/unit_XB.js?v=20260428"></script>
-<script src="data/unit_YA.js?v=20260508"></script>
-<script src="data/unit_YB.js?v=20260506"></script>
-<!-- ── 메뉴 및 설정 ── -->
-<script src="management_data.js?v=20260510"></script>
+<!-- ── 단원 데이터: Firebase에서 로드 (management_data.js / unit_*.js git 제외) ── -->
 <script>
+
+// ═══════════════════════════════════════════
+// 문제 데이터 (Firebase에서 로드 — management_data.js 대체)
+// ═══════════════════════════════════════════
+var MENU = [], O_TYPE = new Set(), Q_EXPS_BOX = new Set(), Q_OPTS_BOX = new Set(), Q3_TYPE = new Set();
+var NUMS = ['①','②','③','④','⑤'];
+var _questionsLoaded = false;
 
 // ═══════════════════════════════════════════
 // 상태 변수
@@ -1096,11 +1051,27 @@ function initFirebaseCore() {
     // 로그인 상태 감지 - 자동으로 처리
     fbAuth.onAuthStateChanged(function(user) {
       if(user) {
-        // 로그인됨
+        // 로그인됨 → 문제 데이터 로드 후 앱 시작
         currentUser = user;
-        hideLoginOverlay();
         showUserUI(user);
-        loadCloudState(user.uid);
+        // 로그인 오버레이를 로딩 메시지로 교체
+        var loginBox = document.querySelector('.login-box');
+        if(loginBox) loginBox.innerHTML =
+          '<div style="text-align:center;padding:40px 0;">'
+          + '<div style="font-size:36px;margin-bottom:14px;">⏳</div>'
+          + '<p style="color:#7dd3fc;font-size:16px;margin:0;font-weight:600;">문제 데이터 로딩 중...</p>'
+          + '<p style="color:#64748b;font-size:13px;margin-top:8px;">잠시만 기다려 주세요</p>'
+          + '</div>';
+        // 로그인 즉시 프로필 저장 (관리자 페이지용)
+        fbDb.ref('users/' + user.uid + '/profile').set({
+          email:       user.email       || '',
+          displayName: user.displayName || '',
+          lastActive:  new Date().toISOString().slice(0,10)
+        }).catch(function(){});
+        _loadQuestionsFromFirebase(function(){
+          hideLoginOverlay();
+          loadCloudState(user.uid);
+        });
       } else {
         // 로그아웃 상태
         currentUser = null;
@@ -1338,16 +1309,64 @@ function signOut(){
   fbAuth.signOut();
 }
 
+// ── Firebase에서 문제 데이터 로드 (로그인 직후 1회) ───────
+function _loadQuestionsFromFirebase(callback) {
+  if(!firebaseReady || !fbDb){ callback && callback(); return; }
+  fbDb.ref('questions/management').once('value')
+    .then(function(snap){
+      var data = snap.val();
+      if(!data || !data.units || !data.menu){
+        console.error('[데이터] Firebase에 문제 데이터 없음 — upload_questions.html로 먼저 업로드하세요.');
+        callback && callback(); return;
+      }
+      var units = data.units;
+      var meta  = data.meta || {};
+      // MENU 재구성 (data 참조 붙이기)
+      MENU = (data.menu || []).map(function(p){
+        return {
+          id: p.id, label: p.label,
+          mids: (p.mids || []).map(function(m){
+            if(m.hasSub){
+              return {
+                id: m.id, label: m.label, hasSub: true,
+                subs: (m.subs || []).map(function(s){
+                  return { id: s.id, label: s.label, data: units[s.id] || [] };
+                })
+              };
+            }
+            return { id: m.id, label: m.label, data: units[m.id] || [] };
+          })
+        };
+      });
+      // Set 재구성
+      O_TYPE     = new Set(meta.o_type     || []);
+      Q_EXPS_BOX = new Set(meta.q_exps_box || []);
+      Q_OPTS_BOX = new Set(meta.q_opts_box || []);
+      Q3_TYPE    = new Set(meta.q3_type    || []);
+      _questionsLoaded = true;
+      renderTabs(); // 사이드바 재구성
+      console.log('[데이터] 문제 로드 완료: ' + getAllQuestions().length + '문제');
+      callback && callback();
+    })
+    .catch(function(e){
+      console.error('[데이터] 문제 로드 실패:', e.message);
+      callback && callback();
+    });
+}
+
 // ── 클라우드에서 진도 불러오기 (로그인 직후 자동) ──────
 function loadCloudState(uid){
   var status = document.getElementById('syncStatus');
   if(status){ status.className = 'sync-status syncing'; status.textContent = '↻'; }
-  // state + plan 동시에 가져오기
+  // state + plan + rv + act + misc 동시에 가져오기
   fbDb.ref('users/' + uid).once('value')
     .then(function(snap){
       var cloudRoot = snap.val() || {};
       var cloudData = cloudRoot.state || null;
-      var cloudPlan = cloudRoot.plan || null;
+      var cloudPlan = cloudRoot.plan  || null;
+      var cloudRv   = cloudRoot.rv    || null;
+      var cloudAct  = cloudRoot.act   || null;
+      var cloudMisc = cloudRoot.misc  || null;
       var localData = state;
 
       if(cloudData){
@@ -1373,12 +1392,24 @@ function loadCloudState(uid){
             saveState();
             // 클라우드 플랜 복원
             if(cloudPlan){ localStorage.setItem(getPlanKey(), JSON.stringify(cloudPlan)); }
+            // 클라우드 복습모드 임시판정 복원
+            if(cloudRv){ Object.keys(cloudRv).forEach(function(k){ if(k.indexOf('rv_')===0) localStorage.setItem(k, cloudRv[k]); }); }
+            // 클라우드 활동 기록 복원 (달력 학습량)
+            if(cloudAct){ Object.keys(cloudAct).forEach(function(k){ if(k.indexOf('act_')===0) localStorage.setItem(k, cloudAct[k]); }); }
+            // 클라우드 기타 플래그 복원 (회독 리셋·재조정·마이그레이션 등)
+            if(cloudMisc){ Object.keys(cloudMisc).forEach(function(k){ localStorage.setItem(k, cloudMisc[k]); }); }
           }
         } else {
           state = cloudData;
           saveState();
           // 클라우드 플랜 복원 (로컬보다 우선)
           if(cloudPlan){ localStorage.setItem(getPlanKey(), JSON.stringify(cloudPlan)); }
+          // 클라우드 복습모드 임시판정 복원
+          if(cloudRv){ Object.keys(cloudRv).forEach(function(k){ if(k.indexOf('rv_')===0) localStorage.setItem(k, cloudRv[k]); }); }
+          // 클라우드 활동 기록 복원 (달력 학습량)
+          if(cloudAct){ Object.keys(cloudAct).forEach(function(k){ if(k.indexOf('act_')===0) localStorage.setItem(k, cloudAct[k]); }); }
+          // 클라우드 기타 플래그 복원 (회독 리셋·재조정·마이그레이션 등)
+          if(cloudMisc){ Object.keys(cloudMisc).forEach(function(k){ localStorage.setItem(k, cloudMisc[k]); }); }
         }
         // 범위 설정 복원
         var savedPlan = loadPlan();
@@ -1434,10 +1465,35 @@ function pushToCloud(uid, showMsg){
   _cloudWriting = true;
   var status = document.getElementById('syncStatus');
   if(status){ status.className = 'sync-status syncing'; status.textContent = '↻'; }
-  // 학습 판정 state + 플랜 데이터 함께 저장
+  // 학습 판정 state + 플랜 + 복습모드 임시판정 + 활동 기록 + 기타 플래그 + 프로필 함께 저장
   var planData = loadPlan();
+  var rvData = {}, actData = {}, miscData = {};
+  var miscPrefixes = ['round_reset_', 'round2_replan_', 'pass_done_pop_'];
+  var miscSingles  = ['migration_v4_done','migration_v4_deferred_at','migration_v4_shown','migrated_review_v1'];
+  for(var i=0; i<localStorage.length; i++){
+    var k = localStorage.key(i);
+    if(!k) continue;
+    if(k.indexOf('rv_')===0)  { rvData[k]  = localStorage.getItem(k); continue; }
+    if(k.indexOf('act_')===0) { actData[k] = localStorage.getItem(k); continue; }
+    for(var pi=0; pi<miscPrefixes.length; pi++){
+      if(k.indexOf(miscPrefixes[pi])===0){ miscData[k]=localStorage.getItem(k); break; }
+    }
+  }
+  miscSingles.forEach(function(k){ var v=localStorage.getItem(k); if(v) miscData[k]=v; });
   var payload = { state: state };
-  if(planData) payload.plan = planData;
+  // plan이 null이면 명시적으로 null 전송 → Firebase /plan 노드 삭제
+  payload.plan = planData || null;
+  if(Object.keys(rvData).length > 0)   payload.rv   = rvData;
+  if(Object.keys(actData).length > 0)  payload.act  = actData;
+  if(Object.keys(miscData).length > 0) payload.misc = miscData;
+  // 프로필 정보 (관리자 페이지용)
+  if(currentUser){
+    payload.profile = {
+      email:       currentUser.email       || '',
+      displayName: currentUser.displayName || '',
+      lastActive:  new Date().toISOString().slice(0,10)
+    };
+  }
   fbDb.ref('users/' + uid).update(payload)
     .then(function(){
       _cloudWriting = false;

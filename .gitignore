@@ -9,3 +9,31 @@ prompt_generator.html
 prompt_generator_mgmt.html
 *.pdf
 *.xlsx
+
+# 문제 데이터 (Firebase로 이관됨 — 로컬 보관 / git 제외)
+management_data.js
+data/unit_*.js
+
+# 업로드 유틸리티 (관리자 로컬 전용)
+upload_questions.html
+
+# 관리자 페이지 (로컬 전용)
+admin.html
+
+# 개발 임시 / 스크립트
+_*.js
+_*.ps1
+_*.py
+_*.txt
+_*.html
+fix_quotes.js
+qa_*.txt
+sa_*.txt
+ta_*.txt
+tmp_*.png
+
+# 인계 / 작업 문서 (로컬 전용)
+handover.md
+
+# .claude
+.claude/

@@ -851,6 +851,7 @@ body{background:var(--bg);color:var(--text);font-family:'Pretendard',sans-serif;
       <button class="tbtn" id="btnGlobalReview" onclick="setMode('final')" title="마지막까지 남은 △·X 지문 - 해설 보며 암기">🎯 파이널체크</button>
       <button class="tbtn" id="btnHelp" onclick="setMode('help')">📖 설명서</button>
       <button class="tbtn ract" id="btnReviewReset" onclick="resetReview()" style="display:none">🗑 복습 초기화</button>
+      <button class="tbtn ract" id="btnFcReset" onclick="resetFcState()" style="display:none" title="졸업한 지문 유지, 나머지 판정 초기화">🔄 다시 풀기</button>
       <button class="tbtn" id="btnResetAll" onclick="resetAll()">전체 초기화</button>
     </div>
   </div>
@@ -1367,6 +1368,7 @@ function loadCloudState(uid){
       var cloudRv   = cloudRoot.rv    || null;
       var cloudAct  = cloudRoot.act   || null;
       var cloudMisc = cloudRoot.misc  || null;
+      var cloudFc   = cloudRoot.fc    || null;
       var localData = state;
 
       if(cloudData){
@@ -1398,6 +1400,8 @@ function loadCloudState(uid){
             if(cloudAct){ Object.keys(cloudAct).forEach(function(k){ if(k.indexOf('act1_')===0) localStorage.setItem(k, cloudAct[k]); }); }
             // 클라우드 기타 플래그 복원 (회독 리셋·재조정·마이그레이션 등)
             if(cloudMisc){ Object.keys(cloudMisc).forEach(function(k){ localStorage.setItem(k, cloudMisc[k]); }); }
+            // 클라우드 파이널체크 판정 복원
+            if(cloudFc){ localStorage.setItem(FC_KEY, JSON.stringify(cloudFc)); }
           }
         } else {
           state = cloudData;
@@ -1406,10 +1410,12 @@ function loadCloudState(uid){
           if(cloudPlan){ localStorage.setItem(getPlanKey(), JSON.stringify(cloudPlan)); }
           // 클라우드 복습모드 임시판정 복원
           if(cloudRv){ Object.keys(cloudRv).forEach(function(k){ if(k.indexOf('rv_')===0) localStorage.setItem(k, cloudRv[k]); }); }
-          // 클라우드 활동 기록 복원 (달력 학습량)
-          if(cloudAct){ Object.keys(cloudAct).forEach(function(k){ if(k.indexOf('act_')===0) localStorage.setItem(k, cloudAct[k]); }); }
+          // 클라우드 활동 기록 복원 (달력 학습량 — act1_* 기반)
+          if(cloudAct){ Object.keys(cloudAct).forEach(function(k){ if(k.indexOf('act1_')===0) localStorage.setItem(k, cloudAct[k]); }); }
           // 클라우드 기타 플래그 복원 (회독 리셋·재조정·마이그레이션 등)
           if(cloudMisc){ Object.keys(cloudMisc).forEach(function(k){ localStorage.setItem(k, cloudMisc[k]); }); }
+          // 클라우드 파이널체크 판정 복원
+          if(cloudFc){ localStorage.setItem(FC_KEY, JSON.stringify(cloudFc)); }
         }
         // 범위 설정 복원
         var savedPlan = loadPlan();
@@ -1486,6 +1492,8 @@ function pushToCloud(uid, showMsg){
   if(Object.keys(rvData).length > 0)   payload.rv   = rvData;
   if(Object.keys(actData).length > 0)  payload.act  = actData;
   if(Object.keys(miscData).length > 0) payload.misc = miscData;
+  var fcData = loadFcState();
+  if(Object.keys(fcData).length > 0) payload.fc = fcData;
   // 프로필 정보 (관리자 페이지용)
   if(currentUser){
     payload.profile = {
@@ -1724,6 +1732,7 @@ function setMode(m){
   document.getElementById('btnGlobalReview').className='tbtn'+(m==='final'?' act':'');
   document.getElementById('btnHelp').className='tbtn'+(m==='help'?' act':'');
   document.getElementById('btnReviewReset').style.display=(m==='review')?'inline-block':'none';
+  document.getElementById('btnFcReset').style.display=(m==='final')?'inline-block':'none';
   document.getElementById('btnResetAll').style.display=(m==='all'||m==='plan')?'inline-block':'none';
   var dashPanel=document.getElementById('dashPanel');
   var helpPanel=document.getElementById('helpPanel');
@@ -2052,6 +2061,91 @@ function setRvGnJudge(qId,idx,level){
     if(cur===level) localStorage.removeItem(k); else localStorage.setItem(k,level);
   }catch(e){}
 }
+// ── 파이널체크 전용 판정 (원본 영향 없음, 기기 간 동기화) ───
+var FC_KEY = 'fc_state';
+var _fcRenderedMastered = {}; // renderAll 시점 스냅샷 (세션 내 제거 방지용)
+
+function loadFcState(){ try{ return JSON.parse(localStorage.getItem(FC_KEY)||'{}'); }catch(e){ return {}; } }
+function saveFcState(fc){ try{ localStorage.setItem(FC_KEY, JSON.stringify(fc)); }catch(e){} saveFcToCloud(); }
+
+function getFcOptJudge(qId,idx){ return loadFcState()[qId+'_opt_'+idx]||null; }
+function getFcBoxJudge(qId,label){ return loadFcState()[qId+'_box_'+label]||null; }
+function getFcGnJudge(qId,idx){ return loadFcState()[qId+'_gn_'+idx]||null; }
+
+function setFcOptJudge(qId,idx,level){
+  var fc=loadFcState(); fc[qId+'_opt_'+idx]=level; saveFcState(fc);
+  refreshOptFc(qId,idx);
+}
+function setFcBoxJudge(qId,label,level){
+  var fc=loadFcState(); fc[qId+'_box_'+label]=level; saveFcState(fc);
+  refreshBoxFc(qId,label);
+}
+function setFcGnJudge(qId,idx,level){
+  var fc=loadFcState(); fc[qId+'_gn_'+idx]=level; saveFcState(fc);
+  refreshGnFc(qId,idx);
+}
+
+// renderAll 시점 fc_state 스냅샷을 기준으로 이 세션에서 이미 mastered였는지 확인
+function _isFcSessionMastered(key){ return !!_fcRenderedMastered[key]; }
+
+// 해당 문제의 모든 △·X 지문이 이전 세션에서 mastered였는지 (문제 제외 여부)
+function isFcDone(qId){
+  var q=getAllQuestions().find(function(x){return x.id===qId;}); if(!q) return false;
+  var lmap={'A':0,'B':1,'C':2,'D':3,'E':4,'ㄱ':0,'ㄴ':1,'ㄷ':2,'ㄹ':3,'ㅁ':4,'ㅂ':5,'ㅅ':6,'ㅇ':7,'ㅈ':8,'가':0,'나':1,'다':2,'라':3,'마':4,'바':5,'사':6,'아':7,'자':8};
+  if(Q_OPTS_BOX.has(qId)||Q_EXPS_BOX.has(qId)){
+    for(var i=0;i<q.exps.length;i++){
+      var ox0=(q.exps[i]&&q.exps[i].ox)||'O';
+      var orig0=getGnJudge(qId,i);
+      if(!_isReviewTarget(orig0,ox0)) continue;
+      if(!_isFcSessionMastered(qId+'_gn_'+i)) return false;
+    }
+    return true;
+  }
+  var parsed=parseBoxStem(q.stem);
+  if(parsed.items.length>0&&!Q3_TYPE.has(qId)){
+    for(var j=0;j<parsed.items.length;j++){
+      var it=parsed.items[j];
+      var li=(lmap[it.label]!==undefined?lmap[it.label]:0);
+      var bexp=(q.bexps&&q.bexps[li])||null;
+      var exp=bexp||q.exps[li]||{ox:'O'};
+      var ox1=exp.ox||'O';
+      var orig1=getBoxJudge(qId,it.label);
+      if(!_isReviewTarget(orig1,ox1)) continue;
+      if(!_isFcSessionMastered(qId+'_box_'+it.label)) return false;
+    }
+    return true;
+  }
+  var isOtype=O_TYPE.has(qId);
+  for(var k=1;k<=q.opts.length;k++){
+    var isAns=(k===q.ans);
+    var ox2=isOtype?(isAns?'O':'X'):(isAns?'X':'O');
+    var orig2=getOptJudge(qId,k);
+    if(!_isReviewTarget(orig2,ox2)) continue;
+    if(!_isFcSessionMastered(qId+'_opt_'+k)) return false;
+  }
+  return true;
+}
+
+function resetFcState(){
+  if(!confirm('🔄 파이널체크 다시 풀기\n\n정답을 맞힌(졸업) 지문은 유지하고 나머지 판정만 초기화합니다.\n미졸업 지문을 처음 상태로 되돌려 다시 풀 수 있습니다.\n\n※ 학습모드·복습모드 데이터는 전혀 영향받지 않습니다.\n\n진행할까요?')) return;
+  var fc=loadFcState();
+  Object.keys(fc).forEach(function(k){ if(fc[k]!=='mastered') delete fc[k]; });
+  saveFcState(fc);
+  renderAll();
+}
+function resetFcStateAll(){
+  if(!confirm('⚠️ 파이널체크 전체 초기화\n\n모든 졸업 처리를 포함하여 파이널체크 판정을 완전 삭제합니다.\n처음부터 다시 시작합니다.\n\n※ 학습모드·복습모드 데이터는 전혀 영향받지 않습니다.\n\n정말 초기화하시겠습니까?')) return;
+  localStorage.removeItem(FC_KEY);
+  saveFcToCloud();
+  renderAll();
+}
+
+function saveFcToCloud(){
+  if(!currentUser||!currentUser.uid||!firebaseReady||!fbDb) return;
+  var fc=loadFcState();
+  fbDb.ref('users/'+currentUser.uid+'/fc').set(Object.keys(fc).length>0?fc:null).catch(function(){});
+}
+
 // 복습모드에서 문제 전체 판정 완료 여부 — 1차에서 틀린 지문만 rv 판정 요구 (행정법 a9e93eb 기준)
 function isQRvDone(q){
   // 유형2/3: ㄱㄴㄷ형 — 1차에서 틀린 지문만 rv 판정 요구
@@ -2200,10 +2294,12 @@ function buildOptRow(q2,i){
     var _isAns0f=(idx===q2.ans); var _isOtype0f=O_TYPE.has(q2.id);
     var _ox0f=_isOtype0f?(_isAns0f?'O':'X'):(_isAns0f?'X':'O');
     if(!_isReviewTarget(orig2,_ox0f)) return null;
+    // 이전 세션에서 mastered 처리된 지문은 표시 안 함
+    if(_isFcSessionMastered(q2.id+'_opt_'+idx)) return null;
   }
 
-  // 복습모드에서는 임시 판정, 그 외엔 원본 판정
-  var jv = isReview ? getRvJudge(q2.id,idx) : getOptJudge(q2.id,idx);
+  // 복습모드에서는 임시 판정, 파이널에서는 fc_state, 그 외엔 원본 판정
+  var jv = isFinal ? getFcOptJudge(q2.id,idx) : isReview ? getRvJudge(q2.id,idx) : getOptJudge(q2.id,idx);
 
   var exp=q2.exps[i]; if(!exp) return null;
   var isAns=(idx===q2.ans); var isOtype=O_TYPE.has(q2.id);
@@ -2212,7 +2308,7 @@ function buildOptRow(q2,i){
   // 파이널: 항상 펼침
   // 복습: 임시 판정이 있을 때만 펼침 (state._e 무시 → 항상 닫힌 상태로 시작)
   // 학습: 원본 열람 기록(state._e)이 있으면 펼침
-  var expCls = isFinal ? ' exp-open'
+  var expCls = isFinal ? (getFcOptJudge(q2.id,idx)!==null ? ' exp-open' : '')
              : isReview ? (getRvJudge(q2.id,idx) !== null ? ' exp-open' : '')
              : (!!(state[q2.id+'_e']||{})[idx] ? ' exp-open' : '');
   var selM=jv==='mastered'?' sel-m':''; var selC=jv==='confused'?' sel-c':''; var selF=jv==='failed'?' sel-f':'';
@@ -2225,15 +2321,15 @@ function buildOptRow(q2,i){
   var btns=document.createElement('div'); btns.className='opt-judge-btns';
 
   if(isFinal){
-    // 파이널: "외움" 버튼만 → 원본 state O로 변경 후 행 제거
-    var bFinal=document.createElement('button');
-    bFinal.className='ojb'; bFinal.style.cssText='font-size:10px;padding:3px 7px;border-color:#22c55e;color:#16a34a;opacity:1;white-space:nowrap;';
-    bFinal.textContent='✅ 외움';
-    bFinal.onclick=(function(qid,ix){return function(){
-      setOptJudge(qid,ix,'mastered');
-      refreshOptFinal(qid,ix);
-    };})(q2.id,idx);
-    btns.appendChild(bFinal);
+    // 파이널: O/△/X (fc_state에 저장, 원본 영향 없음)
+    var fcJv=getFcOptJudge(q2.id,idx);
+    var fcSelM=fcJv==='mastered'?' sel-m':''; var fcSelC=fcJv==='confused'?' sel-c':''; var fcSelF=fcJv==='failed'?' sel-f':'';
+    var bFcO=document.createElement('button'); bFcO.className='ojb'+fcSelM; bFcO.title='완벽히 알겠다'; bFcO.textContent='O';
+    bFcO.onclick=(function(qid,ix){return function(){ setFcOptJudge(qid,ix,'mastered'); };})(q2.id,idx); btns.appendChild(bFcO);
+    var bFcC=document.createElement('button'); bFcC.className='ojb'+fcSelC; bFcC.title='한 번 더 볼게'; bFcC.textContent='△';
+    bFcC.onclick=(function(qid,ix){return function(){ setFcOptJudge(qid,ix,'confused'); };})(q2.id,idx); btns.appendChild(bFcC);
+    var bFcF=document.createElement('button'); bFcF.className='ojb'+fcSelF; bFcF.title='모르겠다/틀렸다'; bFcF.textContent='X';
+    bFcF.onclick=(function(qid,ix){return function(){ setFcOptJudge(qid,ix,'failed'); };})(q2.id,idx); btns.appendChild(bFcF);
   } else if(isReview){
     // 복습모드: 학습모드 UX 동일 (해설 열림, 사라지지 않음) + 임시 state만 저장
     var bO=document.createElement('button'); bO.className='ojb'+selM; bO.title='완벽히 알겠다 (임시 저장)'; bO.textContent='O';
@@ -2293,10 +2389,12 @@ function buildBoxItemRow(q2,item){
     var _exp0f=_bexp0f||q2.exps[_li0f]||{ox:'O'};
     var _ox0f=_exp0f.ox||'O';
     if(!_isReviewTarget(orig2,_ox0f)) return null;
+    // 이전 세션에서 mastered 처리된 지문은 표시 안 함
+    if(_isFcSessionMastered(q2.id+'_box_'+label)) return null;
   }
-  var jv=isReview?getRvBoxJudge(q2.id,label):getBoxJudge(q2.id,label);
-  // 복습: 임시 판정 있을 때만 열림 (state._be 무시)
-  var expOpen = isFinal ? true
+  var jv=isFinal?getFcBoxJudge(q2.id,label):isReview?getRvBoxJudge(q2.id,label):getBoxJudge(q2.id,label);
+  // 파이널: fc_state 판정 있을 때만 열림 / 복습: 임시 판정 있을 때만 열림 (state._be 무시)
+  var expOpen = isFinal ? (getFcBoxJudge(q2.id,label) !== null)
               : isReview ? (getRvBoxJudge(q2.id,label) !== null)
               : getBoxExp(q2.id,label);
   var jCls=jv?({mastered:'judged-m',confused:'judged-c',failed:'judged-f'}[jv]):'';
@@ -2314,14 +2412,15 @@ function buildBoxItemRow(q2,item){
   var txt=document.createElement('div'); txt.className='opt-text'; txt.innerHTML=item.text; top.appendChild(txt);
   var btns=document.createElement('div'); btns.className='opt-judge-btns';
   if(isFinal){
-    var bFinal=document.createElement('button');
-    bFinal.className='ojb'; bFinal.style.cssText='font-size:10px;padding:3px 7px;border-color:#22c55e;color:#16a34a;opacity:1;white-space:nowrap;';
-    bFinal.textContent='✅ 외움';
-    bFinal.onclick=(function(qid,lb){return function(){
-      setBoxJudge(qid,lb,'mastered');
-      var el=document.getElementById('boxrow-'+qid+'-'+lb); if(el) el.remove();
-      checkCardEmpty(qid);
-    };})(q2.id,label); btns.appendChild(bFinal);
+    // O/△/X (fc_state에 저장)
+    var fcJvB=getFcBoxJudge(q2.id,label);
+    var fcSelMB=fcJvB==='mastered'?' sel-m':''; var fcSelCB=fcJvB==='confused'?' sel-c':''; var fcSelFB=fcJvB==='failed'?' sel-f':'';
+    var bFcOB=document.createElement('button'); bFcOB.className='ojb'+fcSelMB; bFcOB.title='완벽히 알겠다'; bFcOB.textContent='O';
+    bFcOB.onclick=(function(qid,lb){return function(){ setFcBoxJudge(qid,lb,'mastered'); };})(q2.id,label); btns.appendChild(bFcOB);
+    var bFcCB=document.createElement('button'); bFcCB.className='ojb'+fcSelCB; bFcCB.title='한 번 더 볼게'; bFcCB.textContent='△';
+    bFcCB.onclick=(function(qid,lb){return function(){ setFcBoxJudge(qid,lb,'confused'); };})(q2.id,label); btns.appendChild(bFcCB);
+    var bFcFB=document.createElement('button'); bFcFB.className='ojb'+fcSelFB; bFcFB.title='모르겠다/틀렸다'; bFcFB.textContent='X';
+    bFcFB.onclick=(function(qid,lb){return function(){ setFcBoxJudge(qid,lb,'failed'); };})(q2.id,label); btns.appendChild(bFcFB);
   } else if(isReview){
     var bO=document.createElement('button'); bO.className='ojb'+selM; bO.title='완벽히 알겠다 (임시 저장)'; bO.textContent='O';
     bO.onclick=(function(qid,lb){return function(){
@@ -2369,10 +2468,12 @@ function buildGnRow(q2,item,expIdx,expOverride){
     var orig2=getGnJudge(q2.id,expIdx);
     var _ox0f=(q2.exps[expIdx]&&q2.exps[expIdx].ox)||'O';
     if(!_isReviewTarget(orig2,_ox0f)) return null;
+    // 이전 세션에서 mastered 처리된 지문은 표시 안 함
+    if(_isFcSessionMastered(q2.id+'_gn_'+expIdx)) return null;
   }
-  var jv=isReview?getRvGnJudge(q2.id,expIdx):getGnJudge(q2.id,expIdx);
-  // 복습: 임시 판정 있을 때만 열림 (state._be_N 무시)
-  var expOpen = isFinal ? true
+  var jv=isFinal?getFcGnJudge(q2.id,expIdx):isReview?getRvGnJudge(q2.id,expIdx):getGnJudge(q2.id,expIdx);
+  // 파이널: fc_state 판정 있을 때만 열림 / 복습: 임시 판정 있을 때만 열림 (state._be_N 무시)
+  var expOpen = isFinal ? (getFcGnJudge(q2.id,expIdx) !== null)
               : isReview ? (getRvGnJudge(q2.id,expIdx) !== null)
               : getGnExp(q2.id,expIdx);
   var jCls=jv?({mastered:'judged-m',confused:'judged-c',failed:'judged-f'}[jv]):'';
@@ -2388,14 +2489,15 @@ function buildGnRow(q2,item,expIdx,expOverride){
   var txt=document.createElement('div'); txt.className='opt-text'; txt.innerHTML=item.text; top.appendChild(txt);
   var btns=document.createElement('div'); btns.className='opt-judge-btns';
   if(isFinal){
-    var bFinal=document.createElement('button');
-    bFinal.className='ojb'; bFinal.style.cssText='font-size:10px;padding:3px 7px;border-color:#22c55e;color:#16a34a;opacity:1;white-space:nowrap;';
-    bFinal.textContent='✅ 외움';
-    bFinal.onclick=(function(qid,ix){return function(){
-      setGnJudge(qid,ix,'mastered');
-      var el=document.getElementById('gnrow-'+qid+'-'+ix); if(el) el.remove();
-      checkCardEmpty(qid);
-    };})(q2.id,expIdx); btns.appendChild(bFinal);
+    // O/△/X (fc_state에 저장)
+    var fcJvG=getFcGnJudge(q2.id,expIdx);
+    var fcSelMG=fcJvG==='mastered'?' sel-m':''; var fcSelCG=fcJvG==='confused'?' sel-c':''; var fcSelFG=fcJvG==='failed'?' sel-f':'';
+    var bFcOG=document.createElement('button'); bFcOG.className='ojb'+fcSelMG; bFcOG.title='완벽히 알겠다'; bFcOG.textContent='O';
+    bFcOG.onclick=(function(qid,ix){return function(){ setFcGnJudge(qid,ix,'mastered'); };})(q2.id,expIdx); btns.appendChild(bFcOG);
+    var bFcCG=document.createElement('button'); bFcCG.className='ojb'+fcSelCG; bFcCG.title='한 번 더 볼게'; bFcCG.textContent='△';
+    bFcCG.onclick=(function(qid,ix){return function(){ setFcGnJudge(qid,ix,'confused'); };})(q2.id,expIdx); btns.appendChild(bFcCG);
+    var bFcFG=document.createElement('button'); bFcFG.className='ojb'+fcSelFG; bFcFG.title='모르겠다/틀렸다'; bFcFG.textContent='X';
+    bFcFG.onclick=(function(qid,ix){return function(){ setFcGnJudge(qid,ix,'failed'); };})(q2.id,expIdx); btns.appendChild(bFcFG);
   } else if(isReview){
     var bO=document.createElement('button'); bO.className='ojb'+selM; bO.title='완벽히 알겠다 (임시 저장)'; bO.textContent='O';
     bO.onclick=(function(qid,ix){return function(){
@@ -2463,6 +2565,49 @@ function refreshGnRv(qId,idx){
   if(newGnRowRv&&el) el.replaceWith(newGnRowRv);
   updateProg();
 }
+// 파이널체크 판정 후 행 갱신 (세션 내 제거 없이 색상만 갱신)
+function refreshOptFc(qId,idx){
+  var q=_findQ(qId); if(!q) return;
+  var el=document.getElementById('optrow-'+qId+'-'+idx);
+  var newRow=buildOptRow(q,idx-1);
+  if(el&&newRow) el.replaceWith(newRow);
+  updateFinalCount();
+}
+function refreshBoxFc(qId,label){
+  var q=_findQ(qId); if(!q) return;
+  var el=document.getElementById('boxrow-'+qId+'-'+label);
+  var parsed=parseBoxStem(q.stem); var item=parsed.items.find(function(it){return it.label===label;});
+  if(el&&item){ var newRow=buildBoxItemRow(q,item); if(newRow) el.replaceWith(newRow); }
+  updateFinalCount();
+}
+function refreshGnFc(qId,idx){
+  var q=_findQ(qId); if(!q) return;
+  var el=document.getElementById('gnrow-'+qId+'-'+idx);
+  var isOpts=Q_OPTS_BOX.has(qId);
+  var isExps=Q_EXPS_BOX.has(qId);
+  if(!isOpts&&!isExps) return;
+  var label,text,newRow;
+  if(isOpts){
+    if(!q.opts[idx]) return;
+    label=(q.opts[idx].match(/^([ㄱ-ㅎ])/)||['','?'])[1];
+    text=q.opts[idx].replace(/^[ㄱ-ㅎ]\.\s*/,'');
+    newRow=buildGnRow(q,{label:label,text:text},idx);
+  } else if(isExps){
+    if(!q.exps[idx]) return;
+    var te=q.exps[idx].t;
+    var gn=te.match(/^([ㄱ-ㅎ])\.\ *([\s\S]*)/);
+    if(!gn) return;
+    label=gn[1];
+    var full=gn[2];
+    var sep=full.indexOf(' → ');
+    text=sep>=0?full.slice(0,sep).trim():full.trim();
+    var ep={ox:q.exps[idx].ox,t:sep>=0?full.slice(sep+3).trim():full.trim()};
+    newRow=buildGnRow(q,{label:label,text:text},idx,ep);
+  } else { return; }
+  if(newRow&&el) el.replaceWith(newRow);
+  updateFinalCount();
+}
+
 // 파이널모드 "외움" 후 카드 내 지문이 전부 사라지면 카드 제거
 function checkCardEmpty(qId){
   var card=document.getElementById('q-'+qId); if(!card) return;
@@ -2474,11 +2619,17 @@ function checkCardEmpty(qId){
     setTimeout(function(){ card.remove(); updateFinalCount(); },300);
   } else { updateFinalCount(); }
 }
-// 파이널모드 카운터 갱신
-function updateFinalCount(){
-  var el=document.getElementById('finalCount'); if(!el) return;
-  var rows=document.querySelectorAll('#qContainer .opt-row');
-  el.textContent='남은 지문 '+rows.length+'개';
+// 파이널모드 카운터 갱신 (졸업 / 남은 / 전체)
+function updateFinalCount(total, graduated){
+  var el=document.getElementById('finalCount');
+  if(el){
+    if(total===undefined){
+      var _allFcQs=getPlanQuestions().filter(function(q){ return needsReview(q.id); });
+      total=_allFcQs.length;
+      graduated=_allFcQs.filter(function(q){ return isFcDone(q.id); }).length;
+    }
+    el.textContent='졸업 '+graduated+' / 남은 '+(total-graduated)+' / 전체 '+total;
+  }
 }
 // 파이널모드 "외움" 후 원본 갱신 + 카드 갱신
 function refreshOptFinal(qId,idx){
@@ -2735,18 +2886,29 @@ function renderAll(){
   renderBulkBar();
   updateExpandAllBtn();
 
-  // 파이널체크: 모든 단원 △·X 문제 수집 (해설 펼침, 외움 버튼만)
+  // 파이널체크: 플랜 범위 △·X 문제 수집 (해설 펼침, O/△/X 버튼으로 fc_state 저장)
   // 복습모드: 현재 단원 △·X 지문만 (임시 판정)
   var Qs, vis=0;
   if(mode==='final'){
-    Qs = getPlanQuestions().filter(function(q){ return needsReview(q.id); });
+    // 세션 시작 시 fc_state 스냅샷 (mastered된 것만 기록 → 세션 내 졸업 지문 재표시 방지)
+    _fcRenderedMastered = {};
+    var _fcSnap = loadFcState();
+    Object.keys(_fcSnap).forEach(function(k){ if(_fcSnap[k]==='mastered') _fcRenderedMastered[k]=true; });
+    // 소스: 플랜 범위 내 △·X 문제
+    var _allFcQs = getPlanQuestions().filter(function(q){ return needsReview(q.id); });
+    var _totalFc = _allFcQs.length;
+    var _graduatedFc = _allFcQs.filter(function(q){ return isFcDone(q.id); }).length;
+    // 표시: 아직 졸업 안 된 문제만
+    Qs = _allFcQs.filter(function(q){ return !isFcDone(q.id); });
     Qs.forEach(function(q){ vis++; c.appendChild(mkCard(q)); });
     // 상단 카운터 삽입
     var cntBar=document.createElement('div');
-    cntBar.style.cssText='background:#1e2540;color:#93c5fd;font-size:12px;font-weight:700;padding:8px 14px;border-radius:8px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;';
-    cntBar.innerHTML='<span>🎯 파이널체크 — 해설을 읽고 완전히 외운 지문은 ✅ 외움 버튼으로 제거하세요</span><span id="finalCount"></span>';
+    cntBar.id='finalCountBar';
+    cntBar.style.cssText='background:#1e2540;color:#93c5fd;font-size:12px;font-weight:700;padding:8px 14px;border-radius:8px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;';
+    cntBar.innerHTML='<span style="flex:1;min-width:200px;">🎯 파이널체크 — O/△/X로 판정하세요. O로 맞힌 지문은 다음 진입 시 제외됩니다.</span>'+
+      '<span id="finalCount" style="background:rgba(34,197,94,.15);padding:3px 8px;border-radius:4px;white-space:nowrap;font-size:11px;font-weight:600;"></span>';
     c.insertBefore(cntBar, c.firstChild);
-    setTimeout(updateFinalCount, 50);
+    setTimeout(function(){ updateFinalCount(_totalFc, _graduatedFc); }, 50);
   } else if(mode==='globalReview'){
     Qs = getPlanQuestions().filter(function(q){ return needsReview(q.id); });
     Qs.forEach(function(q){ vis++; c.appendChild(mkCard(q)); });
@@ -5358,7 +5520,7 @@ function renderHelpPanel(){
   + '<div class="srow"><div class="sline"><div class="scirc">4</div><div class="scon"></div></div><div class="sbody"><div class="stitle">🔁 2차 — 복습모드</div><div class="sdesc">1차에서 △·X 표시한 지문을 닫힌 상태로 다시 풀기 (임시 판정, 원본 보존)</div></div></div>'
   + '<div class="srow"><div class="sline"><div class="scirc">5</div><div class="scon"></div></div><div class="sbody"><div class="stitle">🔁 3차 — 복습모드</div><div class="sdesc">2차에서 남은 △·X 지문 마지막 점검 → 모두 완료 시 차수 자동 종료</div></div></div>'
   + '<div class="srow"><div class="sline"><div class="scirc">6</div><div class="scon"></div></div><div class="sbody"><div class="stitle">🎉 오늘 완료 — 쉬기</div><div class="sdesc">녹색 완료 메시지 확인 후 오늘 학습 종료. 앞당기지 않아도 됩니다</div></div></div>'
-  + '<div class="srow"><div class="sline"><div class="scirc">7</div><div class="scon last"></div></div><div class="sbody"><div class="stitle">🎯 파이널체크 (시험 직전)</div><div class="sdesc">남은 △·X 지문 해설 읽고 ✅ 외움 버튼으로 하나씩 제거 → 시험 최종 점검</div></div></div>'
+  + '<div class="srow"><div class="sline"><div class="scirc">7</div><div class="scon last"></div></div><div class="sbody"><div class="stitle">🎯 파이널체크 (시험 직전)</div><div class="sdesc">남은 △·X 지문 해설 읽고 O/△/X 판정 → O로 맞힌 지문은 다음 세션에서 자동 제외</div></div></div>'
   + '</div>'
   + '</div></div>'
   + '</div>' // end .hvw
@@ -5420,9 +5582,11 @@ function renderHelpPanel(){
   + '<ul style="padding-left:18px;margin:0 0 8px;">'
   + '<li>전체 단원에서 현재 △·X로 남아있는 <b>모든 지문</b>을 한 번에 모아서 보여줍니다</li>'
   + '<li>해설이 <b>처음부터 펼쳐진 상태</b>로 표시 — 읽고 암기하는 용도</li>'
-  + '<li><b>✅ 외움</b> 버튼을 누르면 그 지문이 O로 변경되고 목록에서 사라집니다 (원본 데이터 변경)</li>'
-  + '<li>안 누르면 계속 남아있어 반복해서 읽을 수 있습니다</li>'
-  + '<li>상단 카운터로 <b>남은 지문 수를 실시간</b> 확인할 수 있습니다</li>'
+  + '<li>O/△/X 버튼으로 판정 — <b>원본 데이터에 영향 없음</b> (파이널 전용 저장소)</li>'
+  + '<li><b>O로 맞힌 지문</b>은 다음 파이널체크 진입 시 자동 제외 (졸업)</li>'
+  + '<li>△·X는 계속 남아있어 반복해서 읽을 수 있습니다</li>'
+  + '<li>🔄 다시 풀기: 졸업 지문 유지하고 나머지 판정만 초기화</li>'
+  + '<li>상단 카운터로 <b>졸업 / 남은 / 전체</b> 수를 실시간 확인</li>'
   + '<li>시험 직전 최종 암기 점검용으로 사용하세요</li>'
   + '</ul>'
 
@@ -5513,7 +5677,7 @@ function renderHelpPanel(){
   + '<li>🔁 <b>2차 (복습모드)</b> — △·X 지문을 닫힌 상태로 다시 풀기 (임시 판정, 원본 보존)</li>'
   + '<li>🔁 <b>3차 (복습모드)</b> — 2차에서 남은 △·X 지문 마지막 점검</li>'
   + '<li>🎉 3차 완료 후 녹색 완료 메시지 확인 — 오늘 학습 종료, 푹 쉬기</li>'
-  + '<li>🎯 시험 직전 <b>파이널체크</b>에서 남은 △·X 지문 해설 읽고 ✅ 외움 버튼으로 하나씩 제거</li>'
+  + '<li>🎯 시험 직전 <b>파이널체크</b>에서 남은 △·X 지문 O/△/X 판정 → O 맞힌 지문은 다음 세션에서 자동 제외</li>'
   + '</ol>'
   + '</div>'
 

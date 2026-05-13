@@ -373,6 +373,125 @@ body{background:var(--bg);color:var(--text);font-family:'Pretendard',sans-serif;
 .plan-goal-btn.act6{border-color:var(--c1);background:#cffafe;color:var(--c1);}
 .plan-goal-btn.act9{border-color:var(--correct);background:#dcfce7;color:var(--correct);}
 
+/* ── 다크 카드 공통 (대시보드 일별 학습·단원별) ── */
+.dark-card{background:linear-gradient(135deg,#1e2540,#2d3a6e);border-radius:var(--r);padding:22px 24px;color:#fff;position:relative;overflow:hidden;margin-bottom:12px;}
+.dark-card::before{content:'';position:absolute;right:-30px;top:-30px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,.04);pointer-events:none;}
+.dark-card > *{position:relative;z-index:1;}
+.dark-card-title{font-size:17px;font-weight:800;color:#fff;margin-bottom:16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.dark-card-subtitle{font-size:12.5px;color:rgba(147,197,253,.85);font-weight:600;letter-spacing:.3px;margin-left:auto;}
+.dark-card-title.collapsible{cursor:pointer;user-select:none;margin-bottom:0;transition:margin-bottom .2s;}
+.dark-card-title.collapsible:hover{color:#fbbf24;}
+.dark-card-title.collapsible.open{margin-bottom:16px;}
+.collapse-arrow{font-size:14px;color:rgba(255,255,255,.6);margin-left:8px;transition:transform .25s;}
+.dark-card-title.collapsible.open .collapse-arrow{transform:rotate(180deg);color:#fbbf24;}
+
+/* ── 통합 오늘 플랜 카드 (대시보드용) ── */
+.plan-card{background:linear-gradient(135deg,#1e2540,#2d3a6e);border-radius:var(--r);padding:22px 24px;color:#fff;position:relative;overflow:hidden;}
+.plan-card::before{content:'';position:absolute;right:-30px;top:-30px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,.04);pointer-events:none;z-index:0;}
+.plan-card > *{position:relative;z-index:1;}
+.plan-card-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap;}
+.plan-meta-box{display:flex;gap:10px;flex-wrap:wrap;flex:1;}
+.plan-meta-chip{background:rgba(255,255,255,.1);border:1px solid rgba(147,197,253,.25);border-radius:10px;padding:11px 20px;display:flex;flex-direction:column;gap:5px;}
+.plan-meta-chip .chip-lbl{font-size:13px;color:#bfdbfe;font-weight:700;letter-spacing:.3px;}
+.plan-meta-chip .chip-val{font-size:18px;font-weight:800;color:#fff;line-height:1.2;}
+.plan-meta-chip .chip-val .accent{color:#fff;font-weight:800;}
+.plan-meta-chip .chip-val .accent.warn{color:#fbbf24;}
+.plan-meta-chip .chip-val .examdate{font-size:13px;font-weight:600;color:rgba(255,255,255,.6);margin-left:8px;}
+.plan-edit-btn{background:rgba(255,255,255,.95);color:#1e2540;border:none;border-radius:8px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:5px;flex-shrink:0;transition:all .15s;font-family:Pretendard,sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.18);}
+.plan-edit-btn:hover{background:#fff;transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.25);}
+
+/* 차수 타임라인 */
+.pass-timeline{display:flex;justify-content:space-between;align-items:flex-start;margin:20px 0 22px;position:relative;padding:0 20px;}
+.pass-timeline::before{content:'';position:absolute;top:62px;left:75px;right:75px;height:3px;background:rgba(255,255,255,.15);}
+.pass-step{display:flex;flex-direction:column;align-items:center;position:relative;z-index:1;flex:1;gap:8px;}
+.pass-state-badge{font-size:12px;font-weight:800;padding:4px 13px;border-radius:14px;background:rgba(255,255,255,.12);color:rgba(255,255,255,.6);letter-spacing:.3px;}
+.pass-step.done .pass-state-badge{background:#10b981;color:#fff;}
+.pass-step.current .pass-state-badge{background:#fbbf24;color:#1e2540;box-shadow:0 0 0 3px rgba(251,191,36,.2);}
+.pass-circle{width:54px;height:54px;border-radius:50%;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:24px;}
+.pass-step.current .pass-circle{background:rgba(251,191,36,.18);border-color:#fbbf24;}
+.pass-step.done .pass-circle{background:rgba(16,185,129,.18);border-color:#10b981;}
+.pass-label{font-size:17px;font-weight:800;color:rgba(255,255,255,.9);white-space:nowrap;display:flex;align-items:baseline;gap:6px;}
+.pass-label .num{color:#fff;}
+.pass-label .mode{font-size:14px;font-weight:700;color:rgba(255,255,255,.7);}
+.pass-step.current .pass-label .num{color:#fbbf24;}
+.pass-step.current .pass-label .mode{color:#fcd34d;}
+.pass-step.done .pass-label .num{color:#6ee7b7;}
+.pass-step.done .pass-label .mode{color:#86efac;}
+
+/* 진도 영역 */
+.plan-progress{margin:18px 0;background:rgba(255,255,255,.06);border-radius:10px;padding:16px 18px;}
+.plan-progress-row{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;margin-bottom:11px;}
+.plan-progress-left{display:flex;align-items:center;gap:18px;flex-wrap:wrap;}
+.today-done-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(147,197,253,.18);border:1px solid rgba(147,197,253,.4);border-radius:7px;padding:7px 14px;color:#dbeafe;font-weight:700;font-size:14px;flex-shrink:0;}
+.today-done-badge .num{font-size:18px;font-family:'JetBrains Mono',monospace;font-weight:800;color:#fff;}
+.today-done-badge .total{font-size:14px;color:rgba(219,234,254,.7);font-weight:600;}
+.plan-stats-list{display:flex;gap:22px;align-items:baseline;}
+.plan-stat{display:flex;align-items:baseline;gap:6px;}
+.plan-stat .l{font-size:14px;color:rgba(147,197,253,.9);font-weight:700;}
+.plan-stat .v{font-size:22px;font-weight:800;font-family:'JetBrains Mono',monospace;line-height:1.1;}
+.plan-stat .v.actual{color:#34d399;}
+.plan-stat .v.plan{color:#cbd5e1;}
+.plan-stat .v.total{color:#fff;}
+.plan-pct-big{font-size:30px;font-weight:800;color:#60a5fa;font-family:'JetBrains Mono',monospace;line-height:1;flex-shrink:0;}
+.plan-progress-bar{height:12px;background:rgba(255,255,255,.15);border-radius:6px;overflow:hidden;position:relative;margin-bottom:8px;}
+.plan-progress-fill{height:100%;border-radius:6px;}
+.plan-progress-fill.plan{background:rgba(203,213,225,.5);position:absolute;top:0;left:0;}
+.plan-progress-fill.actual{background:linear-gradient(90deg,#34d399,#60a5fa);position:absolute;top:0;left:0;}
+.plan-progress-delay{font-size:13.5px;color:#fcd34d;font-weight:700;}
+.plan-progress-delay.ok{color:#6ee7b7;}
+
+/* 액션 + 진도 밀림 한 줄 */
+.action-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px;align-items:stretch;}
+@media(max-width:680px){.action-row{grid-template-columns:1fr;}}
+.action-row.solo{grid-template-columns:1fr;}
+.plan-action-wrap{display:flex;}
+.plan-action-btn{width:100%;border:none;border-radius:9px;padding:14px 18px;font-size:15px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-family:Pretendard,sans-serif;transition:all .15s;text-align:center;color:#fff;}
+.plan-action-btn:hover{filter:brightness(1.08);transform:translateY(-1px);}
+.plan-action-btn .sub{display:block;font-size:11.5px;font-weight:500;color:rgba(255,255,255,.85);margin-top:3px;}
+.plan-action-btn.p1,
+.plan-action-btn.p2,
+.plan-action-btn.p3{background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#1e2540;box-shadow:0 4px 14px rgba(251,191,36,.35);}
+.plan-action-btn.p1 .sub,
+.plan-action-btn.p2 .sub,
+.plan-action-btn.p3 .sub{color:rgba(30,37,64,.75);}
+.plan-action-btn.done-state{background:linear-gradient(135deg,#94a3b8,#64748b);color:#fff;cursor:default;box-shadow:none;}
+.plan-action-btn.done-state:hover{transform:none;filter:none;}
+.plan-action-btn.done-state .sub{color:rgba(255,255,255,.85);}
+.plan-action-btn.done-complete{background:linear-gradient(135deg,#059669,#10b981);color:#fff;cursor:default;box-shadow:0 4px 14px rgba(16,185,129,.35);}
+.plan-action-btn.done-complete:hover{transform:none;filter:none;}
+.plan-action-btn.done-complete .sub{color:rgba(255,255,255,.85);}
+
+/* 마이그레이션 마법사 */
+.migration-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.65);z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px;}
+.migration-modal{background:#1e2540;border-radius:16px;padding:28px 24px;max-width:380px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.1);}
+.migration-modal h3{font-size:17px;font-weight:800;color:#fff;margin:0 0 6px;font-family:Pretendard,sans-serif;}
+.migration-modal .msub{font-size:12.5px;color:rgba(255,255,255,.55);margin:0 0 18px;font-family:Pretendard,sans-serif;}
+.migration-modal .mresult{background:rgba(255,255,255,.06);border-radius:10px;padding:14px 16px;margin-bottom:18px;}
+.migration-modal .mresult-row{font-size:13px;color:rgba(255,255,255,.85);padding:3px 0;font-family:Pretendard,sans-serif;}
+.migration-modal .mresult-row.warn{color:#fbbf24;}
+.migration-btn{width:100%;padding:13px 16px;border:none;border-radius:10px;font-size:13.5px;font-weight:700;cursor:pointer;font-family:Pretendard,sans-serif;margin-bottom:8px;text-align:left;display:block;}
+.migration-btn.mprimary{background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;}
+.migration-btn.msecondary{background:rgba(255,255,255,.08);color:rgba(255,255,255,.8);border:1px solid rgba(255,255,255,.15);}
+.migration-btn.mtext{background:transparent;color:rgba(255,255,255,.4);font-size:12px;font-weight:500;padding:8px;text-align:center;margin-bottom:0;}
+.migration-chip{position:fixed;top:10px;right:68px;z-index:9000;background:#f59e0b;color:#1e2540;border:none;border-radius:20px;padding:5px 11px;font-size:11.5px;font-weight:700;cursor:pointer;font-family:Pretendard,sans-serif;box-shadow:0 2px 8px rgba(245,158,11,.5);white-space:nowrap;}
+.migration-banner{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:9px;padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;gap:10px;cursor:pointer;}
+.migration-banner-text{font-size:12.5px;color:#fbbf24;font-family:Pretendard,sans-serif;flex:1;}
+
+/* 한도 1.5배 알림 */
+.limit-alert{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:9px;padding:12px 14px;margin-top:8px;}
+.limit-alert-msg{font-size:13px;font-weight:700;color:#fca5a5;margin-bottom:4px;font-family:Pretendard,sans-serif;}
+.limit-alert-desc{font-size:12px;color:rgba(255,255,255,.6);margin-bottom:10px;font-family:Pretendard,sans-serif;}
+.limit-replan-btn{padding:7px 14px;background:#2563eb;color:#fff;border:none;border-radius:7px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:Pretendard,sans-serif;}
+
+/* 다크 카드 내부 인라인 진도 알림 */
+.plan-delay-inline{background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.3);border-radius:9px;padding:11px 14px;display:flex;flex-direction:column;justify-content:center;gap:8px;}
+.plan-delay-inline.ok{background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.3);}
+.plan-delay-inline.critical{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.3);}
+.plan-delay-title{font-size:13.5px;font-weight:700;color:#fde68a;display:flex;align-items:center;gap:6px;}
+.plan-delay-inline.ok .plan-delay-title{color:#a7f3d0;}
+.plan-delay-inline.critical .plan-delay-title{color:#fecaca;}
+.plan-delay-actions{display:flex;gap:6px;flex-wrap:wrap;}
+
 /* ── 오늘의 학습 배너 ── */
 .today-plan-banner{background:linear-gradient(135deg,#1e2540,#2d3a6e);border-radius:var(--r);padding:14px 18px;margin-bottom:12px;color:#fff;position:relative;overflow:hidden;}
 .today-plan-banner::before{content:'';position:absolute;right:-20px;top:-20px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.04);}
@@ -766,8 +885,8 @@ body{background:var(--bg);color:var(--text);font-family:'Pretendard',sans-serif;
     <!-- 비율 변화 알림 배너 -->
     <div id="ratioAlertBanner" style="display:none;padding-top:10px;"></div>
 
-    <!-- ① 오늘 플랜 현황 (상단 고정) -->
-    <div class="dash-section" id="dashTodaySection"></div>
+    <!-- ① 오늘 플랜 현황 (상단 고정 — 자체 다크 카드) -->
+    <div style="margin-bottom:12px;" id="dashTodaySection"></div>
 
     <!-- ② 계획 대비 실제 진도 -->
     <div class="dash-section" id="dashProgressSection">
@@ -2749,6 +2868,7 @@ function getSrsDueQuestions(){
 // 대시보드
 // ═══════════════════════════════════════════
 function renderDashboard(){
+  checkMigrationPressure();
   // 기능2: 비율 변화 알림 체크
   renderRatioAlert();
 
@@ -2762,9 +2882,9 @@ function renderDashboard(){
   var todaySection = document.getElementById('dashTodaySection');
   if(todaySection){
     if(!plan){
-      todaySection.innerHTML = '<div class="dash-title">📅 오늘의 회독 플랜</div>'
+      todaySection.innerHTML = ''
         +'<div style="background:linear-gradient(135deg,#1e2540,#2d3a6e);border-radius:12px;padding:24px 20px;color:#fff;text-align:center;">'
-        +'<div style="font-size:36px;margin-bottom:10px;">⚖️</div>'
+        +'<div style="font-size:36px;margin-bottom:10px;">📊</div>'
         +'<div style="font-size:17px;font-weight:800;margin-bottom:6px;">경영학 퀴즈에 오신 걸 환영합니다!</div>'
         +'<div style="font-size:12.5px;color:rgba(255,255,255,.7);margin-bottom:20px;line-height:1.7;">'
         +'시험일을 입력하면 9회독까지의 학습 일정을<br>자동으로 계산해 드립니다.</div>'
@@ -2775,37 +2895,153 @@ function renderDashboard(){
         +'<div style="margin-top:16px;font-size:11px;color:rgba(255,255,255,.4);">기존 학습 데이터가 있다면 → 동기화 바에서 JSON 불러오기</div>'
         +'</div>';
     } else if(tp && tp.status==='active'){
+      // 통합 다크 카드 1개로 렌더링 — 차수 타임라인 + 진도 영역 + 통합 메인 버튼 + 진도 밀림 인라인 알림
+      // 경영학은 getTodayPassDone(passQs) 1인자 시그니처 유지
       var done0=getTodayPassDone(tp.passQs), total0=tp.passQs.length;
       var pct0=total0>0?Math.round(done0/total0*100):100;
-      var passLabel=['1차 전체 지문 → 📖 학습모드','2차 △·X 지문만 → 🔁 복습모드','3차 △·X 지문만 → 🔁 복습모드'][tp.passNum-1];
-      var modeTag = tp.isFullPass
-        ? '<span style="background:#dbeafe;color:#1d4ed8;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;margin-left:6px;">📖 학습모드</span>'
-        : '<span style="background:#fef9c3;color:#92400e;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;margin-left:6px;">🔁 복습모드</span>';
-      var progressNote = (tp.round===1 && plan.hasProgress)
-        ? '<div style="font-size:11px;color:#6ee7b7;margin-bottom:6px;">✅ 기존 완료 '+plan.progressCount+'문항 제외 → 잔여 '+tp.targetTotal+'문항 대상</div>'
-        : '';
-      todaySection.innerHTML = '<div class="dash-title">📅 오늘의 회독 플랜</div>'
-        +'<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">'
-        +'<div class="dash-stat" style="flex:1;min-width:90px;"><div class="dash-stat-val">'+tp.round+'회독</div><div class="dash-stat-lbl">현재 회독</div></div>'
-        +'<div class="dash-stat" style="flex:1;min-width:90px;"><div class="dash-stat-val">'+tp.dayInRound+'/'+tp.roundDays+'일</div><div class="dash-stat-lbl">회독 진행일</div></div>'
-        +'<div class="dash-stat" style="flex:1;min-width:90px;"><div class="dash-stat-val" style="color:var(--warn)">D-'+tp.daysLeft+'</div><div class="dash-stat-lbl">시험까지</div></div>'
-        +'<div class="dash-stat" style="flex:1;min-width:90px;"><div class="dash-stat-val" style="color:var(--c2)">'+tp.passNum+'/3차</div><div class="dash-stat-lbl">오늘 차수</div></div>'
-        +'</div>'
-        + progressNote
-        +'<div style="font-size:12px;color:var(--dim);margin-bottom:6px;font-weight:600;">'+passLabel+modeTag+'</div>'
-        +'<div style="font-size:11.5px;color:var(--muted);margin-bottom:8px;">오늘 범위: '+(tp.startIdx+1)+'~'+tp.endIdx+'번째 ('+tp.todayQs.length+'문제)'
-        +' &nbsp;·&nbsp; 현재 차수 대상: '+total0+'문항</div>'
-        +'<div style="height:10px;background:var(--border);border-radius:5px;overflow:hidden;margin-bottom:5px;"><div style="height:100%;width:'+pct0+'%;background:linear-gradient(90deg,#34d399,#60a5fa);border-radius:5px;transition:width .5s;"></div></div>'
-        +'<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:12px;"><span>'+done0+'/'+total0+' 완료 ('+pct0+'%)</span><span>D-'+tp.daysLeft+'일 남음</span></div>'
-        +'<div style="display:flex;gap:6px;flex-wrap:wrap;">'
-        +'<button onclick="startTodayStudy()" style="padding:8px 18px;background:#fbbf24;color:#1e2540;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:Pretendard,sans-serif;">'+(tp.isFullPass?'📖 학습 시작':'🔁 복습 시작')+'</button>'
-        +(tp.passNum<3?'<button onclick="advancePass()" style="padding:8px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;color:var(--dim);font-family:Pretendard,sans-serif;">다음 차수 →</button>':'')
-        +(tp.passNum>1?'<button onclick="retreatPass()" style="padding:8px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;color:var(--dim);font-family:Pretendard,sans-serif;">← 이전 차수</button>':'')
-        +'<button onclick="openPlanOverlay()" style="padding:8px 14px;background:transparent;border:1px solid var(--border);border-radius:8px;font-size:12px;cursor:pointer;color:var(--muted);font-family:Pretendard,sans-serif;">⚙ 플랜 수정</button>'
+
+      // 전체 진도 (계획 vs 실제)
+      var expectedDone = calcExpectedDone(plan, today, allQ);
+      var actualDone = allQ.filter(function(q){ return isQDone(q); }).length;
+      var planTotal = allQ.length;
+      var actPct = Math.round(actualDone/planTotal*100);
+      var diff = actualDone - expectedDone;
+      var diffDays2 = (tp.qPerDay>0) ? Math.round(Math.abs(diff)/tp.qPerDay) : 0;
+
+      // 오늘 활동 카운트 (경영학은 act_+today 사용)
+      var todayActCount = parseInt(localStorage.getItem('act_'+today)||'0');
+
+      // 차수 타임라인 (1차/2차/3차 동그라미 상태 표시)
+      var pn = tp.passNum;
+      var curIsDone = (total0>0 && done0>=total0);
+      function passStateAt(n){
+        if(n < pn) return 'done';
+        if(n > pn) return '';
+        return curIsDone ? 'done' : 'current';
+      }
+      var passSteps = [
+        {num:'1차', mode:'학습', icon:'📖', state: passStateAt(1)},
+        {num:'2차', mode:'복습', icon:'🔁', state: passStateAt(2)},
+        {num:'3차', mode:'복습', icon:'🔁', state: passStateAt(3)}
+      ];
+      var stateBadge = {done:'✓ 완료', current:'▸ 현재', '':'대기'};
+      var timelineHtml = '<div class="pass-timeline">'
+        + passSteps.map(function(s){
+          return '<div class="pass-step '+s.state+'">'
+            +'<div class="pass-state-badge">'+stateBadge[s.state]+'</div>'
+            +'<div class="pass-circle">'+s.icon+'</div>'
+            +'<div class="pass-label"><span class="num">'+s.num+'</span><span class="mode">'+s.mode+'</span></div>'
+            +'</div>';
+        }).join('')
+        + '</div>';
+
+      // 진도 밀림 인라인 알림 (다크 카드 내부)
+      var delayClass = diff>=0 ? 'ok' : (diff>=-tp.qPerDay*3 ? '' : 'critical');
+      var delayMsg, delayActions;
+      if(diff < 0){
+        delayMsg = '⚠ 약 '+diffDays2+'일 분량('+Math.abs(diff)+'문항) 밀려있어요';
+        delayActions = '<span style="font-size:11.5px;color:rgba(255,255,255,.55);">이어서 학습 버튼을 누르면 자동으로 처리됩니다</span>';
+      } else if(diff > 0){
+        delayMsg = '✅ 계획보다 '+diff+'문항 앞서가고 있어요';
+        delayActions = '<span style="font-size:12px;color:rgba(255,255,255,.6);">계속 페이스 유지하세요!</span>';
+      } else {
+        delayMsg = '✅ 계획대로 진행 중';
+        delayActions = '<span style="font-size:12px;color:rgba(255,255,255,.6);">완벽한 페이스!</span>';
+      }
+      var delayHtml = '<div class="plan-delay-inline '+delayClass+'">'
+        +'<div class="plan-delay-title">'+delayMsg+'</div>'
+        +'<div class="plan-delay-actions">'+delayActions+'</div>'
+        +'</div>';
+
+      // 메인 액션 버튼 (통합 1개)
+      // 3차 완료 → 녹색 완료 / 그 외 → 📚 이어서 학습 시작 (자동 큐)
+      var actionHtml;
+      var sq;
+      if(curIsDone && pn === 3){
+        var doneSub = todayActCount > 0 ? todayActCount+'문항 완료 · 푹 쉬세요 🌙' : '오늘 모든 차수를 완료했습니다! 푹 쉬세요 🌙';
+        actionHtml = '<div class="plan-action-wrap"><button class="plan-action-btn done-complete" disabled>'
+          +'<span>🎉 오늘 학습 완료<span class="sub">'+doneSub+'</span></span></button></div>';
+      } else {
+        sq = getStudyQueue();
+        var mainSub;
+        if(curIsDone && pn < 3){
+          var nextPn = pn + 1;
+          var nextQLen = sq ? sq.passQs.length : total0;
+          mainSub = nextPn+'차 복습 시작 · '+nextQLen+'문제';
+        } else {
+          var remainQ = total0 - done0;
+          mainSub = pn+'차 '+(tp.isFullPass ? '학습' : '복습')+' · 남은 '+remainQ+'문제';
+          if(sq && sq.extraCount > 0){
+            mainSub += ' (+밀린 '+sq.extraCount+'문제 포함)';
+          }
+        }
+        actionHtml = '<div class="plan-action-wrap"><button class="plan-action-btn p1" onclick="handleMainStudyBtn()">'
+          +'<span>📚 이어서 학습 시작<span class="sub">'+mainSub+'</span></span></button></div>';
+      }
+
+      // 한도 1.5배 초과 알림 (Phase 3 자리 — 미리 들어가도 무방)
+      var limitAlertHtml = '';
+      if(!curIsDone){
+        var queueTotal = sq ? sq.passQs.length : total0;
+        var limitCount = Math.floor(tp.qPerDay * 1.5);
+        if(queueTotal > limitCount){
+          var overCount = queueTotal - tp.qPerDay;
+          limitAlertHtml = '<div class="limit-alert">'
+            +'<div class="limit-alert-msg">⚠ 오늘 분량이 평소보다 '+overCount+'문제 많아요 ('+queueTotal+'문제 / 기준 '+tp.qPerDay+'문제)</div>'
+            +'<div class="limit-alert-desc">한도('+limitCount+'문제)를 초과했습니다. 무리하지 않으려면 일정을 재조정하세요.</div>'
+            +'<button class="limit-replan-btn" onclick="replanFromToday()">📅 일정 재조정</button>'
+            +'</div>';
+        }
+      }
+
+      // 시험일 + 연속 학습일
+      var examDateStr = plan.examDate || '';
+      var streakN = (typeof calcStreak==='function') ? calcStreak() : 0;
+
+      todaySection.innerHTML = '<div class="plan-card">'
+        +'  <div class="plan-card-head">'
+        +'    <div class="plan-meta-box">'
+        +'      <div class="plan-meta-chip">'
+        +'        <div class="chip-lbl">현재 진행</div>'
+        +'        <div class="chip-val">'+tp.round+'회독, <span class="accent">'+tp.dayInRound+'일차</span></div>'
+        +'      </div>'
+        +'      <div class="plan-meta-chip">'
+        +'        <div class="chip-lbl">시험까지</div>'
+        +'        <div class="chip-val"><span class="accent warn">D-'+tp.daysLeft+'</span>'+(examDateStr?'<span class="examdate">시험일 '+examDateStr+'</span>':'')+'</div>'
+        +'      </div>'
+        +'    </div>'
+        +'    <button class="plan-edit-btn" onclick="openPlanOverlay()">⚙ 플랜 수정</button>'
+        +'  </div>'
+        +  timelineHtml
+        +'  <div class="plan-progress">'
+        +'    <div class="plan-progress-row">'
+        +'      <div class="plan-progress-left">'
+        +'        <div class="today-done-badge">📌 오늘 <span class="num">'+todayActCount+'</span><span class="total">/'+tp.todayQs.length+'</span>문제 완료</div>'
+        +'        <div class="plan-stats-list">'
+        +'          <div class="plan-stat"><span class="l">실제</span><span class="v actual">'+actualDone+'</span></div>'
+        +'          <div class="plan-stat"><span class="l">계획</span><span class="v plan">'+expectedDone+'</span></div>'
+        +'          <div class="plan-stat"><span class="l">전체</span><span class="v total">'+planTotal+'</span></div>'
+        +'        </div>'
+        +'      </div>'
+        +'      <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">'
+        +'        <span class="plan-pct-big">'+actPct+'%</span>'
+        +'        <span style="background:rgba(52,211,153,.15);border:1px solid rgba(52,211,153,.4);border-radius:7px;padding:6px 11px;font-size:13px;font-weight:700;color:#6ee7b7;display:inline-flex;align-items:center;gap:5px;">🔥 연속 <span style="font-size:16px;font-weight:800;font-family:JetBrains Mono,monospace;color:#fff;">'+streakN+'</span>일</span>'
+        +'      </div>'
+        +'    </div>'
+        +'    <div class="plan-progress-bar">'
+        +'      <div class="plan-progress-fill plan" style="width:'+Math.round(expectedDone/planTotal*100)+'%"></div>'
+        +'      <div class="plan-progress-fill actual" style="width:'+actPct+'%"></div>'
+        +'    </div>'
+        +'  </div>'
+        +'  <div class="action-row'+(limitAlertHtml?'':' solo')+'">'
+        +    actionHtml
+        +    limitAlertHtml
+        +    delayHtml
+        +'  </div>'
         +'</div>';
     } else {
       var msg = tp&&tp.status==='notStarted' ? '📅 시작일까지 D-'+diffDays(today,plan.startDate)+'일 남았습니다.' : '🏆 모든 회독 완료!';
-      todaySection.innerHTML = '<div class="dash-title">📅 오늘의 회독 플랜</div><div style="padding:10px 0;font-size:13px;color:var(--dim);">'+msg+'</div><button onclick="openPlanOverlay()" style="padding:7px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;font-size:12px;cursor:pointer;color:var(--dim);font-family:Pretendard,sans-serif;">⚙ 플랜 수정</button>';
+      todaySection.innerHTML = '<div style="padding:10px 0;font-size:13px;color:var(--dim);">'+msg+'</div><button onclick="openPlanOverlay()" style="padding:7px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;font-size:12px;cursor:pointer;color:var(--dim);font-family:Pretendard,sans-serif;">⚙ 플랜 수정</button>';
     }
   }
 
@@ -3698,6 +3934,228 @@ function renderTodayBanner(){
     +'</div>';
 }
 
+// 자동 큐: 오늘 분량 + 1차 학습 시 밀린 분량 흡수
+// (어제 잔여 1차/2차/3차 + 오늘 1차/2차/3차 순서로 자동 진행)
+function getStudyQueue(){
+  var tp = getTodayPlan();
+  if(!tp || tp.status !== 'active') return null;
+  var passQs = tp.passQs.slice();
+  var extraCount = 0;
+  if(tp.isFullPass){
+    var allQ = getPlanQuestions();
+    var notDone = allQ.filter(function(q){ return !isQDone(q); });
+    var inToday = {};
+    passQs.forEach(function(q){ inToday[q.id] = true; });
+    var extras = notDone.filter(function(q){ return !inToday[q.id]; });
+    var room = Math.max(0, tp.qPerDay - passQs.length);
+    if(room > 0 && extras.length > 0){
+      var add = extras.slice(0, room);
+      passQs = passQs.concat(add);
+      extraCount = add.length;
+    }
+  }
+  return { tp: tp, passQs: passQs, isFullPass: tp.isFullPass, extraCount: extraCount };
+}
+
+// 메인 '이어서 학습 시작' 버튼 핸들러
+// 현재 차수 완료 시 → 다음 차수 자동 진입
+// 미완료 시 → 모드 자동 전환 (1차=학습모드 / 2,3차=복습모드)
+function handleMainStudyBtn(){
+  var tp = getTodayPlan();
+  if(!tp || tp.status !== 'active') return;
+  // 경영학은 getTodayPassDone(passQs) 1인자 시그니처 유지
+  var done0 = getTodayPassDone(tp.passQs);
+  var total0 = tp.passQs.length;
+  var curIsDone = (total0 > 0 && done0 >= total0);
+  if(curIsDone && tp.passNum < 3){
+    advancePass();
+    return;
+  }
+  var queue = getStudyQueue();
+  if(queue && queue.isFullPass){
+    planStudyMode = true;
+    planStudyQIds = queue.passQs.map(function(q){ return q.id; });
+    setMode('plan');
+  } else {
+    planStudyMode = false;
+    setMode('review');
+  }
+  window.scrollTo({ top: 200, behavior: 'smooth' });
+}
+
+// ── 마이그레이션 마법사 (대시보드 흐름 v4 적용 안내) ─────────
+function analyzeMigrationGap(){
+  var allQ = getPlanQuestions();
+  var tp = getTodayPlan();
+  if(!tp || tp.status !== 'active') return null;
+  var firstPassDone = allQ.filter(function(q){ return isQDone(q); }).length;
+  var gap = allQ.filter(function(q){ return hasWrongOrConfused(q); }).length;
+  return { firstPassDone: firstPassDone, gap: gap };
+}
+
+function closeMigrationOverlay(){
+  var el = document.getElementById('migrationOverlay');
+  if(el && el.parentNode) el.parentNode.removeChild(el);
+}
+
+function _buildMigrationModal(title, subtitle, result, showDefer){
+  var overlay = document.createElement('div');
+  overlay.className = 'migration-overlay';
+  overlay.id = 'migrationOverlay';
+  overlay.innerHTML = '<div class="migration-modal">'
+    + '<h3>'+title+'</h3>'
+    + '<p class="msub">'+subtitle+'</p>'
+    + '<div class="mresult">'
+    + '<div class="mresult-row">✓ 1차 학습 완료: '+result.firstPassDone+'문제</div>'
+    + '<div class="mresult-row warn">⚠ 2/3차 복습 누락: 약 '+result.gap+'문제</div>'
+    + '</div>'
+    + '<p style="font-size:12px;color:rgba(255,255,255,.55);margin:0 0 12px;font-family:Pretendard,sans-serif;">처리 방법을 선택해 주세요:</p>'
+    + '<button class="migration-btn mprimary" onclick="migrateAutoDistribute()">📅 자동 분산 <span style="font-size:11.5px;font-weight:500;opacity:.85;">— 시험일까지 균등 분배 (추천)</span></button>'
+    + '<button class="migration-btn msecondary" onclick="migrateSkip()">⏭ 건너뛰기 — 누락분 포기, 새 흐름 즉시 시작</button>'
+    + (showDefer ? '<button class="migration-btn mtext" onclick="migrateDefer()">나중에 결정</button>' : '')
+    + '</div>';
+  document.body.appendChild(overlay);
+}
+
+// 마이그레이션 마법사 표시 (migration_v4_done 없을 때)
+function showMigrationWizard(){
+  if(localStorage.getItem('migration_v4_done')) return;
+  var result = analyzeMigrationGap();
+  if(!result) return;
+  if(result.gap <= 20){
+    // 소량 누락 → 자동 흡수 (모달 없음)
+    localStorage.setItem('migration_v4_done', 'auto');
+    return;
+  }
+  _buildMigrationModal('🎯 새 학습 흐름이 적용됐어요', '기존 학습 데이터를 분석했습니다', result, true);
+}
+
+// D-30: 강제 결정 (나중에 버튼 없음)
+function showMigrationWizardForced(){
+  if(localStorage.getItem('migration_v4_done')) return;
+  var result = analyzeMigrationGap();
+  if(!result) return;
+  _buildMigrationModal('⚠ 지금 결정하셔야 해요!', '시험까지 30일 이하 — 더 이상 미루기 어려워요', result, false);
+}
+
+// 자동 분산: replanFromToday 로직을 confirm 없이 실행
+function migrateAutoDistribute(){
+  closeMigrationOverlay();
+  var plan = loadPlan();
+  if(!plan){ localStorage.setItem('migration_v4_done','distribute'); return; }
+  var allQ = getPlanQuestions();
+  var today = todayStr();
+  var tp = getTodayPlan();
+  if(!tp || tp.status !== 'active'){
+    localStorage.setItem('migration_v4_done','distribute');
+    showToast('✅ 새 학습 흐름으로 시작합니다', 3000);
+    return;
+  }
+  var ri = tp.round - 1;
+  var curRound = plan.rounds[ri];
+  var remainDays = Math.max(1, getAvailStudyDays(today, curRound.endDate));
+  var remainQs = allQ.filter(function(q){ return !isQDone(q); });
+  plan.rounds[ri].qPerDay = Math.max(1, Math.ceil(remainQs.length / remainDays));
+  plan.rounds[ri].adjusted = true;
+  var actualWrongCount = allQ.filter(function(q){ return hasWrongOrConfused(q); }).length;
+  for(var i = ri + 1; i < plan.rounds.length; i++){
+    var r = plan.rounds[i];
+    var setScale = i <= 2 ? 1.0 : (i <= 5 ? 0.85 : 0.70);
+    var tc = r.isFullRound ? allQ.length : Math.max(1, Math.round(actualWrongCount * setScale));
+    plan.rounds[i].qPerDay = Math.max(1, Math.ceil(tc / Math.max(1, r.days)));
+    plan.rounds[i].adjusted = true;
+  }
+  savePlanData(plan);
+  localStorage.setItem('migration_v4_done', 'distribute');
+  renderDashboard();
+  showToast('✅ 누락 분량이 시험일까지 균등 분배됩니다', 3500);
+}
+
+function migrateSkip(){
+  closeMigrationOverlay();
+  localStorage.setItem('migration_v4_done', 'skip');
+  showToast('⏭ 새 학습 흐름으로 바로 시작합니다', 3000);
+}
+
+function migrateDefer(){
+  closeMigrationOverlay();
+  if(!localStorage.getItem('migration_v4_deferred_at')){
+    localStorage.setItem('migration_v4_deferred_at', new Date().toISOString());
+  }
+  showToast('⏰ 나중에 다시 안내드릴게요', 2500);
+}
+
+// 점진적 압박 알림 (1주 이내=점, 1~2주=배너, 1개월/D-60=큰 모달, D-30=강제 결정)
+function showMigrationDot(){
+  if(document.getElementById('migrationChip')) return;
+  var chip = document.createElement('button');
+  chip.className = 'migration-chip';
+  chip.id = 'migrationChip';
+  chip.textContent = '⚠ 누락 학습 처리';
+  chip.onclick = function(){ showMigrationWizard(); };
+  document.body.appendChild(chip);
+}
+
+function showMigrationBanner(){
+  if(document.getElementById('migrationBanner')) return;
+  var result = analyzeMigrationGap();
+  if(!result) return;
+  var banner = document.createElement('div');
+  banner.className = 'migration-banner';
+  banner.id = 'migrationBanner';
+  banner.onclick = showMigrationWizard;
+  banner.innerHTML = '<span class="migration-banner-text">⚠ 처리 안 된 누락 학습 약 '+result.gap+'문제 — 탭해서 처리하기</span>'
+    + '<span style="font-size:13px;color:rgba(255,255,255,.4);">›</span>';
+  var dashSection = document.getElementById('dashTodaySection');
+  if(dashSection && dashSection.parentNode){
+    dashSection.parentNode.insertBefore(banner, dashSection);
+  }
+}
+
+function checkMigrationPressure(){
+  if(localStorage.getItem('migration_v4_done')) return;
+  var deferredAt = localStorage.getItem('migration_v4_deferred_at');
+  if(!deferredAt) return;
+  var tp = getTodayPlan ? getTodayPlan() : null;
+  if(!tp || tp.status !== 'active') return;
+  var elapsed = Math.round((Date.now() - new Date(deferredAt).getTime()) / (1000*60*60*24));
+  var dLeft = tp.daysLeft || 999;
+  if(dLeft <= 30){
+    showMigrationWizardForced();
+  } else if(elapsed >= 30 || dLeft <= 60){
+    showMigrationWizard();
+  } else if(elapsed >= 7){
+    showMigrationBanner();
+  } else {
+    showMigrationDot();
+  }
+}
+
+// 토스트 알림
+function showToast(msg, duration){
+  duration = duration || 3000;
+  var el = document.createElement('div');
+  el.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1e2540;color:#fff;padding:11px 20px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,.4);z-index:9999;font-family:Pretendard,sans-serif;white-space:nowrap;opacity:0;transition:opacity .25s;border:1px solid rgba(255,255,255,.12);';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(function(){ el.style.opacity = '1'; }, 10);
+  setTimeout(function(){
+    el.style.opacity = '0';
+    setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 300);
+  }, duration);
+}
+
+// 새 디자인 첫 진입 안내 토스트 (1회만)
+function checkNewDesignToast(){
+  if(localStorage.getItem('migration_v4_shown')) return;
+  var tp = getTodayPlan ? getTodayPlan() : null;
+  if(!tp || tp.status !== 'active') return;
+  setTimeout(function(){
+    showToast('✨ 새 학습 흐름이 적용됐어요 · 버튼 하나로 이어서 학습!', 4500);
+    localStorage.setItem('migration_v4_shown', '1');
+  }, 1000);
+}
+
 // 오늘 학습 시작: 1/4/7차 → 학습모드(plan), 나머지 → 복습모드
 function startTodayStudy(){
   var tp = getTodayPlan();
@@ -4253,6 +4711,8 @@ renderAll();
 updateProg();
 updateTodayUI();
 renderTodayBanner();
+checkNewDesignToast();
+showMigrationWizard();
 
 // 플랜이 활성 상태면 앱 로드 시 오늘 배너 위치로 자동 스크롤
 (function autoScrollToBanner(){

@@ -10,9 +10,8 @@ prompt_generator_mgmt.html
 *.pdf
 *.xlsx
 
-# 문제 데이터 (Firebase로 이관됨 — 로컬 보관 / git 제외)
-management_data.js
-data/unit_*.js
+# 문제 데이터 — git으로 관리 (2026-05-15부터)
+# management_data.js, data/unit_*.js 제외 해제
 
 # 업로드 유틸리티 (관리자 로컬 전용)
 upload_questions.html

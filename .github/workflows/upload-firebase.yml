@@ -6,6 +6,7 @@ on:
     paths:
       - 'data/unit_*.js'
       - 'management_data.js'
+  workflow_dispatch:  # GitHub Actions 탭에서 수동 실행 가능
 
 jobs:
   upload:

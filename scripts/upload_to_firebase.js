@@ -31,7 +31,9 @@ function loadScript(filePath, context) {
 }
 
 // ── unit_*.js 50개 → context에 UNIT_AA … UNIT_YB 등록 ──
+// window = context 자신으로 설정 → window['UNIT_AA'] 등 브라우저 전역 접근 허용
 const context = {};
+context.window = context;
 const dataDir = path.join(__dirname, '..', 'data');
 const unitFiles = fs.readdirSync(dataDir)
   .filter(f => /^unit_[A-Z]{2}\.js$/.test(f))

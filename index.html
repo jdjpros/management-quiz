@@ -5066,6 +5066,7 @@ function shiftRoundStartToToday(silent){
   // 플랜 업데이트
   plan.rounds[ri].startDate = today;
   plan.rounds[ri].qPerDay   = newQpd;
+  plan.rounds[ri].days      = Math.max(1, diffDays(today, curRound.endDate) + 1); // 캘린더 중복 방지
   plan.rounds[ri].adjusted  = true;
 
   // round_reset 키를 새 startDate 기준으로 갱신

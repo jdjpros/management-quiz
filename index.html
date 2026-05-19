@@ -852,6 +852,7 @@ body{background:var(--bg);color:var(--text);font-family:'Pretendard',sans-serif;
       <button class="tbtn" id="btnHelp" onclick="setMode('help')">📖 설명서</button>
       <button class="tbtn ract" id="btnReviewReset" onclick="resetReview()" style="display:none">🗑 복습 초기화</button>
       <button class="tbtn ract" id="btnFcReset" onclick="resetFcState()" style="display:none" title="졸업한 지문 유지, 나머지 판정 초기화">🔄 다시 풀기</button>
+      <button class="tbtn" id="btnRoundReset" onclick="resetCurrentRoundData()" title="현재 회독 판정·복습·활동 기록 전체 초기화 (Firebase 동기화 포함)">🔄 회독 초기화</button>
       <button class="tbtn" id="btnResetAll" onclick="resetAll()">전체 초기화</button>
     </div>
   </div>
@@ -934,6 +935,7 @@ body{background:var(--bg);color:var(--text);font-family:'Pretendard',sans-serif;
     <div class="plan-preview" id="planPreview">시험일을 입력하면 일정이 표시됩니다.</div>
     <button class="plan-btn" onclick="savePlan()">📅 플랜 저장하기</button>
     <button class="plan-btn secondary" onclick="closePlanOverlay()">나중에 설정</button>
+    <button class="plan-btn" onclick="resetCurrentRoundData()" style="background:#fff;color:#d97706;border:1.5px solid #d97706;margin-top:4px;">🔄 현재 회독 학습 데이터 초기화</button>
     <button class="plan-btn" onclick="resetPlanAll()" style="background:#fff;color:#dc2626;border:1.5px solid #dc2626;margin-top:4px;">🗑 회독 플랜 전체 초기화</button>
   </div>
 </div>
@@ -4920,6 +4922,74 @@ function openPlanOverlay(){
   });
 }
 function closePlanOverlay(){ document.getElementById('planOverlay').style.display='none'; }
+
+// ── 현재 회독 학습 데이터 초기화 ─────────────────────────
+// state(O/△/X) + rv(복습 판정) + act(날짜별 학습량) 를 삭제하고
+// Firebase에도 즉시 반영 → 재로그인 시 오염된 이전 데이터 복원 방지
+function resetCurrentRoundData(){
+  var plan = loadPlan();
+  var ri   = (plan && plan.ri !== undefined) ? plan.ri : null;
+  var rLabel = (ri !== null) ? (ri + 1) + '회독' : '현재 회독';
+
+  if(!confirm(
+    '🔄 ' + rLabel + ' 학습 데이터 초기화\n\n' +
+    '아래 데이터가 모두 삭제됩니다:\n' +
+    '  • O/△/X 판정 결과 (state)\n' +
+    '  • 복습 판정 기록 (rv)\n' +
+    '  • 날짜별 학습량 기록 (act)\n\n' +
+    'Firebase에도 즉시 반영되어\n다른 기기에서 재로그인 시에도 초기화가 유지됩니다.\n\n' +
+    '※ 회독 플랜 설정(시험일·일정)은 유지됩니다.\n\n' +
+    '정말 초기화하시겠습니까?'
+  )) return;
+
+  // 1. state 초기화 (메모리 + localStorage)
+  state = {};
+  saveState();
+
+  // 2. rv_*, act_*, today_quota_*, pass_day_*, act1_* 키 일괄 삭제
+  var toRemove = [];
+  for(var i = 0; i < localStorage.length; i++){
+    var k = localStorage.key(i);
+    if(!k) continue;
+    if(k.indexOf('rv_')          === 0 ||
+       k.indexOf('today_quota_') === 0 ||
+       k.indexOf('pass_day_')    === 0 ||
+       k.indexOf('act1_')        === 0 ||
+       /^act_\d{4}-\d{2}-\d{2}$/.test(k) ||
+       k === 'act_오늘'){
+      toRemove.push(k);
+    }
+  }
+  toRemove.forEach(function(k){ localStorage.removeItem(k); });
+
+  // 3. Firebase에도 즉시 반영 (재로그인 시 오염 데이터 복원 방지)
+  if(currentUser && firebaseReady && fbDb){
+    fbDb.ref('users/' + currentUser.uid).update({ state: {}, rv: null, act: null })
+      .then(function(){
+        alert(
+          '✅ ' + rLabel + ' 초기화 완료!\n\nFirebase에도 반영됐습니다.\n' +
+          '대시보드 → 이어서 학습하기로 처음부터 시작하세요.'
+        );
+      })
+      .catch(function(e){
+        alert(
+          '✅ ' + rLabel + ' 초기화 완료!\n\n' +
+          '⚠️ Firebase 반영 실패: ' + e.message + '\n' +
+          '재로그인 시 이전 데이터가 복원될 수 있으니\n수동 동기화 버튼을 눌러주세요.'
+        );
+      });
+  } else {
+    alert(
+      '✅ ' + rLabel + ' 초기화 완료!\n\n' +
+      '(Firebase 미연결 상태 — 로그인 후 수동 동기화를 눌러 반영하세요)'
+    );
+  }
+
+  // 4. UI 갱신
+  renderAll(); updateProg();
+  setMode('dash');
+  setTimeout(function(){ renderDashboard(); }, 100);
+}
 
 function resetPlanAll(){
   if(!confirm('⚠️ 회독 플랜을 전체 초기화합니다.\n\n설정된 시험일, 목표 회독 수, 일정이 모두 삭제됩니다.\n(학습 진도 데이터는 유지됩니다)\n\n초기화하시겠습니까?')) return;

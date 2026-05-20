@@ -3118,6 +3118,55 @@ function todayStr(){
   if(off) d.setDate(d.getDate()+off);
   return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
 }
+
+// ── 새벽 early-morning 데이터 자동 병합 ────────────────────
+// 자정~04:00 사이에 구 코드(0시 기준)로 저장된 calDate 키를
+// 4시 기준 studyDate 키로 자동 이전 (act_, rv_, today_quota_, pass_day_, act1_)
+function mergeEarlyMorningData(){
+  var d = new Date();
+  if(d.getHours() >= STUDY_DAY_CUTOFF_HOUR) return; // 4시 이후면 패스
+
+  var studyDate = todayStr(); // 4시 기준 오늘 (예: 2026-05-20)
+  var calDate   = d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); // 캘린더 날짜 (예: 2026-05-21)
+  if(studyDate === calDate) return; // 같으면 불필요
+
+  var mergeKey = '_em_merged_' + calDate;
+  if(localStorage.getItem(mergeKey)) return; // 이미 병합 완료
+
+  var merged = false;
+
+  // 1) act_ 카운터: 합산 후 삭제
+  var actCal = parseInt(localStorage.getItem('act_' + calDate) || '0');
+  if(actCal > 0){
+    var actStudy = parseInt(localStorage.getItem('act_' + studyDate) || '0');
+    localStorage.setItem('act_' + studyDate, String(actStudy + actCal));
+    localStorage.removeItem('act_' + calDate);
+    merged = true;
+  }
+
+  // 2) act1_, rv_, today_quota_, pass_day_ 키: calDate → studyDate 리네임
+  var prefixes = ['act1_'+calDate, 'rv_'+calDate, 'today_quota_'+calDate, 'pass_day_'+calDate];
+  var toRename = [];
+  for(var i = 0; i < localStorage.length; i++){
+    var k = localStorage.key(i);
+    if(!k) continue;
+    for(var pi = 0; pi < prefixes.length; pi++){
+      if(k.indexOf(prefixes[pi]) === 0){ toRename.push(k); break; }
+    }
+  }
+  toRename.forEach(function(k){
+    var newKey = k.replace(calDate, studyDate);
+    localStorage.setItem(newKey, localStorage.getItem(k));
+    localStorage.removeItem(k);
+    merged = true;
+  });
+
+  if(merged){
+    localStorage.setItem(mergeKey, '1');
+    console.log('[early-morning-merge] ' + calDate + ' → ' + studyDate + ' 병합 완료 (' + (1 + toRename.length) + '개 키)');
+  }
+}
+mergeEarlyMorningData(); // 페이지 로드 시 즉시 실행
 function recordActivity(ownerDate){
   var today = todayStr();
   var k = 'act_' + today;

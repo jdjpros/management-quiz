@@ -2035,7 +2035,21 @@ function getOptJudge(qId,idx){ return (state[qId+'_j']||{})[idx]||null; }
 
 // ── 복습모드 임시 판정 (원본 영향 없음, 차수마다 리셋) ───
 // 키: localStorage, 오늘날짜+passNum 기반 → 차수 바뀌면 자동 소멸
-function _rvKey(){ return 'rv_'+todayStr()+'_p'+(typeof getTodayPlan==='function'&&getTodayPlan()&&getTodayPlan().passNum||'x'); }
+function _rvKey(){
+  // ⚠️ getTodayPlan() 직접 호출 금지 — 무한 재귀 발생
+  // 재귀 고리: getTodayPlan → isQRvDone → getRvGnJudge/getRvBoxJudge/getRvJudge → _rvKey → getTodayPlan
+  // △·X 데이터가 많은 계정에서 페이지 freeze 원인
+  var today = todayStr();
+  var plan = (typeof loadPlan==='function') && loadPlan();
+  if(!plan || !plan.rounds) return 'rv_'+today+'_px';
+  for(var ri=0; ri<plan.rounds.length; ri++){
+    var r = plan.rounds[ri];
+    if(today >= r.startDate && today <= r.endDate){
+      return 'rv_'+today+'_p'+getTodayPassNum(today, ri);
+    }
+  }
+  return 'rv_'+today+'_px';
+}
 function getRvJudge(qId,idx){
   try{ var d=JSON.parse(localStorage.getItem(_rvKey()+'_j_'+qId)||'{}'); return d[idx]||null; }catch(e){return null;}
 }

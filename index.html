@@ -4258,18 +4258,12 @@ function getTodayPlan(){
     }
     var todayQs  = targetQs.slice(startIdx, endIdx);
 
-    // 초기화 필요 회독(4회독, 7회독) 첫날 자동 초기화 체크
-    if(r.resetBefore && dayInRound===0){
-      var resetKey = 'round_reset_'+r.round+'_'+r.startDate;
-      if(!localStorage.getItem(resetKey)){
-        if(confirm('🔄 '+r.round+'회독 시작!\n\n완전 초기화 후 전체 범위를 다시 학습합니다.\n지금 초기화할까요?')){
-          state = {};
-          saveState();
-          localStorage.setItem(resetKey,'1');
-          renderAll(); updateProg(); renderTodayBanner();
-        }
-      }
-    }
+    // ⚠️ 4/7회독 첫날 state 초기화 블록 제거 (2026-06-07, 행정법 사고 동일 예방)
+    //   - getTodayPlan()은 렌더마다 수십 번 호출되는 함수.
+    //   - 여기서 confirm "예" → state={} 로 전체(1·2·3 세트 포함) 학습판정이 삭제되고 Firebase까지 덮어써짐.
+    //   - confirm "취소" → resetKey가 안 박혀서 다음 렌더마다 confirm이 무한 반복 → 페이지 freeze.
+    //   → 어느 쪽도 정상 동작이 아니므로 블록 자체를 제거(데이터 보존). 7회독은 isFullRound라
+    //     초기화 없이도 전체 범위를 다시 학습 가능. 명시적 초기화가 필요하면 대시보드 버튼으로만.
     var passNum    = getTodayPassNum(today, ri);  // ← 누락된 정의 복구
     var globalPass = (ROUND_PASSES[ri]||[passNum])[passNum-1] || passNum;
     var isFullPass = (passNum===1);

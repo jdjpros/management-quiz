@@ -2330,8 +2330,8 @@ function buildOptRow(q2,i){
   // 복습: 임시 판정이 있을 때만 펼침 (state._e 무시 → 항상 닫힌 상태로 시작)
   // 학습: 원본 열람 기록(state._e)이 있으면 펼침
   var expCls = isFinal ? (getFcOptJudge(q2.id,idx)!==null ? ' exp-open' : '')
-             : isReview ? (getRvJudge(q2.id,idx) !== null ? ' exp-open' : '')
-             : (!!(state[q2.id+'_e']||{})[idx] ? ' exp-open' : '');
+             : isReview ? (isQRvDone(q2) ? ' exp-open' : '')
+             : (isQDone(q2) ? ' exp-open' : '');
   var selM=jv==='mastered'?' sel-m':''; var selC=jv==='confused'?' sel-c':''; var selF=jv==='failed'?' sel-f':'';
   var tagLabel=isOtype?(isAns?'✓ 정답(올바른 것)':'✗ 오답(틀린 것)'):(isAns?'✗ 정답(잘못된 것)':'✓ 오답(올바른 것)');
   var div=document.createElement('div');
@@ -2416,8 +2416,8 @@ function buildBoxItemRow(q2,item){
   var jv=isFinal?getFcBoxJudge(q2.id,label):isReview?getRvBoxJudge(q2.id,label):getBoxJudge(q2.id,label);
   // 파이널: fc_state 판정 있을 때만 열림 / 복습: 임시 판정 있을 때만 열림 (state._be 무시)
   var expOpen = isFinal ? (getFcBoxJudge(q2.id,label) !== null)
-              : isReview ? (getRvBoxJudge(q2.id,label) !== null)
-              : getBoxExp(q2.id,label);
+              : isReview ? isQRvDone(q2)
+              : isQDone(q2);
   var jCls=jv?({mastered:'judged-m',confused:'judged-c',failed:'judged-f'}[jv]):'';
   var expCls=expOpen?' exp-open':'';
   var selM=jv==='mastered'?' sel-m':''; var selC=jv==='confused'?' sel-c':''; var selF=jv==='failed'?' sel-f':'';
@@ -2495,8 +2495,8 @@ function buildGnRow(q2,item,expIdx,expOverride){
   var jv=isFinal?getFcGnJudge(q2.id,expIdx):isReview?getRvGnJudge(q2.id,expIdx):getGnJudge(q2.id,expIdx);
   // 파이널: fc_state 판정 있을 때만 열림 / 복습: 임시 판정 있을 때만 열림 (state._be_N 무시)
   var expOpen = isFinal ? (getFcGnJudge(q2.id,expIdx) !== null)
-              : isReview ? (getRvGnJudge(q2.id,expIdx) !== null)
-              : getGnExp(q2.id,expIdx);
+              : isReview ? isQRvDone(q2)
+              : isQDone(q2);
   var jCls=jv?({mastered:'judged-m',confused:'judged-c',failed:'judged-f'}[jv]):'';
   var expCls=expOpen?' exp-open':'';
   var selM=jv==='mastered'?' sel-m':''; var selC=jv==='confused'?' sel-c':''; var selF=jv==='failed'?' sel-f':'';
@@ -2553,8 +2553,14 @@ function buildGnRow(q2,item,expIdx,expOverride){
 // refresh helpers
 // ═══════════════════════════════════════════
 function _findQ(qId){ return getCurrentData().find(function(x){return x.id===qId;})||getAllQuestions().find(function(x){return x.id===qId;})||null; }
+function _rerenderCard(qId){
+  var q=_findQ(qId); if(!q) return;
+  var card=document.getElementById('q-'+qId); if(!card) return;
+  var nc=mkCard(q); if(nc) card.replaceWith(nc);
+}
 function refreshOpt(qId,idx){
   var q=_findQ(qId); if(!q) return;
+  if(isQDone(q)){ _rerenderCard(qId); updateProg(); return; }
   var el=document.getElementById('optrow-'+qId+'-'+idx);
   var newRow=buildOptRow(q,idx-1); if(el&&newRow) el.replaceWith(newRow); else if(el&&!newRow) el.remove();
   var banner=document.getElementById('qbanner-'+qId); if(banner) updateAnsBanner(qId,q,banner);
@@ -2563,12 +2569,14 @@ function refreshOpt(qId,idx){
 // 복습모드 임시 판정 색깔 갱신 (△/X - 위치 유지)
 function refreshOptRv(qId,idx){
   var allQ=getAllQuestions(); var q=allQ.find(function(x){return x.id===qId;}); if(!q) return;
+  if(isQRvDone(q)){ _rerenderCard(qId); updateProg(); return; }
   var el=document.getElementById('optrow-'+qId+'-'+idx);
   var newRow=buildOptRow(q,idx-1); if(el&&newRow) el.replaceWith(newRow);
   updateProg();
 }
 function refreshBoxRv(qId,label){
   var allQ=getAllQuestions(); var q=allQ.find(function(x){return x.id===qId;}); if(!q) return;
+  if(isQRvDone(q)){ _rerenderCard(qId); updateProg(); return; }
   var el=document.getElementById('boxrow-'+qId+'-'+label);
   var parsed=parseBoxStem(q.stem); var item=parsed.items.find(function(it){return it.label===label;});
   if(el&&item) el.replaceWith(buildBoxItemRow(q,item));
@@ -2576,6 +2584,7 @@ function refreshBoxRv(qId,label){
 }
 function refreshGnRv(qId,idx){
   var allQ=getAllQuestions(); var q=allQ.find(function(x){return x.id===qId;}); if(!q) return;
+  if(isQRvDone(q)){ _rerenderCard(qId); updateProg(); return; }
   var el=document.getElementById('gnrow-'+qId+'-'+idx);
   var isOpts=Q_OPTS_BOX.has(qId);
   var isExpsRv=Q_EXPS_BOX.has(qId);
@@ -2643,6 +2652,7 @@ function updateFinalCount(total, graduated){
 }
 function refreshBoxItem(qId,label){
   var q=_findQ(qId); if(!q) return;
+  if(isQDone(q)){ _rerenderCard(qId); updateProg(); return; }
   var el=document.getElementById('boxrow-'+qId+'-'+label);
   var parsed=parseBoxStem(q.stem); var item=parsed.items.find(function(it){return it.label===label;});
   if(el&&item) el.replaceWith(buildBoxItemRow(q,item));
@@ -2651,6 +2661,7 @@ function refreshBoxItem(qId,label){
 }
 function refreshGnRow(qId,idx){
   var q=_findQ(qId); if(!q) return;
+  if(isQDone(q)){ _rerenderCard(qId); updateProg(); return; }
   var el=document.getElementById('gnrow-'+qId+'-'+idx);
   if(!el) return;
   var isOpts=Q_OPTS_BOX.has(qId);

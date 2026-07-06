@@ -262,7 +262,7 @@ function buildGnRow(q2,item,expIdx,expOverride){
 // ═══════════════════════════════════════════
 // refresh helpers
 // ═══════════════════════════════════════════
-function _findQ(qId){ return getCurrentData().find(function(x){return x.id===qId;})||getAllQuestions().find(function(x){return x.id===qId;})||null; }
+function _findQ(qId){ return getCurrentData().find(function(x){return x.id===qId;})||getQById(qId)||null; }
 function _rerenderCard(qId){
   var q=_findQ(qId); if(!q) return;
   var card=document.getElementById('q-'+qId); if(!card) return;
@@ -390,7 +390,15 @@ function refreshGnRow(qId,idx){
 // ═══════════════════════════════════════════
 function updateAnsBanner(qId,q2,banner){
   var allDone=false;
-  if(Q_OPTS_BOX.has(qId)||Q_EXPS_BOX.has(qId)){
+  // 복습모드: 원본 열람기록 기준이면 시작 전부터 정답이 스포일러됨 → rv 판정 완료 기준
+  if(mode==='review'||mode==='globalReview'){
+    allDone=isQRvDone(q2);
+  }
+  // 파이널체크: 판정 훈련 모드이므로 정답 배너 미표시
+  else if(mode==='final'){
+    allDone=false;
+  }
+  else if(Q_OPTS_BOX.has(qId)||Q_EXPS_BOX.has(qId)){
     var cnt=q2.exps.length; allDone=cnt>0;
     for(var i=0;i<cnt;i++){ if(!getGnExp(qId,i)){allDone=false;break;} }
   } else {
@@ -410,7 +418,11 @@ function updateAnsBanner(qId,q2,banner){
 function refreshTip(qId,q2){
   var tipEl=document.getElementById('qtip-'+qId); if(!tipEl||!q2.tip) return;
   var allDone=false;
-  if(Q_OPTS_BOX.has(qId)||Q_EXPS_BOX.has(qId)){
+  // 복습모드: 복습 완료 후에만 팁 표시 (정답 힌트 사전 노출 방지)
+  if(mode==='review'||mode==='globalReview'){
+    allDone=isQRvDone(q2);
+  }
+  else if(Q_OPTS_BOX.has(qId)||Q_EXPS_BOX.has(qId)){
     var cnt=q2.exps.length; allDone=cnt>0;
     for(var i=0;i<cnt;i++){ if(!getGnExp(qId,i)){allDone=false;break;} }
   } else {
@@ -573,16 +585,15 @@ function resetQ(id){
   for(var i=0;i<10;i++){ delete state[id+'_bj_'+i]; delete state[id+'_be_'+i]; delete state[id+'_br_'+i]; }
   state[id]={open:true}; saveState(); refresh(id); updateProg();
 }
-function refresh(id){
-  var q=getCurrentData().find(function(x){return x.id===id;}); if(!q) return;
-  var old=document.getElementById('q-'+id); if(!old) return;
-  old.replaceWith(mkCard(q));
-}
+// _rerenderCard로 일원화 — 기존 refresh는 getCurrentData()만 조회해서
+// 파이널체크/전범위복습의 "현재 단원 밖" 카드가 탭해도 안 열리는 버그가 있었음
+function refresh(id){ _rerenderCard(id); }
 
 // ═══════════════════════════════════════════
 // renderAll
 // ═══════════════════════════════════════════
 function renderAll(){
+  _invalidateRvKeyCache(); // 렌더 사이클마다 rv키 재계산 (사이클 내에서는 캐시 재사용)
   var c=document.getElementById('qContainer'); c.innerHTML='';
   // Bulk/Filter bar
   var bar=document.getElementById('bulkBar'); if(bar) bar.remove();

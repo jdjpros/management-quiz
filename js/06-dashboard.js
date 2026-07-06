@@ -464,25 +464,7 @@ function renderDashboard(){
   }
 }
 
-// ── 문제 완료 여부 헬퍼 ──────────────────────────────
-function isQDone(q){
-  // 유형2/3: Q_OPTS_BOX, Q_EXPS_BOX (exp 열람 기준)
-  if(Q_OPTS_BOX.has(q.id)||Q_EXPS_BOX.has(q.id)){
-    var cnt=q.exps.length; if(!cnt) return false;
-    for(var i=0;i<cnt;i++){if(!getGnExp(q.id,i))return false;}
-    return true;
-  }
-  // 유형1: A~E, ㄱ~ㅈ 박스형 (boxExp 열람 기준)
-  var parsed=parseBoxStem(q.stem);
-  var boxMode=parsed.items.length>0&&!Q3_TYPE.has(q.id);
-  if(boxMode){
-    if(parsed.items.length===0) return false; // 빈 배열 오판 방지
-    return parsed.items.every(function(it){return getBoxExp(q.id,it.label);});
-  }
-  // 일반 4지선다: _e 해설 열람 기준 (opts 빈 배열이면 false)
-  if(!q.opts||q.opts.length===0) return false;
-  return q.opts.every(function(o,i){return !!(state[q.id+'_e']||{})[i+1];});
-}
+// isQDone은 js/03-state-judge.js로 이동 (핵심 판정 로직 집결)
 
 // ── 계획상 오늘까지 완료했어야 할 문항 수 ────────────
 function calcExpectedDone(plan, today, allQ){

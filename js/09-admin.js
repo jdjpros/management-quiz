@@ -150,6 +150,7 @@ function deleteCustomQuestion(unitId, qId){
           }
         });
       });
+      invalidateQuestionCache(); // MENU 변경 → 문제 캐시 무효화
       renderQaList(unitId);
     })
     .catch(function(e){ alert('삭제 실패: '+e.message); });
@@ -182,6 +183,7 @@ function _mergeOneCustomQ(unitId, q){
       if(exists>=0) m.data[exists]=q; else m.data.push(q);
     });
   });
+  invalidateQuestionCache(); // MENU 변경 → 문제 캐시 무효화
 }
 function _rebuildOTypeFromMenu(){
   getAllQuestions().forEach(function(q){

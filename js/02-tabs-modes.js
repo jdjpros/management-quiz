@@ -210,10 +210,13 @@ function applyMasteryFilter(){
 // ═══════════════════════════════════════════
 // 검색
 // ═══════════════════════════════════════════
+// 검색 debounce — 한글 IME는 자모 조합마다 input 이벤트 발생 → 매 타이핑 전체 재렌더링 방지
+var _searchTimer=null;
 function onSearch(){
   searchQuery=document.getElementById('searchInput').value.trim();
   document.getElementById('searchClear').style.display=searchQuery?'inline-block':'none';
-  renderAll();
+  clearTimeout(_searchTimer);
+  _searchTimer=setTimeout(function(){ renderAll(); }, 250);
 }
 function clearSearch(){
   searchQuery=''; document.getElementById('searchInput').value='';
@@ -302,7 +305,7 @@ function _isReviewTarget(jv, ox){
 }
 
 function needsReview(qId){
-  var q = getAllQuestions().find(function(x){return x.id===qId;}); if(!q) return false;
+  var q = getQById(qId); if(!q) return false;
   // 유형2/3: Q_OPTS_BOX, Q_EXPS_BOX (index 기반, exp.ox 사용)
   if(Q_OPTS_BOX.has(qId)||Q_EXPS_BOX.has(qId)){
     for(var i=0;i<q.exps.length;i++){

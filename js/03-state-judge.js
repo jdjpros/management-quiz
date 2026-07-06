@@ -10,20 +10,32 @@ function getOptJudge(qId,idx){ return (state[qId+'_j']||{})[idx]||null; }
 
 // ── 복습모드 임시 판정 (원본 영향 없음, 차수마다 리셋) ───
 // 키: localStorage, 오늘날짜+passNum 기반 → 차수 바뀌면 자동 소멸
+// ── _rvKey 캐시 ──
+// 복습모드 렌더 1회에 지문마다 호출(수천 회)돼 매번 플랜 JSON.parse → 프리즈 원인.
+// 날짜가 같으면 캐시 재사용. 차수/플랜 변경 시 _invalidateRvKeyCache() 필수
+// (호출처: setTodayPassNum, savePlanData, resetPlanAll, 클라우드 플랜 복원, renderAll 진입)
+var _rvKeyCache = null, _rvKeyCacheDay = null;
+function _invalidateRvKeyCache(){ _rvKeyCache = null; }
 function _rvKey(){
   // ⚠️ getTodayPlan() 직접 호출 금지 — 무한 재귀 발생
   // 재귀 고리: getTodayPlan → isQRvDone → getRvGnJudge/getRvBoxJudge/getRvJudge → _rvKey → getTodayPlan
   // △·X 데이터가 많은 계정에서 페이지 freeze 원인
   var today = todayStr();
+  if(_rvKeyCache && _rvKeyCacheDay === today) return _rvKeyCache;
+  var key = 'rv_'+today+'_px';
   var plan = (typeof loadPlan==='function') && loadPlan();
-  if(!plan || !plan.rounds) return 'rv_'+today+'_px';
-  for(var ri=0; ri<plan.rounds.length; ri++){
-    var r = plan.rounds[ri];
-    if(today >= r.startDate && today <= r.endDate){
-      return 'rv_'+today+'_p'+getTodayPassNum(today, ri);
+  if(plan && plan.rounds){
+    for(var ri=0; ri<plan.rounds.length; ri++){
+      var r = plan.rounds[ri];
+      if(today >= r.startDate && today <= r.endDate){
+        key = 'rv_'+today+'_p'+getTodayPassNum(today, ri);
+        break;
+      }
     }
   }
-  return 'rv_'+today+'_px';
+  _rvKeyCacheDay = today;
+  _rvKeyCache = key;
+  return key;
 }
 function getRvJudge(qId,idx){
   try{ var d=JSON.parse(localStorage.getItem(_rvKey()+'_j_'+qId)||'{}'); return d[idx]||null; }catch(e){return null;}
@@ -61,8 +73,15 @@ function setRvGnJudge(qId,idx,level){
 var FC_KEY = 'fc_state';
 var _fcRenderedMastered = {}; // renderAll 시점 스냅샷 (세션 내 제거 방지용)
 
-function loadFcState(){ try{ return JSON.parse(localStorage.getItem(FC_KEY)||'{}'); }catch(e){ return {}; } }
-function saveFcState(fc){ try{ localStorage.setItem(FC_KEY, JSON.stringify(fc)); }catch(e){} saveFcToCloud(); }
+// 파이널모드 렌더 시 지문마다 JSON.parse 반복 방지용 캐시 (외부 변경 시 _invalidateFcCache 필수)
+var _fcStateCache = null;
+function _invalidateFcCache(){ _fcStateCache = null; }
+function loadFcState(){
+  if(_fcStateCache) return _fcStateCache;
+  try{ _fcStateCache = JSON.parse(localStorage.getItem(FC_KEY)||'{}'); }catch(e){ _fcStateCache = {}; }
+  return _fcStateCache;
+}
+function saveFcState(fc){ _fcStateCache = fc; try{ localStorage.setItem(FC_KEY, JSON.stringify(fc)); }catch(e){} saveFcToCloud(); }
 
 function getFcOptJudge(qId,idx){ return loadFcState()[qId+'_opt_'+idx]||null; }
 function getFcBoxJudge(qId,label){ return loadFcState()[qId+'_box_'+label]||null; }
@@ -86,7 +105,7 @@ function _isFcSessionMastered(key){ return !!_fcRenderedMastered[key]; }
 
 // 해당 문제의 모든 △·X 지문이 이전 세션에서 mastered였는지 (문제 제외 여부)
 function isFcDone(qId){
-  var q=getAllQuestions().find(function(x){return x.id===qId;}); if(!q) return false;
+  var q=getQById(qId); if(!q) return false;
   var lmap={'A':0,'B':1,'C':2,'D':3,'E':4,'ㄱ':0,'ㄴ':1,'ㄷ':2,'ㄹ':3,'ㅁ':4,'ㅂ':5,'ㅅ':6,'ㅇ':7,'ㅈ':8,'가':0,'나':1,'다':2,'라':3,'마':4,'바':5,'사':6,'아':7,'자':8};
   if(Q_OPTS_BOX.has(qId)||Q_EXPS_BOX.has(qId)){
     for(var i=0;i<q.exps.length;i++){
@@ -132,6 +151,7 @@ function resetFcState(){
 function resetFcStateAll(){
   if(!confirm('⚠️ 파이널체크 전체 초기화\n\n모든 졸업 처리를 포함하여 파이널체크 판정을 완전 삭제합니다.\n처음부터 다시 시작합니다.\n\n※ 학습모드·복습모드 데이터는 전혀 영향받지 않습니다.\n\n정말 초기화하시겠습니까?')) return;
   localStorage.removeItem(FC_KEY);
+  _invalidateFcCache();
   saveFcToCloud();
   renderAll();
 }
@@ -162,7 +182,7 @@ function isQRvDone(q){
   var parsed=parseBoxStem(q.stem);
   var boxMode=parsed.items.length>0&&!Q3_TYPE.has(q.id);
   if(boxMode){
-    var _lmapR={'A':0,'B':1,'C':2,'D':3,'E':4,'ㄱ':0,'ㄴ':1,'ㄷ':2,'ㄹ':3,'ㅁ':4,'ㅂ':5,'ㅅ':6,'ㅇ':7,'ㅈ':8};
+    var _lmapR={'A':0,'B':1,'C':2,'D':3,'E':4,'ㄱ':0,'ㄴ':1,'ㄷ':2,'ㄹ':3,'ㅁ':4,'ㅂ':5,'ㅅ':6,'ㅇ':7,'ㅈ':8,'가':0,'나':1,'다':2,'라':3,'마':4,'바':5,'사':6,'아':7,'자':8};
     for(var bi=0;bi<parsed.items.length;bi++){
       var it=parsed.items[bi];
       var jvB=getBoxJudge(q.id,it.label);
@@ -203,7 +223,7 @@ function setOptJudge(qId,idx,level){
   var wasNew = !state[qId+'_e'][idx];
   state[qId+'_e'][idx]=true;
   if(wasNew){
-    var _q1 = getAllQuestions().find(function(x){return x.id===qId;});
+    var _q1 = getQById(qId);
     if(_q1 && isQDone(_q1)) recordActivity(getQOwnerDate(qId));
     setSrsState(qId, level==='mastered'); renderTodayBanner();
   }
@@ -223,7 +243,7 @@ function setBoxJudge(qId,label,level){
   var wasNew = !state[ek][label];
   state[ek][label]=true;
   if(wasNew){
-    var _q2 = getAllQuestions().find(function(x){return x.id===qId;});
+    var _q2 = getQById(qId);
     if(_q2 && isQDone(_q2)) recordActivity(getQOwnerDate(qId));
     setSrsState(qId, level==='mastered'); renderTodayBanner();
   }
@@ -243,7 +263,7 @@ function setGnJudge(qId,idx,level){
   if(state[qId+'_bj_'+idx]===level) delete state[qId+'_bj_'+idx]; else state[qId+'_bj_'+idx]=level;
   state[qId+'_be_'+idx]=true;
   if(wasNew){
-    var _q3 = getAllQuestions().find(function(x){return x.id===qId;});
+    var _q3 = getQById(qId);
     if(_q3 && isQDone(_q3)) recordActivity(getQOwnerDate(qId));
     setSrsState(qId, level==='mastered'); renderTodayBanner();
   }
@@ -262,4 +282,23 @@ function setGnReview(qId,idx){
   saveState(); refreshGnRow(qId,idx); updateProg();
 }
 function getGnReview(qId,idx){ return !!state[qId+'_br_'+idx]; }
-
+
+// ── 학습(원본) 전체완료 판정 — 06-dashboard.js에서 이동 (2026-07-06) ──
+function isQDone(q){
+  // 유형2/3: Q_OPTS_BOX, Q_EXPS_BOX (exp 열람 기준)
+  if(Q_OPTS_BOX.has(q.id)||Q_EXPS_BOX.has(q.id)){
+    var cnt=q.exps.length; if(!cnt) return false;
+    for(var i=0;i<cnt;i++){if(!getGnExp(q.id,i))return false;}
+    return true;
+  }
+  // 유형1: A~E, ㄱ~ㅈ 박스형 (boxExp 열람 기준)
+  var parsed=parseBoxStem(q.stem);
+  var boxMode=parsed.items.length>0&&!Q3_TYPE.has(q.id);
+  if(boxMode){
+    if(parsed.items.length===0) return false; // 빈 배열 오판 방지
+    return parsed.items.every(function(it){return getBoxExp(q.id,it.label);});
+  }
+  // 일반 4지선다: _e 해설 열람 기준 (opts 빈 배열이면 false)
+  if(!q.opts||q.opts.length===0) return false;
+  return q.opts.every(function(o,i){return !!(state[q.id+'_e']||{})[i+1];});
+}

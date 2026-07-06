@@ -35,6 +35,24 @@ var syncCode = null;
 var firebaseReady = false;
 var autoSyncTimer = null;
 var _cloudWriting = false; // pushToCloud 중복 실행 방지 플래그
+var _cloudLoaded  = false; // 초기 클라우드 로드 완료 전 자동 push 금지 (낡은 로컬로 클라우드 덮어쓰기 방지)
+
+// ── 동기화 메타 (누가/언제 마지막으로 썼는지 — 타 기기 변경 감지용) ──
+function _getDeviceId(){
+  var id = localStorage.getItem('_device_id');
+  if(!id){
+    id = 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    try{ localStorage.setItem('_device_id', id); }catch(e){}
+  }
+  return id;
+}
+function _metaTuple(meta){ return meta ? String(meta.updatedAt||'') + '|' + (meta.device||'') : ''; }
+function _recordCloudMetaSeen(uid, meta){ try{ localStorage.setItem('cloud_meta_seen_'+uid, _metaTuple(meta)); }catch(e){} }
+// 마지막으로 본 클라우드 버전과 다르면 = 다른 기기(또는 이 기기의 다른 세션)가 그 사이에 씀
+function _cloudChangedSinceSeen(uid, cloudMeta){
+  if(!cloudMeta) return false; // meta 없는 레거시 데이터 → 판단 불가, 기존 동작 유지
+  return _metaTuple(cloudMeta) !== (localStorage.getItem('cloud_meta_seen_'+uid) || '');
+}
 
 function initFirebase() {
   if(firebaseConfig.apiKey === 'YOUR_API_KEY') { showGuestUI(); return; }
@@ -374,6 +392,7 @@ function _loadQuestionsFromFirebase(callback) {
       Q3_TYPE    = new Set(meta.q3_type    || []);
       _questionsLoaded = true;
       _questionsLoading = false;
+      if(typeof invalidateQuestionCache==='function') invalidateQuestionCache(); // MENU 재구성 → 문제 캐시 무효화
       renderTabs(); // 사이드바 재구성
       console.log('[데이터] 문제 로드 완료: ' + getAllQuestions().length + '문제');
       callback && callback();
@@ -399,7 +418,10 @@ function loadCloudState(uid){
       var cloudAct  = cloudRoot.act   || null;
       var cloudMisc = cloudRoot.misc  || null;
       var cloudFc   = cloudRoot.fc    || null;
+      var cloudMeta = cloudRoot.meta  || null;
       var localData = state;
+      var changedByOther = _cloudChangedSinceSeen(uid, cloudMeta);
+      _cloudLoaded = true; // 클라우드를 확인했으므로 이후 자동 push 허용
 
       if(cloudData){
         var cloudCount = Object.keys(cloudData).filter(function(k){
@@ -414,16 +436,43 @@ function loadCloudState(uid){
             '📶 오프라인 학습 데이터 감지\n\n'
             + '로컬 기기: ' + localCount2 + '개 판정\n'
             + '클라우드:  ' + cloudCount  + '개 판정\n\n'
+            + (changedByOther ? '⚠️ 다른 기기에서 저장한 기록이 있습니다.\n' : '')
             + '로컬 데이터가 더 많습니다.\n'
             + '로컬 데이터를 클라우드에 업로드할까요?\n'
             + '(취소 시 클라우드 데이터로 덮어씁니다)'
           )){
+            // ⚠️ 업로드 전 클라우드에만 있는 부가 데이터를 로컬에 먼저 병합
+            //    (이 기기에 없다는 이유로 플랜·달력·복습기록이 통째로 삭제되는 사고 방지)
+            if(cloudPlan && !loadPlan()){
+              localStorage.setItem(getPlanKey(), JSON.stringify(cloudPlan));
+              if(typeof _invalidateRvKeyCache==='function') _invalidateRvKeyCache();
+            }
+            if(cloudRv){ Object.keys(cloudRv).forEach(function(k){
+              if(k.indexOf('rv_')===0 && localStorage.getItem(k)===null) localStorage.setItem(k, cloudRv[k]);
+            }); }
+            if(cloudAct){ Object.keys(cloudAct).forEach(function(k){
+              if(k.indexOf('act_')===0 && /^act_\d{4}/.test(k)){
+                // 날짜별 학습량: 큰 값 우선 (양쪽 기록 보존)
+                var lv=parseInt(localStorage.getItem(k)||'0'), cv=parseInt(cloudAct[k]||'0');
+                if(cv>lv) localStorage.setItem(k, cloudAct[k]);
+              } else if(k.indexOf('act1_')===0 && localStorage.getItem(k)===null){
+                localStorage.setItem(k, cloudAct[k]);
+              }
+            }); }
+            if(cloudMisc){ Object.keys(cloudMisc).forEach(function(k){
+              if(localStorage.getItem(k)===null) localStorage.setItem(k, cloudMisc[k]);
+            }); }
+            if(cloudFc){
+              var _lfc = loadFcState(); var _fcMerged = false;
+              Object.keys(cloudFc).forEach(function(k){ if(!(k in _lfc)){ _lfc[k]=cloudFc[k]; _fcMerged=true; } });
+              if(_fcMerged) saveFcState(_lfc);
+            }
             pushToCloud(uid, true);
           } else {
             state = cloudData;
             saveState();
             // 클라우드 플랜 복원
-            if(cloudPlan){ localStorage.setItem(getPlanKey(), JSON.stringify(cloudPlan)); }
+            if(cloudPlan){ localStorage.setItem(getPlanKey(), JSON.stringify(cloudPlan)); if(typeof _invalidateRvKeyCache==='function') _invalidateRvKeyCache(); }
             // 클라우드 복습모드 임시판정 복원
             if(cloudRv){ Object.keys(cloudRv).forEach(function(k){ if(k.indexOf('rv_')===0) localStorage.setItem(k, cloudRv[k]); }); }
             // 클라우드 활동 기록 복원 (날짜별 학습량 + act1_*)
@@ -431,13 +480,13 @@ function loadCloudState(uid){
             // 클라우드 기타 플래그 복원 (회독 리셋·재조정·마이그레이션 등)
             if(cloudMisc){ Object.keys(cloudMisc).forEach(function(k){ localStorage.setItem(k, cloudMisc[k]); }); }
             // 클라우드 파이널체크 판정 복원
-            if(cloudFc){ localStorage.setItem(FC_KEY, JSON.stringify(cloudFc)); }
+            if(cloudFc){ localStorage.setItem(FC_KEY, JSON.stringify(cloudFc)); if(typeof _invalidateFcCache==='function') _invalidateFcCache(); }
           }
         } else {
           state = cloudData;
           saveState();
           // 클라우드 플랜 복원 (로컬보다 우선)
-          if(cloudPlan){ localStorage.setItem(getPlanKey(), JSON.stringify(cloudPlan)); }
+          if(cloudPlan){ localStorage.setItem(getPlanKey(), JSON.stringify(cloudPlan)); if(typeof _invalidateRvKeyCache==='function') _invalidateRvKeyCache(); }
           // 클라우드 복습모드 임시판정 복원
           if(cloudRv){ Object.keys(cloudRv).forEach(function(k){ if(k.indexOf('rv_')===0) localStorage.setItem(k, cloudRv[k]); }); }
           // 클라우드 활동 기록 복원 (달력 학습량 — act1_* 기반)
@@ -447,6 +496,8 @@ function loadCloudState(uid){
           // 클라우드 파이널체크 판정 복원
           if(cloudFc){ localStorage.setItem(FC_KEY, JSON.stringify(cloudFc)); }
         }
+        // 현재 클라우드 버전을 "확인함"으로 기록 (푸시 시엔 push 성공 콜백이 새 버전으로 갱신)
+        _recordCloudMetaSeen(uid, cloudMeta);
         // 범위 설정 복원
         var savedPlan = loadPlan();
         if(savedPlan && savedPlan.scopeMode){
@@ -458,8 +509,30 @@ function loadCloudState(uid){
         if(status){ status.className = 'sync-status'; status.textContent = '●'; }
         startAutoSync(uid);
       } else {
+        // 클라우드에 state 없음
         if(Object.keys(localData).length > 0){
-          pushToCloud(uid, false);
+          if(changedByOther){
+            // ⚠️ 다른 기기가 최근에 썼는데 state가 없음 = 다른 기기에서 초기화한 것
+            //    (기존: confirm 없이 자동 재업로드 → 초기화가 조용히 무효화되는 최악 시나리오)
+            if(confirm(
+              '⚠️ 다른 기기에서 데이터 초기화가 감지됐습니다.\n\n'
+              + '이 기기에는 이전 학습 데이터가 남아 있습니다.\n\n'
+              + '[확인] 이 기기 데이터를 다시 업로드 (초기화 취소)\n'
+              + '[취소] 초기화 유지 (이 기기 판정 기록 삭제)'
+            )){
+              pushToCloud(uid, false);
+            } else {
+              state = {};
+              saveState();
+              _recordCloudMetaSeen(uid, cloudMeta);
+              renderAll(); updateProg();
+            }
+          } else {
+            // 신규 계정/레거시(meta 없음) — 기존 동작 유지
+            pushToCloud(uid, false);
+          }
+        } else {
+          _recordCloudMetaSeen(uid, cloudMeta);
         }
         if(status){ status.className = 'sync-status'; status.textContent = '●'; }
         startAutoSync(uid);
@@ -496,6 +569,9 @@ function startAutoSync(uid){
 // ── 클라우드에 저장 ────────────────────────────────────
 function pushToCloud(uid, showMsg){
   if(!firebaseReady || !fbDb || !uid) return;
+  // 초기 클라우드 로드가 안 끝났으면 자동 push 금지 (낡은 로컬로 클라우드 덮어쓰기 방지)
+  // 수동 동기화(showMsg=true)는 사용자 의사이므로 허용
+  if(!_cloudLoaded && !showMsg) return;
   // 이미 쓰기 진행 중이면 자동 호출(showMsg=false)은 skip
   if(_cloudWriting && !showMsg) return;
   _cloudWriting = true;
@@ -525,6 +601,9 @@ function pushToCloud(uid, showMsg){
   if(Object.keys(miscData).length > 0) payload.misc = miscData;
   var fcData = loadFcState();
   if(Object.keys(fcData).length > 0) payload.fc = fcData;
+  // 쓰기 메타 (타 기기 변경 감지용 — 클라이언트 시각이지만 "값이 바뀌었는가" 비교만 하므로 시계 오차 무관)
+  var _pushMeta = { updatedAt: Date.now(), device: _getDeviceId() };
+  payload.meta = _pushMeta;
   // 프로필 정보 (관리자 페이지용)
   if(currentUser){
     payload.profile = {
@@ -536,6 +615,7 @@ function pushToCloud(uid, showMsg){
   fbDb.ref('users/' + uid).update(payload)
     .then(function(){
       _cloudWriting = false;
+      _recordCloudMetaSeen(uid, _pushMeta); // 내가 쓴 버전 = 마지막으로 본 버전
       if(status){ status.className = 'sync-status'; status.textContent = '●'; }
       if(showMsg){
         var info = document.getElementById('syncInfo');

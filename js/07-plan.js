@@ -7,7 +7,11 @@
 // ═══════════════════════════════════════════
 
 // 전체 문제 순서 배열 (MENU 순서대로 flat)
+// 판정 1탭에 수백 회 호출되는 핫패스 → 캐시 (MENU 변경 시 invalidateQuestionCache 필수)
+var _allQCache = null, _qByIdCache = null;
+function invalidateQuestionCache(){ _allQCache = null; _qByIdCache = null; }
 function getAllQuestions(){
+  if(_allQCache) return _allQCache;
   var all = [];
   MENU.forEach(function(p){
     p.mids.forEach(function(m){
@@ -15,7 +19,16 @@ function getAllQuestions(){
       else if(m.data){ all = all.concat(m.data); }
     });
   });
+  _allQCache = all;
   return all;
+}
+// id → 문제 객체 O(1) 조회 (getAllQuestions().find 대체)
+function getQById(qId){
+  if(!_qByIdCache){
+    _qByIdCache = {};
+    getAllQuestions().forEach(function(q){ _qByIdCache[q.id] = q; });
+  }
+  return _qByIdCache[qId] || null;
 }
 
 // 플랜 범위 상태 (전역)
@@ -108,6 +121,7 @@ var planGoalRounds = 9; // UI 상태
 function loadPlan(){ try{ return JSON.parse(localStorage.getItem(getPlanKey())||'null'); }catch(e){ return null; } }
 function savePlanData(p){
   localStorage.setItem(getPlanKey(), JSON.stringify(p));
+  if(typeof _invalidateRvKeyCache === 'function') _invalidateRvKeyCache(); // 플랜 변경 → rv키 캐시 무효화
   // 로그인 상태면 Firebase에도 즉시 반영
   if(currentUser && currentUser.uid && firebaseReady && fbDb){
     fbDb.ref('users/' + currentUser.uid + '/plan').set(p).catch(function(){});
@@ -307,9 +321,12 @@ function getTodayPlan(){
     var startIdx, endIdx, carryover = 0;
     if(!_allDoneFallback){
       // 큐 방식: 어제까지 밀린 분량 + 오늘 할당량
-      var alreadyDone    = _totalPool - targetQs.length;              // 지금까지 완료한 수
-      var shouldHaveDone = Math.min((dayInRound + 1) * qPerDay, _totalPool); // 오늘까지 완료해야 할 수
-      carryover = Math.max(0, shouldHaveDone - alreadyDone);          // 밀린 수
+      // ⚠️ off-by-one 주의: carryover는 "어제까지" 기준이어야 함.
+      //    (dayInRound+1)로 오늘을 포함하면 endIdx에서 qPerDay가 이중 계상되어
+      //    첫날부터 분량이 2배로 표시됨 (2026-07-06 수정)
+      var alreadyDone     = _totalPool - targetQs.length;             // 지금까지 완료한 수
+      var dueByYesterday  = Math.min(dayInRound * qPerDay, _totalPool); // 어제까지 완료해야 할 수
+      carryover = Math.max(0, dueByYesterday - alreadyDone);          // 밀린 수
       startIdx = 0;
       endIdx   = Math.min(carryover + qPerDay, targetQs.length);
     } else {
@@ -370,11 +387,15 @@ function getTodayPlan(){
 // 오늘 몇 차인지 판단 (localStorage에 저장)
 function getTodayPassNum(today, roundIdx){
   var k = 'pass_day_'+today+'_r'+roundIdx;
-  return parseInt(localStorage.getItem(k)||'1');
+  var n = parseInt(localStorage.getItem(k)||'1');
+  if(isNaN(n) || n < 1) n = 1;   // 오염값 방어
+  if(n > 3) n = 3;
+  return n;
 }
 function setTodayPassNum(today, roundIdx, n){
   var k = 'pass_day_'+today+'_r'+roundIdx;
   localStorage.setItem(k, n);
+  if(typeof _invalidateRvKeyCache === 'function') _invalidateRvKeyCache(); // 차수 변경 → rv키 캐시 무효화
 }
 
 
@@ -1132,8 +1153,17 @@ function resetCurrentRoundData(){
   }
 
   if(currentUser && firebaseReady && fbDb){
-    fbDb.ref('users/' + currentUser.uid).update({ state: {}, rv: null, act: null })
-      .then(function(){ _afterReset(true,  null); })
+    // 초기화도 meta를 남겨 다른 기기가 "누군가 썼음"을 감지하게 함
+    // (meta 없이 state만 지우면 타 기기가 낡은 데이터를 확인 없이 재업로드하는 사고 발생)
+    var _resetMeta = (typeof _getDeviceId==='function')
+      ? { updatedAt: Date.now(), device: _getDeviceId() } : null;
+    var _resetUpd = { state: {}, rv: null, act: null };
+    if(_resetMeta) _resetUpd.meta = _resetMeta;
+    fbDb.ref('users/' + currentUser.uid).update(_resetUpd)
+      .then(function(){
+        if(_resetMeta && typeof _recordCloudMetaSeen==='function') _recordCloudMetaSeen(currentUser.uid, _resetMeta);
+        _afterReset(true,  null);
+      })
       .catch(function(e){ _afterReset(false, e.message); });
   } else {
     _afterReset(false, null);
@@ -1222,6 +1252,7 @@ function resetPlanAll(){
   Object.keys(localStorage).forEach(function(k){
     if(k.indexOf('pass_day_')===0 || k.indexOf('round_reset_')===0) localStorage.removeItem(k);
   });
+  if(typeof _invalidateRvKeyCache === 'function') _invalidateRvKeyCache();
   closePlanOverlay();
   setMode('dash');
   setTimeout(function(){ renderDashboard(); }, 50);
@@ -1424,112 +1455,5 @@ function dismissRatioAlert(){
   if(el){ el.innerHTML=''; el.style.display='none'; }
 }
 
-// iOS Safari 주소창 높이 변동 대응 - visualViewport 우선, fallback innerHeight
-(function setAppHeight(){
-  function update(){
-    // visualViewport: iOS Safari 주소창 슬라이드 시 실제 보이는 높이를 정확히 반영
-    var h = (window.visualViewport ? window.visualViewport.height : window.innerHeight);
-    document.documentElement.style.setProperty('--app-height', h + 'px');
-  }
-  update();
-  // visualViewport resize: iOS Safari 주소창 나타남/사라짐 시 즉시 반응
-  if(window.visualViewport){
-    window.visualViewport.addEventListener('resize', update);
-    window.visualViewport.addEventListener('scroll', update);
-  }
-  // 일반 resize (데스크탑·안드로이드 대응)
-  window.addEventListener('resize', update);
-  // 화면 회전: iOS는 회전 완료까지 시간이 필요해 딜레이를 넉넉히 줌
-  window.addEventListener('orientationchange', function(){
-    setTimeout(update, 100);
-    setTimeout(update, 450); // 회전 애니메이션 완료 후 한 번 더
-  });
-})();
 
-loadState();
-migrateReviewFlags();
-cleanOldRvKeys();   // 3일 이상 된 임시 판정 키 자동 정리
-// 저장된 플랜에서 범위 설정 즉시 복원 (Firebase 로드 전에도 동작)
-(function restorePlanScope(){
-  try{
-    var saved = JSON.parse(localStorage.getItem(PLAN_KEY)||'null');
-    if(saved && saved.scopeMode){
-      planScopeMode = saved.scopeMode;
-      planScopeIds  = saved.scopeIds || [];
-    }
-  }catch(e){}
-})();
-renderTabs();
-renderAll();
-updateProg();
-updateTodayUI();
-renderTodayBanner();
-checkNewDesignToast();
-showMigrationWizard();
-
-// 플랜이 활성 상태면 앱 로드 시 오늘 배너 위치로 자동 스크롤
-(function autoScrollToBanner(){
-  try{
-    var tp = getTodayPlan ? getTodayPlan() : null;
-    if(tp && tp.status==='active'){
-      setTimeout(function(){
-        var banner = document.getElementById('todayPlanBanner');
-        if(banner && banner.offsetParent !== null){
-          banner.scrollIntoView({ behavior:'smooth', block:'start' });
-        }
-      }, 300);
-    }
-  }catch(e){}
-})();
-
-// Firebase SDK는 <head>의 <script> 태그로 동기 로드됨
-initFirebase();
-// 10초 후에도 버튼이 비활성 상태면 게스트 모드로 강제 전환
-setTimeout(function(){
-  if(!firebaseReady){
-    console.warn('[동기화] 10초 내 Firebase 초기화 실패 - 게스트 모드 전환');
-    showGuestUI();
-  }
-}, 10000);
-// ⑦ 뒤로가기 버튼 → 이전 모드로 복원 (창 종료 방지)
-(function(){
-  var _popHandling = false;
-  var _initialized = false;
-
-  history.replaceState({mode:'dash'}, '');
-
-  window.addEventListener('popstate', function(e){
-    var m = (e.state && e.state.mode) ? e.state.mode : 'dash';
-    _popHandling = true;
-    setMode(m);
-    renderAll();
-    _popHandling = false;
-  });
-
-  var _origSetMode = setMode;
-  setMode = function(m){
-    _origSetMode(m);
-    if(!_popHandling){
-      if(!_initialized){ history.replaceState({mode:m}, ''); _initialized=true; }
-      else { history.pushState({mode:m}, ''); }
-    }
-  };
-})();
-
-setTimeout(function(){
-  setMode('dash');
-  setTimeout(renderRatioAlert, 300);
-}, 50);
-
-setTimeout(function(){
-  if(!loadPlan()){
-    var checkLogin = setInterval(function(){
-      var lo = document.getElementById('loginOverlay');
-      if(!lo || lo.style.display==='none'){
-        clearInterval(checkLogin);
-        setTimeout(function(){ if(!loadPlan()) openPlanOverlay(); }, 2000);
-      }
-    }, 500);
-  }
-},100);
-
+// (앱 부트스트랩 코드는 js/99-boot.js로 이동 — 로드 순서 지뢰 방지)

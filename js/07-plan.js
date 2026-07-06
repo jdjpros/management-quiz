@@ -279,7 +279,16 @@ function getTodayPlan(){
     var r = plan.rounds[ri];
     if(today < r.startDate || today > r.endDate) continue;
 
-    var dayInRound = diffDays(r.startDate, today); // 0-based
+    // dayInRound: startDate~today 경과 학습일수 (today 미포함 0-based)
+    // 주말 제외 플랜은 qPerDay가 평일 기준이므로 달력일(diffDays) 대신 학습일로 계산해야
+    //   주말 낀 뒤 carryover가 과대(월요일 분량 폭증)되지 않음.
+    var dayInRound;
+    if(plan.includeWeekend===false){
+      // countWeekdays는 양끝 포함 → startDate~어제(today 전날)의 평일 수 = today 미포함 경과 학습일
+      dayInRound = (today > r.startDate) ? countWeekdays(r.startDate, addDays(today, -1)) : 0;
+    } else {
+      dayInRound = diffDays(r.startDate, today); // 0-based
+    }
 
     // 대상 문제 결정 (큐 방식 — 어제 잔여 자동 흡수)
     var targetQs;
@@ -1284,6 +1293,21 @@ function shiftRoundStartToToday(silent){
   localStorage.removeItem(oldKey);
   localStorage.setItem(newKey, resetTs);
 
+  // rvdone_r<ri>_<startDate> 회독 누적 완료 셋도 새 startDate로 이전
+  // (안 옮기면 고아가 되어 △·X 회독 진도가 통째로 리셋됨)
+  var oldRvKey = 'rvdone_r' + ri + '_' + oldStart;
+  var newRvKey = 'rvdone_r' + ri + '_' + today;
+  var rvVal = localStorage.getItem(oldRvKey);
+  if(rvVal !== null){
+    localStorage.setItem(newRvKey, rvVal);
+    localStorage.removeItem(oldRvKey);
+    // 클라우드 misc에도 옛 키 null + 새 키 값 전파 (재로그인 시 좀비 부활/유실 방지)
+    if(currentUser && currentUser.uid && firebaseReady && fbDb){
+      var _rvUpd = {}; _rvUpd[oldRvKey] = null; _rvUpd[newRvKey] = rvVal;
+      fbDb.ref('users/' + currentUser.uid + '/misc').update(_rvUpd).catch(function(){});
+    }
+  }
+
   savePlanData(plan);
   renderDashboard();
   renderTodayBanner();
@@ -1300,25 +1324,32 @@ function shiftRoundStartToToday(silent){
 
 function resetPlanAll(){
   if(!confirm('⚠️ 회독 플랜을 전체 초기화합니다.\n\n설정된 시험일, 목표 회독 수, 일정이 모두 삭제됩니다.\n(학습 진도 데이터는 유지됩니다)\n\n초기화하시겠습니까?')) return;
-  // 현재 사용자 키로 플랜 삭제 (로컬 + Firebase)
+  // 현재 사용자 키로 플랜 삭제 (로컬)
   localStorage.removeItem(getPlanKey());
-  if(currentUser && currentUser.uid && firebaseReady && fbDb){
-    fbDb.ref('users/' + currentUser.uid + '/plan').remove().catch(function(){});
-  }
-  // 오늘 차수·회독 관련 로컬 키 정리 (pass_day_·round_reset_·rvdone_·today_slice_)
+  // 오늘 차수·회독 관련 로컬 키 정리 (pass_day_·round_reset_·rvdone_·today_slice_·today_quota_)
   var _rmMisc = [];
   Object.keys(localStorage).forEach(function(k){
     if(k.indexOf('pass_day_')===0 || k.indexOf('round_reset_')===0 ||
-       k.indexOf('rvdone_')===0   || k.indexOf('today_slice_')===0){
+       k.indexOf('rvdone_')===0   || k.indexOf('today_slice_')===0 ||
+       k.indexOf('today_quota_')===0){
       localStorage.removeItem(k);
       // today_slice_는 로컬 전용(클라우드 미저장)이라 misc null 전파 대상에서 제외
       if(k.indexOf('today_slice_')!==0) _rmMisc.push(k);
     }
   });
-  // 클라우드 misc에서도 같은 키 삭제 (재로그인 시 좀비 플래그 부활 방지)
-  if(_rmMisc.length && currentUser && currentUser.uid && firebaseReady && fbDb){
-    var _mupd = {}; _rmMisc.forEach(function(k){ _mupd[k] = null; });
-    fbDb.ref('users/' + currentUser.uid + '/misc').update(_mupd).catch(function(){});
+  // Firebase 반영: plan remove + misc null + meta 를 하나의 multi-path update로 합침
+  // (meta를 남겨야 타 기기가 "누군가 변경함"을 감지 — resetCurrentRoundData와 동일 패턴)
+  if(currentUser && currentUser.uid && firebaseReady && fbDb){
+    var _resetMeta = (typeof _getDeviceId==='function')
+      ? { updatedAt: Date.now(), device: _getDeviceId() } : null;
+    var _upd = { plan: null };
+    _rmMisc.forEach(function(k){ _upd['misc/'+k] = null; });
+    if(_resetMeta) _upd.meta = _resetMeta;
+    fbDb.ref('users/' + currentUser.uid).update(_upd)
+      .then(function(){
+        if(_resetMeta && typeof _recordCloudMetaSeen==='function') _recordCloudMetaSeen(currentUser.uid, _resetMeta);
+      })
+      .catch(function(){});
   }
   if(typeof _invalidateRvKeyCache === 'function') _invalidateRvKeyCache();
   closePlanOverlay();

@@ -425,7 +425,9 @@ function _loadQuestionsFromFirebase(callback) {
 // - 한쪽에만 있는 키: 보존
 // - 양쪽에 있는 키: 객체/배열은 하위 키 단위 병합(incoming=클라우드 우선), 스칼라는 클라우드 우선
 // (타임스탬프가 없어 동일 지문의 진짜 충돌은 클라우드 우선 — 발생 빈도 극히 낮음)
-function _mergeCloudState(local, cloud){
+// preferLocal=true면 동일 문제키·동일 하위키 충돌 시 로컬 값 우선(방금 한 판정 보존).
+//   탭 복귀(refreshFromCloud) 전용 — 로그인 직후(loadCloudState)는 클라우드가 신뢰본이라 기본 false.
+function _mergeCloudState(local, cloud, preferLocal){
   var out = {}, k;
   for(k in local){ if(Object.prototype.hasOwnProperty.call(local,k)) out[k]=local[k]; }
   for(k in cloud){
@@ -434,8 +436,16 @@ function _mergeCloudState(local, cloud){
     if(cv && typeof cv==='object' && lv && typeof lv==='object'){
       // Firebase가 숫자키 객체를 배열로 되돌려줘도 동작 (인덱스 키 순회 병합)
       var m = Array.isArray(lv) ? lv.slice() : Object.assign({}, lv);
-      Object.keys(cv).forEach(function(sk){ if(cv[sk]!==null && cv[sk]!==undefined) m[sk]=cv[sk]; });
+      Object.keys(cv).forEach(function(sk){
+        if(cv[sk]===null || cv[sk]===undefined) return;
+        // preferLocal: 로컬에 이미 값이 있는 하위키는 클라우드로 덮지 않음
+        if(preferLocal && m[sk]!==null && m[sk]!==undefined) return;
+        m[sk]=cv[sk];
+      });
       out[k]=m;
+    } else if(preferLocal && lv!==null && lv!==undefined){
+      // 스칼라 충돌 시 로컬 우선 (out[k]=lv 이미 세팅됨 → 유지)
+      out[k]=lv;
     } else {
       out[k]=cv;
     }
@@ -474,7 +484,7 @@ function loadCloudState(uid){
       _cloudLoaded = true; // 클라우드를 확인했으므로 이후 자동 push 허용
       _lastCloudRefresh = Date.now(); // 직후 visible 이벤트의 중복 재수신 방지
 
-      if(cloudData){
+      if(cloudData && Object.keys(cloudData).length > 0){
         // ── 유니온 병합: 로컬·클라우드 양쪽 판정을 문제 키 단위로 모두 보존 ──
         //    (기존 "개수 비교 후 통째 선택" → 서로 다른 문제를 푼 두 기기 중 한쪽 유실 문제 해결)
         var _mergedState = _mergeCloudState(state, cloudData);
@@ -595,12 +605,14 @@ function refreshFromCloud(){
   _lastCloudRefresh = now;
   fbDb.ref('users/' + currentUser.uid).once('value').then(function(snap){
     var root = snap.val() || {};
-    if(root.state){ state = _mergeCloudState(state, root.state); saveState(); }
+    // 탭 복귀: 방금 이 기기에서 한 판정이 클라우드 옛값으로 롤백되지 않도록 로컬 우선 병합
+    if(root.state){ state = _mergeCloudState(state, root.state, true); saveState(); }
     if(root.plan){ localStorage.setItem(getPlanKey(), JSON.stringify(root.plan)); if(typeof _invalidateRvKeyCache==='function') _invalidateRvKeyCache(); }
     if(root.rv){ Object.keys(root.rv).forEach(function(k){ if(k.indexOf('rv_')===0) localStorage.setItem(k, root.rv[k]); }); }
     if(root.act){ Object.keys(root.act).forEach(function(k){ if(k.indexOf('act_')===0 || k.indexOf('act1_')===0) _mergeActCount(k, root.act[k]); }); }
     if(root.misc){ Object.keys(root.misc).forEach(function(k){ localStorage.setItem(k, root.misc[k]); }); }
-    if(root.fc){ try{ var _lfc1=loadFcState(); localStorage.setItem(FC_KEY, JSON.stringify(Object.assign({}, _lfc1, root.fc))); if(typeof _invalidateFcCache==='function') _invalidateFcCache(); }catch(e){} }
+    // fc 병합도 로컬 우선 (Object.assign 뒤 인자가 우선 → localFc를 마지막에)
+    if(root.fc){ try{ var _lfc1=loadFcState(); localStorage.setItem(FC_KEY, JSON.stringify(Object.assign({}, root.fc, _lfc1))); if(typeof _invalidateFcCache==='function') _invalidateFcCache(); }catch(e){} }
     if(root.meta){ _recordCloudMetaSeen(currentUser.uid, root.meta); }
     // 현재 화면 갱신 (모드 유지)
     if(typeof renderAll==='function') renderAll();
@@ -780,6 +792,18 @@ function cleanOldRvKeys(){
       if(k.indexOf('today_slice_')===0){
         var sm = k.match(/^today_slice_(\d{4}-\d{2}-\d{2})_/);
         if(sm && sm[1] < cutoff) toDelete.push(k);
+        continue;
+      }
+      // 키 형식: pass_day_YYYY-MM-DD_rN (날짜별 차수 · 3일 지난 것 정리)
+      if(k.indexOf('pass_day_')===0){
+        var pm = k.match(/^pass_day_(\d{4}-\d{2}-\d{2})_/);
+        if(pm && pm[1] < cutoff) toDelete.push(k);
+        continue;
+      }
+      // 키 형식: today_quota_YYYY-MM-DD_rN (당일 quota · 3일 지난 것 정리)
+      if(k.indexOf('today_quota_')===0){
+        var qm = k.match(/^today_quota_(\d{4}-\d{2}-\d{2})_/);
+        if(qm && qm[1] < cutoff) toDelete.push(k);
       }
     }
     toDelete.forEach(function(k){ localStorage.removeItem(k); });

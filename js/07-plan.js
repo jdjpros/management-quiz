@@ -82,11 +82,7 @@ function getPlanScopeAllMidIds(){
   return ids;
 }
 
-// 날짜 유틸
-function dateStr(d){ return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
-function parseDate(s){ var p=s.split('-'); return new Date(+p[0],+p[1]-1,+p[2]); }
-function diffDays(a,b){ return Math.round((parseDate(b)-parseDate(a))/(1000*60*60*24)); }
-function addDays(s,n){ var d=parseDate(s); d.setDate(d.getDate()+n); return dateStr(d); }
+// 날짜 유틸 (dateStr, parseDate, diffDays, addDays)는 js/00-date-utils.js로 이동
 
 /*
   회독 구조:
@@ -175,10 +171,7 @@ function calcWrongRatio(){
   기간: D1=사용자설정, D4=D1×0.7, D7=D1×0.5 (점차 감소)
   △X 회독: Dn×r (r=현재 △X비율)
 */
-// 주말 제외 옵션 반영한 날짜 이동
-function addStudyDays(startStr, n){
-  return planIncludeWeekend ? addDays(startStr, n) : addWeekdays(startStr, n);
-}
+// addStudyDays는 js/00-date-utils.js로 이동
 
 function calcPlan(startDate, examDate, d1Override, goalRounds){
   var allQ=getPlanQuestions(), totalQ=allQ.length, rInfo=calcWrongRatio(), r=rInfo.r;

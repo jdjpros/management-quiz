@@ -177,17 +177,7 @@ function updateProg(){
 // ═══════════════════════════════════════════
 // 오늘 학습량 / 연속일
 // ═══════════════════════════════════════════
-// 학습일 기준: 새벽 4시 (자정 이후 ~ 04:00 학습은 전날로 집계)
-var STUDY_DAY_CUTOFF_HOUR = 4;
-function todayStr(){
-  var d=new Date();
-  // 새벽 4시 이전이면 전날로 처리 (밤샘 학습 연속성 유지)
-  if(d.getHours() < STUDY_DAY_CUTOFF_HOUR) d.setDate(d.getDate()-1);
-  // 테스트용 가상 날짜 오프셋 (testNextDay/testResetDate에서 조작)
-  var off=parseInt(localStorage.getItem('_dateOffset')||'0');
-  if(off) d.setDate(d.getDate()+off);
-  return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
-}
+// STUDY_DAY_CUTOFF_HOUR, todayStr는 js/00-date-utils.js로 이동
 
 // ── 새벽 early-morning 데이터 자동 병합 ────────────────────
 // 자정~04:00 사이에 구 코드(0시 기준)로 저장된 calDate 키를

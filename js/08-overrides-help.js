@@ -27,28 +27,7 @@ function selectWeekend(include){
   updatePlanPreview();
 }
 
-// 두 날짜 사이 평일 수 계산
-function countWeekdays(start, end){
-  var d = parseDate(start), e = parseDate(end), cnt = 0;
-  while(d <= e){ var day = d.getDay(); if(day!==0&&day!==6) cnt++; d.setDate(d.getDate()+1); }
-  return cnt;
-}
-
-// 평일 기준 N일 후 날짜
-function addWeekdays(startStr, n){
-  var d = parseDate(startStr), cnt = 0;
-  while(cnt < n){ d.setDate(d.getDate()+1); var day=d.getDay(); if(day!==0&&day!==6) cnt++; }
-  return dateStr(d);
-}
-
-// 가용 학습일수 (주말 제외 옵션 반영)
-function getAvailStudyDays(startStr, endStr){
-  return planIncludeWeekend
-    ? diffDays(startStr, endStr)
-    : countWeekdays(startStr, endStr);
-}
-
-// 학습일수 기준 날짜 계산
+// countWeekdays, addWeekdays, getAvailStudyDays는 js/00-date-utils.js로 이동
 
 // ═══════════════════════════════════════════
 // 다음 단원 계산 헬퍼

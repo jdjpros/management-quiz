@@ -23,7 +23,8 @@ function getCurrentLabel(){
 // ═══════════════════════════════════════════
 function scrollParentTabs(dir){
   var el=document.getElementById('parentTabs');
-  if(el) el.scrollBy({left: dir*120, behavior:'smooth'});
+  // behavior:'smooth'는 일부 환경에서 무시되는 버그가 있어 'auto' 사용
+  if(el) el.scrollBy({left: dir*160, behavior:'auto'});
 }
 (function(){
   var el=document.getElementById('parentTabs');
@@ -33,6 +34,18 @@ function scrollParentTabs(dir){
     e.preventDefault();
     el.scrollBy({left: e.deltaY*1.2, behavior:'auto'});
   },{passive:false});
+  // 화살표에 마우스를 올려두면 연속 스크롤 (클릭은 점프 이동)
+  function bindHoverScroll(btnId, dir){
+    var b=document.getElementById(btnId); if(!b) return;
+    var timer=null;
+    b.addEventListener('mouseenter', function(){
+      if(timer) return;
+      timer=setInterval(function(){ el.scrollLeft += dir*8; }, 16);
+    });
+    b.addEventListener('mouseleave', function(){ if(timer){ clearInterval(timer); timer=null; } });
+  }
+  bindHoverScroll('parentPrev',-1);
+  bindHoverScroll('parentNext',1);
 })();
 
 // ═══════════════════════════════════════════

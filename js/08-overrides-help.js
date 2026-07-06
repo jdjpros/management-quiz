@@ -95,17 +95,7 @@ function getSetWrongQs(){
   return allQ.filter(function(q){ return hasWrongOrConfused(q); });
 }
 
-// getPassQuestions 오버라이드
-// passNum=1: 오늘 범위 전체 (학습모드)
-// passNum=2,3: 이 세트의 전체 △·X 중 오늘 범위에 해당하는 것
-function getPassQuestions(todayQs, roundIdx, passNum, today){
-  if(passNum===1) return todayQs; // 1차: 오늘 범위 전체
-
-  // 2차/3차: 오늘 범위 문제 중 △·X인 것
-  // (2차와 3차 모두 같은 풀에서 보되 3차는 2차에서 또 △·X인 것)
-  var wrongInToday = todayQs.filter(function(q){ return hasWrongOrConfused(q); });
-  return wrongInToday;
-}
+// getPassQuestions는 07-plan.js로 이동됨 (부트스트랩이 로드 시점에 호출하므로 07에 있어야 함)
 
 // ════════════════════════════════════════
 // ① 플랜 저장 버그 수정 (wrongRatio 키 통일)

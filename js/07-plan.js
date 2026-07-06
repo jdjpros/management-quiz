@@ -378,7 +378,16 @@ function setTodayPassNum(today, roundIdx, n){
 }
 
 
-// 해당 차수의 문제 목록 — 5581줄 오버라이드 버전이 최종 정의
+// 해당 차수의 문제 목록
+// passNum=1: 오늘 범위 전체 (학습모드)
+// passNum=2,3: 오늘 범위 문제 중 △·X인 것
+// ⚠️ 이 파일 하단 부트스트랩(updateProg→getTodayPlan)이 로드 시점에 호출하므로
+//    반드시 07 안에 정의돼 있어야 함 (08로 옮기면 게스트 플랜 기기에서 ReferenceError로 앱 먹통)
+function getPassQuestions(todayQs, roundIdx, passNum, today){
+  if(passNum===1) return todayQs; // 1차: 오늘 범위 전체
+  // 2차/3차: 오늘 범위 문제 중 △·X인 것
+  return todayQs.filter(function(q){ return hasWrongOrConfused(q); });
+}
 
 // 문제에 X 또는 △ 지문이 하나라도 있는지
 function hasWrongOrConfused(q){

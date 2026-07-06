@@ -84,17 +84,33 @@ function renderQaList(unitId){
       container.innerHTML = '<div class="qa-list-empty">저장된 문제 없음</div>';
       return;
     }
-    var html = '';
+    // 문자열 onclick 조립 대신 createElement + 클로저 onclick 사용 (인젝션 방지)
+    container.innerHTML = '';
     Object.keys(data).forEach(function(qId){
       var q = data[qId];
       var stem = (q.stem||'').replace(/<[^>]+>/g,'').slice(0,60);
-      html += '<div class="qa-list-item">';
-      html += '<div class="qa-list-stem"><b style="font-size:10px;color:var(--muted);margin-right:4px;">['+qId+']</b>'+stem+'</div>';
-      html += '<div class="qa-list-meta">정답 '+q.ans+'번</div>';
-      html += '<button class="qa-list-del" onclick="deleteCustomQuestion(\''+unitId+'\',\''+qId+'\')" title="삭제">✕</button>';
-      html += '</div>';
+      var item = document.createElement('div');
+      item.className = 'qa-list-item';
+      var stemDiv = document.createElement('div');
+      stemDiv.className = 'qa-list-stem';
+      var idB = document.createElement('b');
+      idB.style.cssText = 'font-size:10px;color:var(--muted);margin-right:4px;';
+      idB.textContent = '['+qId+']';
+      stemDiv.appendChild(idB);
+      stemDiv.appendChild(document.createTextNode(stem));
+      item.appendChild(stemDiv);
+      var metaDiv = document.createElement('div');
+      metaDiv.className = 'qa-list-meta';
+      metaDiv.textContent = '정답 '+q.ans+'번';
+      item.appendChild(metaDiv);
+      var delBtn = document.createElement('button');
+      delBtn.className = 'qa-list-del';
+      delBtn.title = '삭제';
+      delBtn.textContent = '✕';
+      delBtn.onclick = (function(u,i){ return function(){ deleteCustomQuestion(u,i); }; })(unitId, qId);
+      item.appendChild(delBtn);
+      container.appendChild(item);
     });
-    container.innerHTML = html;
   }).catch(function(){ container.innerHTML='<div class="qa-list-empty">로드 실패</div>'; });
 }
 
@@ -105,6 +121,11 @@ function saveCustomQuestion(){
   var ans    = parseInt(document.getElementById('qaAns').value);
   var qId    = (document.getElementById('qaId').value||'').trim();
   if(!stem){ alert('문제 줄기를 입력해주세요.'); return; }
+  // 사용자 입력 qId 형식 검증 (Firebase 경로/키 안전 문자만 허용)
+  if(qId && !/^[A-Za-z0-9_-]+$/.test(qId)){
+    alert('문제 ID는 영문·숫자·밑줄(_)·하이픈(-)만 사용할 수 있습니다.');
+    return;
+  }
   var opts = [], exps = [];
   for(var i=1;i<=4;i++){
     var optTxt = (document.getElementById('qaOpt'+i).value||'').trim();

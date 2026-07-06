@@ -37,7 +37,8 @@ function renderDashboard(){
       // 1차: act_ 카운터(완료 수) + todayInitialQuota(처음 할당 수)로 진도 표시
       // 2·3차: getTodayPassDone(passQs 기반 isQRvDone) 유지
       var done0, total0;
-      if(tp.passNum >= 2){
+      if(!tp.isFullPass){
+        // 복습(2·3차 및 △·X 회독 전 차수): rv 판정 기준
         done0 = getTodayPassDone(tp.passQs, tp.passNum);
         total0 = tp.passQs.length;
       } else {

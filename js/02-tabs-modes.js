@@ -224,6 +224,13 @@ function clearSearch(){
   document.getElementById('searchCount').textContent='';
   document.getElementById('searchCount').className='search-count';
   document.querySelectorAll('#qContainer .qcard').forEach(function(c){c.style.display='';});
+  // 제목에 남은 하이라이트 스팬만 안전하게 unwrap (qsrc/srs-badge 등 다른 마크업은 보존)
+  document.querySelectorAll('#qContainer .qtitle .highlight').forEach(function(span){
+    var parent=span.parentNode; if(!parent) return;
+    while(span.firstChild){ parent.insertBefore(span.firstChild, span); }
+    parent.removeChild(span);
+    parent.normalize(); // 분리된 텍스트 노드 병합
+  });
 }
 function matchesSearch(q,query){
   var lo=query.toLowerCase();

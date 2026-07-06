@@ -105,6 +105,11 @@ function initFirebaseCore() {
           updateAdminUI();
           loadAndMergeCustomQuestions();
         });
+        // 안전장치: 8초 후에도 loginOverlay가 살아있으면 강제 해제 (캐시/렌더링 버그 대응)
+        setTimeout(function(){
+          var _lo = document.getElementById('loginOverlay');
+          if(_lo && _lo.style.display !== 'none'){ _lo.style.display = 'none'; }
+        }, 8000);
       } else {
         // 로그아웃 상태
         currentUser = null;
@@ -287,7 +292,7 @@ function signInWithGoogle(){
         clearInterval(retryTimer);
         _resetGoogleBtn(btn);
         signInWithGoogle();
-      } else if(waited >= 30000){
+      } else if(waited >= 5000){
         clearInterval(retryTimer);
         _resetGoogleBtn(btn);
         var retry = confirm('Firebase 연결 시간 초과.\n인터넷 연결을 확인 후 다시 시도해주세요.\n\n[확인] 페이지 새로고침\n[취소] 로그인 없이 계속');
@@ -359,12 +364,22 @@ function _loadQuestionsFromFirebase(callback) {
   if(!firebaseReady || !fbDb){ callback && callback(); return; }
   if(_questionsLoaded || _questionsLoading){ callback && callback(); return; }
   _questionsLoading = true;
+  var _lfq_called = false;
+  var _lfq_safe = function(){ if(!_lfq_called){ _lfq_called=true; callback && callback(); } };
+  // 5초 타임아웃: Firebase 응답 없으면 loginOverlay 강제 해제 (모바일 무한 로딩 방지)
+  var _lfq_timeout = setTimeout(function(){
+    console.warn('[데이터] Firebase 응답 없음 - 타임아웃으로 진행');
+    _questionsLoading = false;
+    _lfq_safe();
+  }, 5000);
   fbDb.ref('questions/management').once('value')
     .then(function(snap){
+      clearTimeout(_lfq_timeout);
       var data = snap.val();
       if(!data || !data.units || !data.menu){
         console.error('[데이터] Firebase에 문제 데이터 없음 — upload_questions.html로 먼저 업로드하세요.');
-        callback && callback(); return;
+        _questionsLoading = false;
+        _lfq_safe(); return;
       }
       var units = data.units;
       var meta  = data.meta || {};
@@ -395,13 +410,48 @@ function _loadQuestionsFromFirebase(callback) {
       if(typeof invalidateQuestionCache==='function') invalidateQuestionCache(); // MENU 재구성 → 문제 캐시 무효화
       renderTabs(); // 사이드바 재구성
       console.log('[데이터] 문제 로드 완료: ' + getAllQuestions().length + '문제');
-      callback && callback();
+      _lfq_safe();
     })
     .catch(function(e){
+      clearTimeout(_lfq_timeout);
       _questionsLoading = false; // 실패 시 재시도 허용 (게스트 실패 후 로그인 등)
       console.error('[데이터] 문제 로드 실패:', e.message);
-      callback && callback();
+      _lfq_safe();
     });
+}
+
+// ── state 병합: 통째 교체 대신 문제 키 단위 유니온 ──────
+// 두 기기가 서로 다른 문제를 푼 경우 한쪽 작업 전체가 유실되는 것을 방지.
+// - 한쪽에만 있는 키: 보존
+// - 양쪽에 있는 키: 객체/배열은 하위 키 단위 병합(incoming=클라우드 우선), 스칼라는 클라우드 우선
+// (타임스탬프가 없어 동일 지문의 진짜 충돌은 클라우드 우선 — 발생 빈도 극히 낮음)
+function _mergeCloudState(local, cloud){
+  var out = {}, k;
+  for(k in local){ if(Object.prototype.hasOwnProperty.call(local,k)) out[k]=local[k]; }
+  for(k in cloud){
+    if(!Object.prototype.hasOwnProperty.call(cloud,k)) continue;
+    var cv = cloud[k], lv = out[k];
+    if(cv && typeof cv==='object' && lv && typeof lv==='object'){
+      // Firebase가 숫자키 객체를 배열로 되돌려줘도 동작 (인덱스 키 순회 병합)
+      var m = Array.isArray(lv) ? lv.slice() : Object.assign({}, lv);
+      Object.keys(cv).forEach(function(sk){ if(cv[sk]!==null && cv[sk]!==undefined) m[sk]=cv[sk]; });
+      out[k]=m;
+    } else {
+      out[k]=cv;
+    }
+  }
+  return out;
+}
+// 활동 카운트 병합: 두 기기가 각자 센 값 중 큰 쪽이 실제에 가까움 (act_날짜·act1_ 공용)
+function _mergeActCount(k, cloudVal){
+  var lv = parseInt(localStorage.getItem(k)||'0');
+  var cvNum = parseInt(cloudVal);
+  if(!isNaN(cvNum) && String(cvNum)===String(cloudVal).trim()){
+    localStorage.setItem(k, String(Math.max(lv, cvNum)));
+  } else {
+    // 숫자가 아닌 값은 클라우드 우선
+    localStorage.setItem(k, cloudVal);
+  }
 }
 
 // ── 클라우드에서 진도 불러오기 (로그인 직후 자동) ──────
@@ -422,82 +472,36 @@ function loadCloudState(uid){
       var localData = state;
       var changedByOther = _cloudChangedSinceSeen(uid, cloudMeta);
       _cloudLoaded = true; // 클라우드를 확인했으므로 이후 자동 push 허용
+      _lastCloudRefresh = Date.now(); // 직후 visible 이벤트의 중복 재수신 방지
 
       if(cloudData){
-        var cloudCount = Object.keys(cloudData).filter(function(k){
-          return k.indexOf('_j')>0 || k.indexOf('_bj')>0 || k.indexOf('_bj_')>0;
-        }).length;
-        var localCount2 = Object.keys(localData).filter(function(k){
-          return k.indexOf('_j')>0 || k.indexOf('_bj')>0 || k.indexOf('_bj_')>0;
-        }).length;
-
-        if(localCount2 > cloudCount){
-          if(confirm(
-            '📶 오프라인 학습 데이터 감지\n\n'
-            + '로컬 기기: ' + localCount2 + '개 판정\n'
-            + '클라우드:  ' + cloudCount  + '개 판정\n\n'
-            + (changedByOther ? '⚠️ 다른 기기에서 저장한 기록이 있습니다.\n' : '')
-            + '로컬 데이터가 더 많습니다.\n'
-            + '로컬 데이터를 클라우드에 업로드할까요?\n'
-            + '(취소 시 클라우드 데이터로 덮어씁니다)'
-          )){
-            // ⚠️ 업로드 전 클라우드에만 있는 부가 데이터를 로컬에 먼저 병합
-            //    (이 기기에 없다는 이유로 플랜·달력·복습기록이 통째로 삭제되는 사고 방지)
-            if(cloudPlan && !loadPlan()){
-              localStorage.setItem(getPlanKey(), JSON.stringify(cloudPlan));
-              if(typeof _invalidateRvKeyCache==='function') _invalidateRvKeyCache();
-            }
-            if(cloudRv){ Object.keys(cloudRv).forEach(function(k){
-              if(k.indexOf('rv_')===0 && localStorage.getItem(k)===null) localStorage.setItem(k, cloudRv[k]);
-            }); }
-            if(cloudAct){ Object.keys(cloudAct).forEach(function(k){
-              if(k.indexOf('act_')===0 && /^act_\d{4}/.test(k)){
-                // 날짜별 학습량: 큰 값 우선 (양쪽 기록 보존)
-                var lv=parseInt(localStorage.getItem(k)||'0'), cv=parseInt(cloudAct[k]||'0');
-                if(cv>lv) localStorage.setItem(k, cloudAct[k]);
-              } else if(k.indexOf('act1_')===0 && localStorage.getItem(k)===null){
-                localStorage.setItem(k, cloudAct[k]);
-              }
-            }); }
-            if(cloudMisc){ Object.keys(cloudMisc).forEach(function(k){
-              if(localStorage.getItem(k)===null) localStorage.setItem(k, cloudMisc[k]);
-            }); }
-            if(cloudFc){
-              var _lfc = loadFcState(); var _fcMerged = false;
-              Object.keys(cloudFc).forEach(function(k){ if(!(k in _lfc)){ _lfc[k]=cloudFc[k]; _fcMerged=true; } });
-              if(_fcMerged) saveFcState(_lfc);
-            }
-            pushToCloud(uid, true);
-          } else {
-            state = cloudData;
-            saveState();
-            // 클라우드 플랜 복원
-            if(cloudPlan){ localStorage.setItem(getPlanKey(), JSON.stringify(cloudPlan)); if(typeof _invalidateRvKeyCache==='function') _invalidateRvKeyCache(); }
-            // 클라우드 복습모드 임시판정 복원
-            if(cloudRv){ Object.keys(cloudRv).forEach(function(k){ if(k.indexOf('rv_')===0) localStorage.setItem(k, cloudRv[k]); }); }
-            // 클라우드 활동 기록 복원 (날짜별 학습량 + act1_*)
-            if(cloudAct){ Object.keys(cloudAct).forEach(function(k){ if(k.indexOf('act_')===0||k.indexOf('act1_')===0) localStorage.setItem(k, cloudAct[k]); }); }
-            // 클라우드 기타 플래그 복원 (회독 리셋·재조정·마이그레이션 등)
-            if(cloudMisc){ Object.keys(cloudMisc).forEach(function(k){ localStorage.setItem(k, cloudMisc[k]); }); }
-            // 클라우드 파이널체크 판정 복원
-            if(cloudFc){ localStorage.setItem(FC_KEY, JSON.stringify(cloudFc)); if(typeof _invalidateFcCache==='function') _invalidateFcCache(); }
-          }
-        } else {
-          state = cloudData;
-          saveState();
-          // 클라우드 플랜 복원 (로컬보다 우선)
-          if(cloudPlan){ localStorage.setItem(getPlanKey(), JSON.stringify(cloudPlan)); if(typeof _invalidateRvKeyCache==='function') _invalidateRvKeyCache(); }
-          // 클라우드 복습모드 임시판정 복원
-          if(cloudRv){ Object.keys(cloudRv).forEach(function(k){ if(k.indexOf('rv_')===0) localStorage.setItem(k, cloudRv[k]); }); }
-          // 클라우드 활동 기록 복원 (달력 학습량 — act1_* 기반)
-          if(cloudAct){ Object.keys(cloudAct).forEach(function(k){ if(k.indexOf('act1_')===0) localStorage.setItem(k, cloudAct[k]); }); }
-          // 클라우드 기타 플래그 복원 (회독 리셋·재조정·마이그레이션 등)
-          if(cloudMisc){ Object.keys(cloudMisc).forEach(function(k){ localStorage.setItem(k, cloudMisc[k]); }); }
-          // 클라우드 파이널체크 판정 복원
-          if(cloudFc){ localStorage.setItem(FC_KEY, JSON.stringify(cloudFc)); }
+        // ── 유니온 병합: 로컬·클라우드 양쪽 판정을 문제 키 단위로 모두 보존 ──
+        //    (기존 "개수 비교 후 통째 선택" → 서로 다른 문제를 푼 두 기기 중 한쪽 유실 문제 해결)
+        var _mergedState = _mergeCloudState(state, cloudData);
+        // 병합 결과가 로컬과 달라졌는지 (달라졌으면 클라우드에도 반영 필요)
+        var _stateChanged = JSON.stringify(_mergedState) !== JSON.stringify(state);
+        state = _mergedState;
+        saveState();
+        // 클라우드 플랜 복원 (로컬보다 우선)
+        if(cloudPlan){ localStorage.setItem(getPlanKey(), JSON.stringify(cloudPlan)); if(typeof _invalidateRvKeyCache==='function') _invalidateRvKeyCache(); }
+        // 클라우드 복습모드 임시판정 복원
+        if(cloudRv){ Object.keys(cloudRv).forEach(function(k){ if(k.indexOf('rv_')===0) localStorage.setItem(k, cloudRv[k]); }); }
+        // 클라우드 활동 기록 복원 (날짜별 학습량 act_ + act1_* — 숫자 카운트는 max 병합)
+        if(cloudAct){ Object.keys(cloudAct).forEach(function(k){
+          if(k.indexOf('act_')===0 || k.indexOf('act1_')===0) _mergeActCount(k, cloudAct[k]);
+        }); }
+        // 클라우드 기타 플래그 복원 (회독 리셋·재조정·마이그레이션 등)
+        if(cloudMisc){ Object.keys(cloudMisc).forEach(function(k){ localStorage.setItem(k, cloudMisc[k]); }); }
+        // 클라우드 파이널체크 판정 복원 (통째 교체 대신 키 단위 병합 — 로컬 전용 키 보존)
+        if(cloudFc){
+          try{ var _lfc0=loadFcState(); localStorage.setItem(FC_KEY, JSON.stringify(Object.assign({}, _lfc0, cloudFc))); }
+          catch(e){ localStorage.setItem(FC_KEY, JSON.stringify(cloudFc)); }
+          if(typeof _invalidateFcCache==='function') _invalidateFcCache();
         }
         // 현재 클라우드 버전을 "확인함"으로 기록 (푸시 시엔 push 성공 콜백이 새 버전으로 갱신)
         _recordCloudMetaSeen(uid, cloudMeta);
+        // 병합 결과가 로컬과 달라졌으면 클라우드에 반영 (병합본이 다른 기기에도 전파되도록)
+        if(_stateChanged){ pushToCloud(uid, false); }
         // 범위 설정 복원
         var savedPlan = loadPlan();
         if(savedPlan && savedPlan.scopeMode){
@@ -558,12 +562,52 @@ function loadCloudState(uid){
 
 
 
-// ── 자동 동기화 (60초마다 저장 — 배터리·데이터 최적화) ──
+// ── 자동 동기화 (페이지 이탈 직전 저장 — 배터리·데이터 최적화) ──
+// setInterval(60초 push) 폐기: localStorage 순회로 모바일 freeze 발생.
+// 대신 visibilitychange / beforeunload 시점에만 저장하고, 탭 복귀 시 클라우드 재수신.
 function startAutoSync(uid){
-  if(autoSyncTimer) clearInterval(autoSyncTimer);
-  autoSyncTimer = setInterval(function(){
-    pushToCloud(uid, false);
-  }, 60000);
+  // 리스너는 최초 1회만 등록 (재로그인마다 startAutoSync가 불려도 중복 누적 방지)
+  if(!startAutoSync._listenersBound){
+    startAutoSync._listenersBound = true;
+    // beforeunload: 탭 닫기/새로고침 직전 저장
+    window.addEventListener('beforeunload', function(){
+      if(currentUser && currentUser.uid) pushToCloud(currentUser.uid, false);
+    });
+    // visibilitychange: 탭 숨김(앱 전환 등) 시 저장 / 탭 복귀 시 클라우드 재수신
+    document.addEventListener('visibilitychange', function(){
+      if(document.visibilityState === 'hidden' && currentUser && currentUser.uid){
+        pushToCloud(currentUser.uid, false);
+      } else if(document.visibilityState === 'visible'){
+        refreshFromCloud(); // 다른 기기가 올린 최신 데이터 반영 (켜둔 탭이 옛 데이터로 덮어쓰는 사고 방지)
+      }
+    });
+  }
+}
+
+// ── 탭 복귀 시 클라우드 재수신 (유니온 병합 재사용) ──────
+// 폰에서 풀고 → 켜둔 PC 탭으로 복귀 시, PC가 옛 데이터로 덮어쓰는 사고를 병합 수신으로 차단.
+var _lastCloudRefresh = 0;
+function refreshFromCloud(){
+  if(!currentUser || !currentUser.uid || !firebaseReady || !fbDb) return;
+  if(_cloudWriting) return;                       // 쓰기 진행 중이면 이번엔 건너뜀
+  var now = Date.now();
+  if(now - _lastCloudRefresh < 60000) return;     // 60초 스로틀 (탭 전환 연타 방지)
+  _lastCloudRefresh = now;
+  fbDb.ref('users/' + currentUser.uid).once('value').then(function(snap){
+    var root = snap.val() || {};
+    if(root.state){ state = _mergeCloudState(state, root.state); saveState(); }
+    if(root.plan){ localStorage.setItem(getPlanKey(), JSON.stringify(root.plan)); if(typeof _invalidateRvKeyCache==='function') _invalidateRvKeyCache(); }
+    if(root.rv){ Object.keys(root.rv).forEach(function(k){ if(k.indexOf('rv_')===0) localStorage.setItem(k, root.rv[k]); }); }
+    if(root.act){ Object.keys(root.act).forEach(function(k){ if(k.indexOf('act_')===0 || k.indexOf('act1_')===0) _mergeActCount(k, root.act[k]); }); }
+    if(root.misc){ Object.keys(root.misc).forEach(function(k){ localStorage.setItem(k, root.misc[k]); }); }
+    if(root.fc){ try{ var _lfc1=loadFcState(); localStorage.setItem(FC_KEY, JSON.stringify(Object.assign({}, _lfc1, root.fc))); if(typeof _invalidateFcCache==='function') _invalidateFcCache(); }catch(e){} }
+    if(root.meta){ _recordCloudMetaSeen(currentUser.uid, root.meta); }
+    // 현재 화면 갱신 (모드 유지)
+    if(typeof renderAll==='function') renderAll();
+    if(typeof updateProg==='function') updateProg();
+    if(typeof renderTodayBanner==='function') renderTodayBanner();
+    if(mode==='dash' && typeof renderDashboard==='function') renderDashboard();
+  }).catch(function(){});
 }
 
 // ── 클라우드에 저장 ────────────────────────────────────
@@ -580,18 +624,19 @@ function pushToCloud(uid, showMsg){
   // 학습 판정 state + 플랜 + 복습모드 임시판정 + 활동 기록 + 기타 플래그 + 프로필 함께 저장
   var planData = loadPlan();
   var rvData = {}, actData = {}, miscData = {};
-  var miscPrefixes = ['round_reset_', 'round2_replan_', 'pass_done_pop_'];
+  // rvdone_ : △·X 회독 누적 완료 셋 (기기 간 동기화 필요). today_slice_는 로컬 전용(미포함)
+  var miscPrefixes = ['round_reset_', 'round2_replan_', 'pass_done_pop_', 'rvdone_'];
   var miscSingles  = ['migration_v4_done','migration_v4_deferred_at','migration_v4_shown','migrated_review_v1','act1_tracking_start'];
-  for(var i=0; i<localStorage.length; i++){
-    var k = localStorage.key(i);
-    if(!k) continue;
-    if(k.indexOf('rv_')===0)   { rvData[k]  = localStorage.getItem(k); continue; }
-    if(k.indexOf('act_')===0)  { actData[k] = localStorage.getItem(k); continue; } // 날짜별 학습량(연속일 계산용)
-    if(k.indexOf('act1_')===0) { actData[k] = localStorage.getItem(k); continue; }
+  // Object.keys() 일괄 조회 (for+key(i) 방식 대비 O(n²)→O(n) 개선, 모바일 freeze 방지)
+  Object.keys(localStorage).forEach(function(k){
+    if(!k) return;
+    if(k.indexOf('rv_')===0)   { rvData[k]  = localStorage.getItem(k); return; }
+    if(k.indexOf('act_')===0)  { actData[k] = localStorage.getItem(k); return; } // 날짜별 학습량(연속일 계산용)
+    if(k.indexOf('act1_')===0) { actData[k] = localStorage.getItem(k); return; }
     for(var pi=0; pi<miscPrefixes.length; pi++){
       if(k.indexOf(miscPrefixes[pi])===0){ miscData[k]=localStorage.getItem(k); break; }
     }
-  }
+  });
   miscSingles.forEach(function(k){ var v=localStorage.getItem(k); if(v) miscData[k]=v; });
   var payload = { state: state };
   // plan이 null이면 명시적으로 null 전송 → Firebase /plan 노드 삭제
@@ -724,10 +769,18 @@ function cleanOldRvKeys(){
     var toDelete = [];
     for(var i=0; i<localStorage.length; i++){
       var k = localStorage.key(i);
-      if(!k || k.indexOf('rv_')!==0) continue;
+      if(!k) continue;
       // 키 형식: rv_YYYY-MM-DD_pN_...
-      var dateMatch = k.match(/^rv_(\d{4}-\d{2}-\d{2})_/);
-      if(dateMatch && dateMatch[1] < cutoff) toDelete.push(k);
+      if(k.indexOf('rv_')===0){
+        var dateMatch = k.match(/^rv_(\d{4}-\d{2}-\d{2})_/);
+        if(dateMatch && dateMatch[1] < cutoff) toDelete.push(k);
+        continue;
+      }
+      // 키 형식: today_slice_YYYY-MM-DD_rN (로컬 전용 · 3일 지난 것 정리)
+      if(k.indexOf('today_slice_')===0){
+        var sm = k.match(/^today_slice_(\d{4}-\d{2}-\d{2})_/);
+        if(sm && sm[1] < cutoff) toDelete.push(k);
+      }
     }
     toDelete.forEach(function(k){ localStorage.removeItem(k); });
     if(toDelete.length>0) console.log('[정리] rv_ 임시 키 '+toDelete.length+'개 삭제');

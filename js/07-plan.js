@@ -302,11 +302,25 @@ function getTodayPlan(){
         _allDoneFallback = true; // 전부 완료 → 날짜 기반 slice fallback
       }
     } else {
-      // 2/3회독: △·X 문항을 큐처럼 (미복습 우선, 어제 잔여 자동 흡수)
+      // △·X 회독(2·3·5·6·8·9회독): △·X 문항을 큐처럼 (미복습 우선, 어제 잔여 자동 흡수)
       var allWrong = allQ.filter(function(q){ return hasWrongOrConfused(q); });
       if(allWrong.length===0) allWrong = allQ;
       _totalPool = allWrong.length; // △·X 총 수
-      var notRvDone = allWrong.filter(function(q){ return !isQRvDone(q); });
+      // ── 결함2: 회독 누적 완료 셋 ──────────────────────────────
+      // isQRvDone은 날짜별 rv키를 읽어 자정(4시) 지나면 전부 false로 리셋됨.
+      // → 회독(startDate) 단위 누적 셋에 완료분을 쌓아 다음날에도 유지.
+      // 핫패스이므로 "셋에 아직 없는 것"만 isQRvDone 재검사(이미 완료분 재검사 생략).
+      var _rvDoneKey = 'rvdone_r'+ri+'_'+r.startDate;
+      var _rvDoneSet;
+      try{ _rvDoneSet = JSON.parse(localStorage.getItem(_rvDoneKey)||'{}'); }catch(e){ _rvDoneSet = {}; }
+      var _rvSetChanged = false;
+      for(var _wi=0; _wi<allWrong.length; _wi++){
+        var _wq = allWrong[_wi];
+        if(_rvDoneSet[_wq.id]) continue;          // 이미 완료 기록 → 재검사 생략
+        if(isQRvDone(_wq)){ _rvDoneSet[_wq.id] = 1; _rvSetChanged = true; }
+      }
+      if(_rvSetChanged){ try{ localStorage.setItem(_rvDoneKey, JSON.stringify(_rvDoneSet)); }catch(e){} }
+      var notRvDone = allWrong.filter(function(q){ return !_rvDoneSet[q.id]; });
       if(notRvDone.length>0){
         targetQs = notRvDone;
       } else {
@@ -344,16 +358,45 @@ function getTodayPlan(){
     //     초기화 없이도 전체 범위를 다시 학습 가능. 명시적 초기화가 필요하면 대시보드 버튼으로만.
     var passNum    = getTodayPassNum(today, ri);  // ← 누락된 정의 복구
     var globalPass = (ROUND_PASSES[ri]||[passNum])[passNum-1] || passNum;
-    var isFullPass = (passNum===1);
+    // ── 결함2: △·X 회독은 학습모드 1차가 무의미(대상이 이미 전부 isQDone) ──
+    //   1차도 복습모드로 흐르게 함. isFullPass=true는 "전체 회독의 1차"에만 한정.
+    var isFullPass = (passNum===1 && r.isFullRound);
 
-    var passQs = getPassQuestions(todayQs, ri, passNum, today);
+    // ── 결함1: 1차 슬라이스 id 저장 (2·3차 복습 대상 산정 기준) ──────────
+    //   todayQs는 미완료 큐라 1차에서 완료한 문제가 즉시 빠짐 → 2·3차에서
+    //   "다음 문제들"을 보게 되어 복습 대상이 비어버림. 오늘의 1차 범위를 고정 저장.
+    var sliceKey = 'today_slice_'+today+'_r'+ri;
+    var passQs;
+    if(passNum===1 && r.isFullRound){
+      // 전체 회독 1차: 오늘 슬라이스 id를 최초 1회 저장 (완료로 큐가 줄어도 고정)
+      if(todayQs.length>0 && !localStorage.getItem(sliceKey)){
+        localStorage.setItem(sliceKey, JSON.stringify(todayQs.map(function(q){return q.id;})));
+      }
+      passQs = getPassQuestions(todayQs, ri, passNum, today);
+    } else if(passNum>=2 && r.isFullRound){
+      // 전체 회독 2·3차: 저장된 1차 슬라이스에서 △·X만 복습 대상
+      var _sliceRaw = localStorage.getItem(sliceKey);
+      if(_sliceRaw){
+        var _sliceIds; try{ _sliceIds = JSON.parse(_sliceRaw)||[]; }catch(e){ _sliceIds = []; }
+        var sliceQs = _sliceIds.map(getQById).filter(Boolean);
+        // 1차 완료(isQDone) && △·X만 → 1차 미완료 문제가 복습에 섞이는 것 방지
+        passQs = sliceQs.filter(function(q){ return isQDone(q) && hasWrongOrConfused(q); });
+      } else {
+        // 레거시(슬라이스 미저장): 기존 로직 fallback
+        passQs = getPassQuestions(todayQs, ri, passNum, today);
+      }
+    } else {
+      // △·X 회독(isFullRound=false): 1·2·3차 모두 todayQs가 이미 △·X 필터됨
+      passQs = getPassQuestions(todayQs, ri, passNum, today);
+    }
 
-    // 1차 진도 표시용 초기 할당량을 처음 한 번만 기록 (완료가 진행돼도 분모가 고정됨)
+    // 진도 표시용 초기 할당량을 처음 한 번만 기록 (완료가 진행돼도 분모가 고정됨)
+    // ⚠️ isFullPass(전체 회독 1차)에서만 act_ 카운터 기반 진도를 쓰므로 그때만 quota 고정.
     var quotaKey = 'today_quota_'+today+'_r'+ri;
-    if(passNum === 1 && !localStorage.getItem(quotaKey) && passQs.length > 0){
+    if(isFullPass && !localStorage.getItem(quotaKey) && passQs.length > 0){
       localStorage.setItem(quotaKey, passQs.length);
     }
-    var todayInitialQuota = (passNum === 1)
+    var todayInitialQuota = isFullPass
       ? (parseInt(localStorage.getItem(quotaKey)||'0') || passQs.length)
       : passQs.length;
 
@@ -406,8 +449,9 @@ function setTodayPassNum(today, roundIdx, n){
 //    반드시 07 안에 정의돼 있어야 함 (08로 옮기면 게스트 플랜 기기에서 ReferenceError로 앱 먹통)
 function getPassQuestions(todayQs, roundIdx, passNum, today){
   if(passNum===1) return todayQs; // 1차: 오늘 범위 전체
-  // 2차/3차: 오늘 범위 문제 중 △·X인 것
-  return todayQs.filter(function(q){ return hasWrongOrConfused(q); });
+  // 2차/3차: 1차 완료(isQDone) && △·X인 문제만
+  //   → 아직 1차를 못 마친 carryover 문제는 복습에서 제외
+  return todayQs.filter(function(q){ return isQDone(q) && hasWrongOrConfused(q); });
 }
 
 // 문제에 X 또는 △ 지문이 하나라도 있는지
@@ -488,7 +532,8 @@ function renderTodayBanner(){
 
   var _bannerToday = todayStr();
   var done, total;
-  if(tp.passNum >= 2){
+  if(!tp.isFullPass){
+    // 복습(2·3차 및 △·X 회독의 모든 차수): rv 판정 기준
     done = getTodayPassDone(tp.passQs, tp.passNum);
     total = tp.passQs.length;
   } else {
@@ -496,13 +541,16 @@ function renderTodayBanner(){
     total = tp.todayInitialQuota || tp.passQs.length;
   }
   var pct = total>0 ? Math.round(done/total*100) : 0;
-  var passLabel = ['1차 (전체 지문)','2차 (△·X 지문)','3차 (△·X 지문)'][tp.passNum-1];
+  // △·X 회독은 1차도 복습이므로 라벨을 "복습"으로 읽히게 (isFullPass일 때만 "전체 지문")
+  var passLabel = tp.isFullPass
+    ? '1차 (전체 지문)'
+    : ['1차 (△·X 복습)','2차 (△·X 지문)','3차 (△·X 지문)'][tp.passNum-1];
   var roundLabel = tp.round+'회독 '+tp.globalPass+'차';
   var passClass = ['p1','p2','p3'][tp.passNum-1];
   var modeIcon = tp.isFullPass ? '📖' : '🔁';
 
-  // 2차이상인데 오늘 복습 대상 없으면 완료 표시
-  if(tp.passNum>1 && total===0){
+  // 복습 차수인데 오늘 복습 대상 없으면 완료 표시 (△·X 회독 1차 포함)
+  if(!tp.isFullPass && total===0){
     el.innerHTML='<div class="today-plan-banner" style="background:linear-gradient(135deg,#064e3b,#065f46)">'
       +'<div class="tpb-round">✅ '+roundLabel+'</div>'
       +'<div class="tpb-main">오늘 <span>'+passLabel+'</span> 완료!</div>'
@@ -557,7 +605,7 @@ function handleMainStudyBtn(){
   if(!tp || tp.status !== 'active') return;
   var _hmsbToday = todayStr();
   var done0, total0;
-  if(tp.passNum >= 2){
+  if(!tp.isFullPass){
     done0 = getTodayPassDone(tp.passQs, tp.passNum);
     total0 = tp.passQs.length;
   } else {
@@ -746,17 +794,25 @@ function checkMigrationPressure(){
   }
 }
 
-// 토스트 알림
+// 토스트 알림 — 싱글턴 요소 재사용 (동시 호출 시 겹침 방지: 텍스트 교체 + 타이머 리셋)
+var _toastEl = null, _toastHideTimer = null, _toastRemoveTimer = null;
 function showToast(msg, duration){
   duration = duration || 3000;
-  var el = document.createElement('div');
-  el.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1e2540;color:#fff;padding:11px 20px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,.4);z-index:9999;font-family:Pretendard,sans-serif;white-space:nowrap;opacity:0;transition:opacity .25s;border:1px solid rgba(255,255,255,.12);';
-  el.textContent = msg;
-  document.body.appendChild(el);
+  // 기존 요소 재사용, 없거나 이미 제거됐으면 새로 생성
+  if(!_toastEl || !_toastEl.parentNode){
+    _toastEl = document.createElement('div');
+    _toastEl.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1e2540;color:#fff;padding:11px 20px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,.4);z-index:9999;font-family:Pretendard,sans-serif;white-space:nowrap;opacity:0;transition:opacity .25s;border:1px solid rgba(255,255,255,.12);';
+    document.body.appendChild(_toastEl);
+  }
+  // 진행 중인 숨김/제거 타이머 취소 (겹침 방지 · 타이머 리셋)
+  if(_toastHideTimer){ clearTimeout(_toastHideTimer); _toastHideTimer = null; }
+  if(_toastRemoveTimer){ clearTimeout(_toastRemoveTimer); _toastRemoveTimer = null; }
+  _toastEl.textContent = msg;
+  var el = _toastEl;
   setTimeout(function(){ el.style.opacity = '1'; }, 10);
-  setTimeout(function(){
+  _toastHideTimer = setTimeout(function(){
     el.style.opacity = '0';
-    setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 300);
+    _toastRemoveTimer = setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 300);
   }, duration);
 }
 
@@ -1102,18 +1158,21 @@ function resetCurrentRoundData(){
 
   // 2. rv_*, act_*, today_quota_*, pass_day_*, act1_* 키 일괄 삭제
   var toRemove = [];
-  for(var i = 0; i < localStorage.length; i++){
-    var k = localStorage.key(i);
-    if(!k) continue;
+  var _rmMiscR = []; // 클라우드 misc null 전파 대상 (rvdone_·pass_day_)
+  Object.keys(localStorage).forEach(function(k){
+    if(!k) return;
     if(k.indexOf('rv_')          === 0 ||
+       k.indexOf('rvdone_')      === 0 ||
+       k.indexOf('today_slice_') === 0 ||
        k.indexOf('today_quota_') === 0 ||
        k.indexOf('pass_day_')    === 0 ||
        k.indexOf('act1_')        === 0 ||
        /^act_\d{4}-\d{2}-\d{2}$/.test(k) ||
        k === 'act_오늘'){
       toRemove.push(k);
+      if(k.indexOf('rvdone_')===0 || k.indexOf('pass_day_')===0) _rmMiscR.push(k);
     }
-  }
+  });
   toRemove.forEach(function(k){ localStorage.removeItem(k); });
 
   // 3. UI 갱신 (Firebase 응답 전에 먼저)
@@ -1159,6 +1218,8 @@ function resetCurrentRoundData(){
       ? { updatedAt: Date.now(), device: _getDeviceId() } : null;
     var _resetUpd = { state: {}, rv: null, act: null };
     if(_resetMeta) _resetUpd.meta = _resetMeta;
+    // 삭제한 rvdone_·pass_day_ 를 클라우드 misc에서도 null 처리 (재로그인 시 좀비 부활 방지)
+    _rmMiscR.forEach(function(k){ _resetUpd['misc/'+k] = null; });
     fbDb.ref('users/' + currentUser.uid).update(_resetUpd)
       .then(function(){
         if(_resetMeta && typeof _recordCloudMetaSeen==='function') _recordCloudMetaSeen(currentUser.uid, _resetMeta);
@@ -1246,12 +1307,26 @@ function shiftRoundStartToToday(silent){
 
 function resetPlanAll(){
   if(!confirm('⚠️ 회독 플랜을 전체 초기화합니다.\n\n설정된 시험일, 목표 회독 수, 일정이 모두 삭제됩니다.\n(학습 진도 데이터는 유지됩니다)\n\n초기화하시겠습니까?')) return;
-  // 현재 사용자 키로 플랜 삭제
+  // 현재 사용자 키로 플랜 삭제 (로컬 + Firebase)
   localStorage.removeItem(getPlanKey());
-  // 오늘 차수 기록도 정리 (pass_day_ 로 시작하는 키)
+  if(currentUser && currentUser.uid && firebaseReady && fbDb){
+    fbDb.ref('users/' + currentUser.uid + '/plan').remove().catch(function(){});
+  }
+  // 오늘 차수·회독 관련 로컬 키 정리 (pass_day_·round_reset_·rvdone_·today_slice_)
+  var _rmMisc = [];
   Object.keys(localStorage).forEach(function(k){
-    if(k.indexOf('pass_day_')===0 || k.indexOf('round_reset_')===0) localStorage.removeItem(k);
+    if(k.indexOf('pass_day_')===0 || k.indexOf('round_reset_')===0 ||
+       k.indexOf('rvdone_')===0   || k.indexOf('today_slice_')===0){
+      localStorage.removeItem(k);
+      // today_slice_는 로컬 전용(클라우드 미저장)이라 misc null 전파 대상에서 제외
+      if(k.indexOf('today_slice_')!==0) _rmMisc.push(k);
+    }
   });
+  // 클라우드 misc에서도 같은 키 삭제 (재로그인 시 좀비 플래그 부활 방지)
+  if(_rmMisc.length && currentUser && currentUser.uid && firebaseReady && fbDb){
+    var _mupd = {}; _rmMisc.forEach(function(k){ _mupd[k] = null; });
+    fbDb.ref('users/' + currentUser.uid + '/misc').update(_mupd).catch(function(){});
+  }
   if(typeof _invalidateRvKeyCache === 'function') _invalidateRvKeyCache();
   closePlanOverlay();
   setMode('dash');

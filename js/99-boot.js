@@ -82,8 +82,7 @@ setTimeout(function(){
   window.addEventListener('popstate', function(e){
     var m = (e.state && e.state.mode) ? e.state.mode : 'dash';
     _popHandling = true;
-    setMode(m);
-    renderAll();
+    setMode(m); // setMode 내부에서 해당 모드 렌더까지 수행 (중복 renderAll 제거)
     _popHandling = false;
   });
 

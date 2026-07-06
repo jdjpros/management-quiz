@@ -772,6 +772,35 @@ body{background:var(--bg);color:var(--text);font-family:'Pretendard',sans-serif;
   cursor:pointer; color:var(--text);
 }
 .modal-close-btn:hover{ background:var(--border); }
+
+/* ── 문제 추가 오버레이 ── */
+.qaov{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:2000;display:flex;align-items:center;justify-content:center;padding:12px;}
+.qabox{background:#fff;border-radius:12px;width:100%;max-width:640px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,.25);}
+.qabox-head{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.qabox-head h3{font-size:15px;font-weight:700;margin:0;}
+.qabox-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);line-height:1;}
+.qabox-body{padding:16px 18px;overflow-y:auto;flex:1;}
+.qa-field{margin-bottom:12px;}
+.qa-field label{display:block;font-size:11px;font-weight:700;color:var(--dim);margin-bottom:4px;letter-spacing:.5px;}
+.qa-field input,.qa-field textarea,.qa-field select{width:100%;border:1px solid var(--border);border-radius:7px;padding:7px 10px;font-family:'Pretendard',sans-serif;font-size:13px;color:var(--text);outline:none;background:#fff;}
+.qa-field textarea{resize:vertical;min-height:60px;line-height:1.6;}
+.qa-field input:focus,.qa-field textarea:focus,.qa-field select:focus{border-color:var(--c0);}
+.qa-opt-block{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:8px;}
+.qa-opt-label{font-size:10px;font-weight:700;color:var(--dim);margin-bottom:6px;}
+.qa-opt-row{display:flex;gap:8px;margin-bottom:6px;}
+.qa-ox-sel{width:70px!important;flex-shrink:0;}
+.qa-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:4px;}
+.qa-save-btn{background:var(--c0);color:#fff;border:none;border-radius:7px;padding:8px 20px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Pretendard',sans-serif;}
+.qa-save-btn:hover{filter:brightness(1.1);}
+.qa-cancel-btn{background:var(--surface2);color:var(--dim);border:1px solid var(--border);border-radius:7px;padding:8px 14px;font-size:13px;cursor:pointer;font-family:'Pretendard',sans-serif;}
+.qabox-list{border-top:1px solid var(--border);padding:12px 18px;flex-shrink:0;max-height:220px;overflow-y:auto;}
+.qabox-list h4{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:8px;}
+.qa-list-item{display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);}
+.qa-list-item:last-child{border-bottom:none;}
+.qa-list-stem{font-size:12px;color:var(--text);flex:1;line-height:1.5;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.qa-list-meta{font-size:10px;color:var(--muted);flex-shrink:0;white-space:nowrap;}
+.qa-list-del{background:none;border:none;color:var(--wrong);cursor:pointer;font-size:13px;padding:0 4px;flex-shrink:0;}
+.qa-list-empty{font-size:12px;color:var(--muted);text-align:center;padding:12px;}
 </style>
 </head>
 <body>
@@ -803,6 +832,50 @@ body{background:var(--bg);color:var(--text);font-family:'Pretendard',sans-serif;
       </div>
       <button class="inapp-copy-btn" onclick="copyPageUrl()">🔗 주소 복사하기</button>
       <span class="inapp-skip-link" onclick="skipLogin()">로그인 없이 시작하기</span>
+    </div>
+  </div>
+</div>
+
+<!-- 문제 추가 오버레이 (관리자 전용) -->
+<div class="qaov" id="qaOverlay" style="display:none;" onclick="if(event.target===this)closeQaOverlay()">
+  <div class="qabox">
+    <div class="qabox-head">
+      <h3>✏️ 문제 추가 (관리자)</h3>
+      <button class="qabox-close" onclick="closeQaOverlay()">✕</button>
+    </div>
+    <div class="qabox-body">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <div class="qa-field" style="flex:1;min-width:140px;">
+          <label>단원 선택</label>
+          <select id="qaUnitSel" onchange="onQaUnitChange()"></select>
+        </div>
+        <div class="qa-field" style="flex:1;min-width:120px;">
+          <label>문제 ID <span style="font-weight:400;color:var(--muted)">(비우면 자동)</span></label>
+          <input type="text" id="qaId" placeholder="예: NA_C01">
+        </div>
+      </div>
+      <div class="qa-field">
+        <label>문제 줄기</label>
+        <textarea id="qaStem" rows="3" placeholder="다음 중 가장 옳은 것은?"></textarea>
+      </div>
+      <div class="qa-field" style="max-width:160px;">
+        <label>정답 번호</label>
+        <select id="qaAns">
+          <option value="1">① 1번</option>
+          <option value="2">② 2번</option>
+          <option value="3">③ 3번</option>
+          <option value="4">④ 4번</option>
+        </select>
+      </div>
+      <div id="qaOptsWrap"></div>
+      <div class="qa-footer">
+        <button class="qa-cancel-btn" onclick="closeQaOverlay()">취소</button>
+        <button class="qa-save-btn" onclick="saveCustomQuestion()">💾 저장하기</button>
+      </div>
+    </div>
+    <div class="qabox-list" id="qaListWrap">
+      <h4>저장된 커스텀 문제</h4>
+      <div id="qaListItems"><div class="qa-list-empty">단원을 선택하면 목록이 표시됩니다.</div></div>
     </div>
   </div>
 </div>
@@ -853,7 +926,8 @@ body{background:var(--bg);color:var(--text);font-family:'Pretendard',sans-serif;
       <button class="tbtn ract" id="btnReviewReset" onclick="resetReview()" style="display:none">🗑 복습 초기화</button>
       <button class="tbtn ract" id="btnFcReset" onclick="resetFcState()" style="display:none" title="졸업한 지문 유지, 나머지 판정 초기화">🔄 다시 풀기</button>
       <button class="tbtn" id="btnRoundReset" onclick="resetCurrentRoundData()" style="display:none" title="【회독 초기화】&#10;O/△/X 판정 + 복습 기록 + 날짜별 학습량을 삭제합니다.&#10;Firebase에도 즉시 반영 → 다른 기기에서 재로그인해도 유지.&#10;회독 플랜(시험일·일정)은 그대로 남습니다.&#10;&#10;데이터 오염 복구나 회독 재시작 시 사용하세요.">🔄 회독 초기화</button>
-      <button class="tbtn" id="btnResetAll" onclick="resetAll()" title="【전체 초기화】&#10;O/△/X 판정 기록(state)만 삭제합니다.&#10;복습 기록·학습량·플랜은 유지됩니다.">전체 초기화</button>
+      <button class="tbtn" id="btnResetAll" onclick="resetAll()" title="【전체 초기화】&#10;O/△/X 판정 ���록(state)만 삭제합니다.&#10;복습 기록·학습량·플랜은 유지됩니다.">전체 초기화</button>
+      <button class="tbtn" id="btnAddQ" onclick="openQaOverlay()" style="display:none;background:rgba(124,58,237,.15);border-color:rgba(124,58,237,.4);color:#c4b5fd;" title="관리자 전용 — 새 문제 추가">✏️ 문제 추가</button>
     </div>
   </div>
 </div>
@@ -1078,10 +1152,13 @@ function initFirebaseCore() {
         _loadQuestionsFromFirebase(function(){
           hideLoginOverlay();
           loadCloudState(user.uid);
+          updateAdminUI();
+          loadAndMergeCustomQuestions();
         });
       } else {
         // 로그아웃 상태
         currentUser = null;
+        updateAdminUI();
         var skipped = localStorage.getItem('login_skipped');
         if(skipped) {
           showGuestUI();
@@ -1222,6 +1299,8 @@ function showGuestUI(){
     if(su) su.style.display = 'none';
     if(sg) sg.style.display = 'flex';
     hideLoginOverlay();
+    // 게스트 모드에서도 커스텀 문제 로드 (Firebase 연결된 경우)
+    setTimeout(function(){ loadAndMergeCustomQuestions(); }, 800);
   } catch(e) { console.warn('[UI] showGuestUI 오류:', e.message); }
 }
 
@@ -1402,8 +1481,8 @@ function loadCloudState(uid){
             if(cloudPlan){ localStorage.setItem(getPlanKey(), JSON.stringify(cloudPlan)); }
             // 클라우드 복습모드 임시판정 복원
             if(cloudRv){ Object.keys(cloudRv).forEach(function(k){ if(k.indexOf('rv_')===0) localStorage.setItem(k, cloudRv[k]); }); }
-            // 클라우드 활동 기록 복원 (달력 학습량 — act1_* 기반)
-            if(cloudAct){ Object.keys(cloudAct).forEach(function(k){ if(k.indexOf('act1_')===0) localStorage.setItem(k, cloudAct[k]); }); }
+            // 클라우드 활동 기록 복원 (날짜별 학습량 + act1_*)
+            if(cloudAct){ Object.keys(cloudAct).forEach(function(k){ if(k.indexOf('act_')===0||k.indexOf('act1_')===0) localStorage.setItem(k, cloudAct[k]); }); }
             // 클라우드 기타 플래그 복원 (회독 리셋·재조정·마이그레이션 등)
             if(cloudMisc){ Object.keys(cloudMisc).forEach(function(k){ localStorage.setItem(k, cloudMisc[k]); }); }
             // 클라우드 파이널체크 판정 복원
@@ -1486,6 +1565,7 @@ function pushToCloud(uid, showMsg){
     var k = localStorage.key(i);
     if(!k) continue;
     if(k.indexOf('rv_')===0)   { rvData[k]  = localStorage.getItem(k); continue; }
+    if(k.indexOf('act_')===0)  { actData[k] = localStorage.getItem(k); continue; } // 날짜별 학습량(연속일 계산용)
     if(k.indexOf('act1_')===0) { actData[k] = localStorage.getItem(k); continue; }
     for(var pi=0; pi<miscPrefixes.length; pi++){
       if(k.indexOf(miscPrefixes[pi])===0){ miscData[k]=localStorage.getItem(k); break; }
@@ -2181,14 +2261,13 @@ function isQRvDone(q){
         if(getRvGnJudge(q.id,i)===null) return false;
       }
     }
-    return any2;
+    return true; // 복습 대상 없거나 모두 완료
   }
   // 유형1: 박스형 — 1차에서 틀린 라벨만 rv 판정 요구
   var parsed=parseBoxStem(q.stem);
   var boxMode=parsed.items.length>0&&!Q3_TYPE.has(q.id);
   if(boxMode){
     var _lmapR={'A':0,'B':1,'C':2,'D':3,'E':4,'ㄱ':0,'ㄴ':1,'ㄷ':2,'ㄹ':3,'ㅁ':4,'ㅂ':5,'ㅅ':6,'ㅇ':7,'ㅈ':8};
-    var anyB=false;
     for(var bi=0;bi<parsed.items.length;bi++){
       var it=parsed.items[bi];
       var jvB=getBoxJudge(q.id,it.label);
@@ -2197,26 +2276,23 @@ function isQRvDone(q){
       var expR=bexpR||q.exps[liR]||{ox:'O'};
       var oxR=expR.ox||'O';
       if(_isReviewTarget(jvB,oxR)){
-        anyB=true;
         if(getRvBoxJudge(q.id,it.label)===null) return false;
       }
     }
-    return anyB;
+    return true; // 복습 대상 없거나 모두 완료
   }
   // 일반 4지선다 — 1차에서 틀린 지문만 rv 판정 요구
   if(!q.opts||q.opts.length===0) return false;
   var isOtypeR=O_TYPE.has(q.id);
-  var anyO=false;
   for(var k=1;k<=q.opts.length;k++){
     var jvO=getOptJudge(q.id,k);
     var isAnsR=(k===q.ans);
     var oxR2=isOtypeR?(isAnsR?'O':'X'):(isAnsR?'X':'O');
     if(_isReviewTarget(jvO,oxR2)){
-      anyO=true;
       if(getRvJudge(q.id,k)===null) return false;
     }
   }
-  return anyO;
+  return true; // 복습 대상 없거나 모두 완료
 }
 // 복습모드에서 해당 지문이 임시 O 처리됐는지
 function isRvDone(qId,idx,type){
@@ -2571,7 +2647,7 @@ function refreshOptRv(qId,idx){
   var allQ=getAllQuestions(); var q=allQ.find(function(x){return x.id===qId;}); if(!q) return;
   if(isQRvDone(q)){ _rerenderCard(qId); updateProg(); return; }
   var el=document.getElementById('optrow-'+qId+'-'+idx);
-  var newRow=buildOptRow(q,idx-1); if(el&&newRow) el.replaceWith(newRow);
+  var newRow=buildOptRow(q,idx-1); if(el&&newRow) el.replaceWith(newRow); else if(el&&!newRow) el.remove();
   updateProg();
 }
 function refreshBoxRv(qId,label){
@@ -3020,8 +3096,8 @@ function updateProg(){
     }
   });
 
-  // 완료 문항 수: review 모드(2/3차)는 임시 rv_ 판정 기준, 나머지는 원본 state 기준
-  var isReviewPass = (mode==='review' && hasPlanToday && tp && tp.passNum > 1);
+  // 완료 문항 수: review 모드는 항상 rv_ 판정 기준, 나머지는 원본 state 기준
+  var isReviewPass = (mode==='review' || mode==='globalReview');
   var done = Qs.filter(function(q){ return isReviewPass ? isQRvDone(q) : isQDone(q); }).length;
 
   // 판정별 집계 (원본 state 기준)
@@ -3236,7 +3312,12 @@ function updateTodayUI(){
   var el2 = document.getElementById('streakDays'); if(el2) el2.textContent = calcStreak();
 }
 function calcStreak(){
-  var d = new Date(); var streak = 0;
+  // todayStr()과 동일한 4AM 컷오프 + dateOffset 적용
+  var d = new Date();
+  if(d.getHours() < STUDY_DAY_CUTOFF_HOUR) d.setDate(d.getDate()-1);
+  var off = parseInt(localStorage.getItem('_dateOffset')||'0');
+  if(off) d.setDate(d.getDate()+off);
+  var streak = 0;
   for(var i=0;i<365;i++){
     var s = d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
     if(parseInt(localStorage.getItem('act_'+s)||'0') > 0){ streak++; }
@@ -3244,11 +3325,6 @@ function calcStreak(){
     d.setDate(d.getDate()-1);
   }
   return streak;
-}
-function updateStatHistory(){
-  var k = 'act_' + todayStr();
-  var n = parseInt(localStorage.getItem(k)||'0');
-  localStorage.setItem(k, n); // already set above, just ensure
 }
 
 // ═══════════════════════════════════════════
@@ -4328,15 +4404,7 @@ function setTodayPassNum(today, roundIdx, n){
 }
 
 
-// 해당 차수의 문제 목록
-function getPassQuestions(todayQs, roundIdx, passNum, today){
-  // 1차 (또는 4,7차): 전체
-  if(passNum === 1) return todayQs;
-  // 2,3차: 오늘 1차에서 X 또는 △(confused) 판정된 지문
-  return todayQs.filter(function(q){
-    return hasWrongOrConfused(q);
-  });
-}
+// 해당 차수의 문제 목록 — 5581줄 오버라이드 버전이 최종 정의
 
 // 문제에 X 또는 △ 지문이 하나라도 있는지
 function hasWrongOrConfused(q){
@@ -4994,9 +5062,12 @@ function openPlanOverlay(){
   selectWeekend(planIncludeWeekend);
   updatePlanPreview();
   document.getElementById('planOverlay').style.display='flex';
+  // 중복 등록 방지: 기존 핸들러 제거 후 재등록
   ['planExamDate','planStartDate','planD1'].forEach(function(id){
     var el=document.getElementById(id);
-    if(el) el.addEventListener('input', updatePlanPreview);
+    if(!el) return;
+    el.removeEventListener('input', updatePlanPreview);
+    el.addEventListener('input', updatePlanPreview);
   });
 }
 function closePlanOverlay(){ document.getElementById('planOverlay').style.display='none'; }
@@ -5369,9 +5440,6 @@ function dismissRatioAlert(){
   var el = document.getElementById('ratioAlertBanner');
   if(el){ el.innerHTML=''; el.style.display='none'; }
 }
-
-// setMode에 plan 모드 추가
-var _origSetMode = setMode;
 
 // iOS Safari 주소창 높이 변동 대응 - visualViewport 우선, fallback innerHeight
 (function setAppHeight(){
@@ -5930,6 +5998,196 @@ function renderHelpPanel(){
 }
 
 // 설명서 탭 버튼 추가 (setMode 연동)
+
+// ════════════════════════════════════════════
+// 관리자 — 문제 추가 기능
+// ════════════════════════════════════════════
+var ADMIN_EMAIL = 'jdjpros@naver.com';
+
+function isAdmin(){
+  return currentUser && currentUser.email === ADMIN_EMAIL;
+}
+
+// 관리자 버튼 노출 (onAuthStateChanged, signOut 연동)
+function updateAdminUI(){
+  var btn = document.getElementById('btnAddQ');
+  if(btn) btn.style.display = isAdmin() ? 'inline-block' : 'none';
+}
+
+// ── 오버레이 열기 ──
+function openQaOverlay(){
+  if(!isAdmin()){ alert('관리자 전용 기능입니다.'); return; }
+  if(!firebaseReady||!fbDb){ alert('Firebase 연결 후 사용 가능합니다.'); return; }
+  // 단원 드롭다운 초기화
+  var sel = document.getElementById('qaUnitSel');
+  sel.innerHTML = '';
+  MENU.forEach(function(p){
+    p.mids.forEach(function(m){
+      var opt = document.createElement('option');
+      opt.value = m.id;
+      opt.textContent = '[' + m.id + '] ' + p.label + ' — ' + m.label;
+      sel.appendChild(opt);
+    });
+  });
+  buildQaOptsUI();
+  onQaUnitChange();
+  document.getElementById('qaOverlay').style.display = 'flex';
+}
+function closeQaOverlay(){
+  document.getElementById('qaOverlay').style.display = 'none';
+  // 폼 초기화
+  document.getElementById('qaId').value = '';
+  document.getElementById('qaStem').value = '';
+  document.getElementById('qaAns').value = '1';
+  var wrap = document.getElementById('qaOptsWrap');
+  if(wrap) wrap.querySelectorAll('input,textarea').forEach(function(el){ el.value=''; });
+}
+
+// ── 선지 UI 4개 생성 ──
+function buildQaOptsUI(){
+  var wrap = document.getElementById('qaOptsWrap');
+  if(!wrap) return;
+  var html = '';
+  for(var i=1;i<=4;i++){
+    html += '<div class="qa-opt-block">';
+    html += '<div class="qa-opt-label">'+['①','②','③','④'][i-1]+' 선지</div>';
+    html += '<div class="qa-opt-row">';
+    html += '<input type="text" id="qaOpt'+i+'" placeholder="선지 내용 입력" style="flex:1;">';
+    html += '</div>';
+    html += '<div class="qa-opt-row">';
+    html += '<select class="qa-ox-sel" id="qaOx'+i+'"><option value="O">O (맞음)</option><option value="X">X (틀림)</option></select>';
+    html += '<input type="text" id="qaExp'+i+'" placeholder="해설 입력 (없으면 비워도 됨)" style="flex:1;">';
+    html += '</div>';
+    html += '</div>';
+  }
+  wrap.innerHTML = html;
+}
+
+// ── 단원 변경 시 저장 목록 갱신 ──
+function onQaUnitChange(){
+  var unitId = document.getElementById('qaUnitSel').value;
+  renderQaList(unitId);
+}
+
+// ── 저장된 커스텀 문제 목록 렌더링 ──
+function renderQaList(unitId){
+  var container = document.getElementById('qaListItems');
+  if(!container) return;
+  if(!fbDb){ container.innerHTML='<div class="qa-list-empty">Firebase 미연결</div>'; return; }
+  container.innerHTML = '<div class="qa-list-empty">로딩 중...</div>';
+  fbDb.ref('customQuestions/'+unitId).once('value').then(function(snap){
+    var data = snap.val();
+    if(!data||Object.keys(data).length===0){
+      container.innerHTML = '<div class="qa-list-empty">저장된 문제 없음</div>';
+      return;
+    }
+    var html = '';
+    Object.keys(data).forEach(function(qId){
+      var q = data[qId];
+      var stem = (q.stem||'').replace(/<[^>]+>/g,'').slice(0,60);
+      html += '<div class="qa-list-item">';
+      html += '<div class="qa-list-stem"><b style="font-size:10px;color:var(--muted);margin-right:4px;">['+qId+']</b>'+stem+'</div>';
+      html += '<div class="qa-list-meta">정답 '+q.ans+'번</div>';
+      html += '<button class="qa-list-del" onclick="deleteCustomQuestion(\''+unitId+'\',\''+qId+'\')" title="삭제">✕</button>';
+      html += '</div>';
+    });
+    container.innerHTML = html;
+  }).catch(function(){ container.innerHTML='<div class="qa-list-empty">로드 실패</div>'; });
+}
+
+// ── 저장 ──
+function saveCustomQuestion(){
+  var unitId = document.getElementById('qaUnitSel').value;
+  var stem   = (document.getElementById('qaStem').value||'').trim();
+  var ans    = parseInt(document.getElementById('qaAns').value);
+  var qId    = (document.getElementById('qaId').value||'').trim();
+  if(!stem){ alert('문제 줄기를 입력해주세요.'); return; }
+  var opts = [], exps = [];
+  for(var i=1;i<=4;i++){
+    var optTxt = (document.getElementById('qaOpt'+i).value||'').trim();
+    var ox     = document.getElementById('qaOx'+i).value;
+    var expTxt = (document.getElementById('qaExp'+i).value||'').trim();
+    if(!optTxt){ alert((i)+'번 선지를 입력해주세요.'); return; }
+    opts.push(NUMS[i-1]+' '+optTxt);
+    exps.push({ ox: ox, t: expTxt || (ox==='O'?'맞는 설명입니다.':'틀린 설명입니다.') });
+  }
+  if(!qId){
+    // 자동 ID: 단원ID + _C + 타임스탬프 끝 4자리
+    var ts = String(Date.now()).slice(-4);
+    qId = unitId + '_C' + ts;
+  }
+  var q = { id: qId, ans: ans, stem: stem, opts: opts, exps: exps, _custom: true };
+  fbDb.ref('customQuestions/'+unitId+'/'+qId).set(q)
+    .then(function(){
+      showToast('✅ 문제 저장 완료: '+qId);
+      // MENU에 즉시 반영
+      _mergeOneCustomQ(unitId, q);
+      // 폼 초기화 및 목록 갱신
+      document.getElementById('qaId').value = '';
+      document.getElementById('qaStem').value = '';
+      document.getElementById('qaAns').value = '1';
+      document.getElementById('qaOptsWrap').querySelectorAll('input,textarea').forEach(function(el){ el.value=''; });
+      renderQaList(unitId);
+    })
+    .catch(function(e){ alert('저장 실패: '+e.message); });
+}
+
+// ── 삭제 ──
+function deleteCustomQuestion(unitId, qId){
+  if(!confirm('['+qId+'] 문제를 삭제하시겠습니까?')) return;
+  fbDb.ref('customQuestions/'+unitId+'/'+qId).remove()
+    .then(function(){
+      showToast('🗑 문제 삭제: '+qId);
+      // MENU에서도 제거
+      MENU.forEach(function(p){
+        p.mids.forEach(function(m){
+          if(m.id===unitId && m.data){
+            var idx = m.data.findIndex(function(q){ return q.id===qId; });
+            if(idx>=0) m.data.splice(idx,1);
+          }
+        });
+      });
+      renderQaList(unitId);
+    })
+    .catch(function(e){ alert('삭제 실패: '+e.message); });
+}
+
+// ── Firebase → MENU 병합 ──
+function loadAndMergeCustomQuestions(){
+  if(!firebaseReady||!fbDb) return;
+  fbDb.ref('customQuestions').once('value').then(function(snap){
+    var data = snap.val();
+    if(!data) return;
+    Object.keys(data).forEach(function(unitId){
+      var qs = data[unitId];
+      if(!qs) return;
+      Object.keys(qs).forEach(function(qId){
+        _mergeOneCustomQ(unitId, qs[qId]);
+      });
+    });
+    // O_TYPE 재계산 (커스텀 문제 포함)
+    _rebuildOTypeFromMenu();
+    updateProg();
+  }).catch(function(){});
+}
+function _mergeOneCustomQ(unitId, q){
+  MENU.forEach(function(p){
+    p.mids.forEach(function(m){
+      if(m.id!==unitId) return;
+      if(!m.data) m.data=[];
+      var exists = m.data.findIndex(function(x){ return x.id===q.id; });
+      if(exists>=0) m.data[exists]=q; else m.data.push(q);
+    });
+  });
+}
+function _rebuildOTypeFromMenu(){
+  getAllQuestions().forEach(function(q){
+    if(!q.exps||!q.opts) return;
+    if(q.exps[0] && q.exps[0].ox==='O'){
+      O_TYPE.add(q.id);
+    }
+  });
+}
 
 </script>
 </body>

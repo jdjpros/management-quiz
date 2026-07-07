@@ -335,6 +335,8 @@ body{background:var(--bg);color:var(--text);font-family:'Pretendard',sans-serif;
 .plan-btn{width:100%;padding:12px;border:none;border-radius:10px;background:var(--c0);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:'Pretendard',sans-serif;transition:filter .15s;}
 .plan-btn:hover{filter:brightness(1.08);}
 .plan-btn.secondary{background:var(--surface2);color:var(--dim);border:1px solid var(--border);margin-top:8px;font-weight:500;}
+.plan-btn.plan-btn-nuke{background:linear-gradient(135deg,#dc2626,#991b1b);color:#fff;border:1.5px solid #7f1d1d;font-weight:800;box-shadow:0 2px 10px rgba(220,38,38,.35);}
+.plan-btn.plan-btn-nuke:hover{filter:brightness(1.08);box-shadow:0 3px 14px rgba(220,38,38,.5);}
 .plan-goal-btn{flex:1;padding:10px 8px;border:2px solid var(--border);border-radius:10px;background:var(--surface2);cursor:pointer;font-family:'Pretendard',sans-serif;font-size:13px;font-weight:700;color:var(--muted);text-align:center;transition:all .15s;line-height:1.6;}
 .plan-goal-btn:hover{border-color:var(--c0);color:var(--c0);}
 .plan-goal-btn.act{border-color:var(--c0);background:#dbeafe;color:var(--c0);}

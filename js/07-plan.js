@@ -1358,6 +1358,91 @@ function resetPlanAll(){
   alert('✅ 회독 플랜이 초기화됐습니다.\n대시보드에서 새로 설정할 수 있습니다.');
 }
 
+// ═══════════════════════════════════════════
+// 💣 모든 데이터 완전 초기화 (판정·복습·학습량·파이널체크·플랜 전부)
+//    resetAll / resetCurrentRoundData / resetPlanAll 를 한 번에 수행하는 최종 초기화.
+//    2단계 confirm 통과 후에만 실행. login_skipped·_device_id·cloud_meta_seen_* 는 보존.
+// ═══════════════════════════════════════════
+function resetEverything(){
+  // ── 안전장치: 2단계 확인 ──
+  if(!confirm(
+    '💣 모든 데이터 완전 초기화\n\n' +
+    '아래 데이터가 전부 삭제됩니다:\n' +
+    '  • O/△/X 판정 결과 (state)\n' +
+    '  • 복습 판정 기록 (rv)\n' +
+    '  • 날짜별 학습량·연속일 기록 (act)\n' +
+    '  • 파이널체크 상태 (fc)\n' +
+    '  • 회독 플랜·시험일·일정 전체 (plan)\n' +
+    '  • 차수·회독·마이그레이션 등 모든 진행 플래그\n\n' +
+    '⚠️ 로그인 상태라면 Firebase에도 반영되어\n' +
+    '   다른 기기에서도 동일하게 초기화됩니다.\n\n' +
+    '❗ 되돌릴 수 없습니다.\n\n' +
+    '계속하시겠습니까?'
+  )) return;
+  if(!confirm(
+    '정말 마지막 확인입니다.\n\n' +
+    '지금까지의 모든 학습 데이터가 영구적으로 삭제됩니다.\n' +
+    '이 작업은 되돌릴 수 없습니다.\n\n' +
+    '정말로 전부 초기화하시겠습니까?'
+  )) return;
+
+  // ── 1. state 초기화 (메모리 + localStorage SK 키) ──
+  state = {};
+  saveState();
+
+  // ── 2. 접두사 일괄 삭제 ──
+  var _prefixes = ['rv_','act_','act1_','pass_day_','today_quota_','today_slice_',
+                   'rvdone_','round_reset_','round2_replan_','pass_done_pop_'];
+  // ── 단일 키 삭제 ── (플랜 키는 게스트+로그인 둘 다)
+  var _singles = ['fc_state', PLAN_KEY,
+                  'migration_v4_done','migration_v4_deferred_at','migration_v4_shown',
+                  'migrated_review_v1','act1_tracking_start'];
+  if(currentUser && currentUser.uid) _singles.push('study_plan_v1_' + currentUser.uid);
+
+  Object.keys(localStorage).forEach(function(k){
+    if(!k) return;
+    for(var pi=0; pi<_prefixes.length; pi++){
+      if(k.indexOf(_prefixes[pi])===0){ localStorage.removeItem(k); return; }
+    }
+  });
+  _singles.forEach(function(k){ localStorage.removeItem(k); });
+  // 보존: login_skipped, _device_id, cloud_meta_seen_* (아래 Firebase 반영 후 새 meta로 갱신)
+
+  // ── 3. Firebase 반영 (로그인+연결 시) — 단일 multi-path update, profile 보존 ──
+  function _afterReset(fbOk, errMsg){
+    var fbLine = fbOk    ? 'Firebase에도 반영됐습니다 (다른 기기 포함).' :
+                 errMsg  ? '⚠️ Firebase 반영 실패: ' + errMsg + '\n로그인 후 수동 동기화를 눌러 반영하세요.' :
+                           '(Firebase 미연결 — 로그인 후 수동 동기화를 눌러 반영하세요)';
+    // 캐시 무효화 + 범위 리셋
+    if(typeof _invalidateRvKeyCache === 'function') _invalidateRvKeyCache();
+    if(typeof _invalidateFcCache === 'function') _invalidateFcCache();
+    planScopeMode = 'all';
+    planScopeIds  = [];
+    // UI 갱신
+    renderAll(); updateProg();
+    setMode('dash');
+    setTimeout(function(){ renderDashboard(); }, 100);
+    alert('✅ 모든 데이터가 초기화됐습니다.\n' + fbLine +
+      '\n\n대시보드에서 새 플랜을 설정하고 처음부터 시작하세요.');
+  }
+
+  if(currentUser && currentUser.uid && firebaseReady && fbDb){
+    var _resetMeta = (typeof _getDeviceId==='function')
+      ? { updatedAt: Date.now(), device: _getDeviceId() } : null;
+    // profile은 보존, 나머지 전 노드 null
+    var _upd = { state: null, rv: null, act: null, misc: null, fc: null, plan: null };
+    if(_resetMeta) _upd.meta = _resetMeta;
+    fbDb.ref('users/' + currentUser.uid).update(_upd)
+      .then(function(){
+        if(_resetMeta && typeof _recordCloudMetaSeen==='function') _recordCloudMetaSeen(currentUser.uid, _resetMeta);
+        _afterReset(true, null);
+      })
+      .catch(function(e){ _afterReset(false, e.message); });
+  } else {
+    _afterReset(false, null);
+  }
+}
+
 function updatePlanPreview(){
   var examDate  = document.getElementById('planExamDate').value;
   var startDate = document.getElementById('planStartDate').value;
